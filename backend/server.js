@@ -10,7 +10,7 @@ const server = http.createServer(app);
 // Configure CORS for Express
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-domain.vercel.app'] 
+    ? [process.env.FRONTEND_URL || 'https://your-domain.vercel.app'] 
     : ['http://localhost:3000'],
   credentials: true
 }));
@@ -19,7 +19,7 @@ app.use(cors({
 const io = socketIo(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://your-domain.vercel.app'] 
+      ? [process.env.FRONTEND_URL || 'https://your-domain.vercel.app'] 
       : ['http://localhost:3000'],
     methods: ['GET', 'POST'],
     credentials: true
@@ -90,36 +90,48 @@ app.get('/stats', (req, res) => {
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 3001;
+// Start server (Cloud Run uses PORT env var)
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Terminal backend server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Graceful shutdown handling
-process.on('SIGINT', async () => {
-  console.log('Received SIGINT, shutting down gracefully...');
-  
-  // Close all sessions
-  await sessionManager.destroyAllSessions();
-  
-  // Close server
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
+// Track shutdown state to prevent multiple shutdown attempts
+let isShuttingDown = false;
 
-process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM, shutting down gracefully...');
+// Graceful shutdown function
+async function gracefulShutdown(signal) {
+  if (isShuttingDown) {
+    console.log(`Already shutting down, ignoring ${signal}`);
+    return;
+  }
   
-  // Close all sessions
-  await sessionManager.destroyAllSessions();
+  isShuttingDown = true;
+  console.log(`Received ${signal}, shutting down gracefully...`);
   
-  // Close server
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
+  try {
+    // Close all sessions
+    await sessionManager.destroyAllSessions();
+    
+    // Close server
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+    
+    // Force exit after 5 seconds if graceful shutdown fails
+    setTimeout(() => {
+      console.log('Force exiting...');
+      process.exit(1);
+    }, 5000);
+    
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown handling
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

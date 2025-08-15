@@ -223,9 +223,15 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         ref={terminalRef}
         className="w-full h-full"
         style={{
-          minHeight: "100vh",
+          width: "100vw",
+          height: "100vh",
+          margin: 0,
+          padding: 0,
           boxSizing: "border-box",
           backgroundColor: terminalConfig.theme.background,
+          position: "absolute",
+          top: 0,
+          left: 0,
         }}
       />
     );

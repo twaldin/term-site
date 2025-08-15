@@ -109,15 +109,11 @@ class SessionManager {
         WorkingDir: '/home/portfolio',
         User: 'portfolio',
         HostConfig: {
-          Memory: 256 * 1024 * 1024, // 256MB
-          CpuQuota: 25000, // 0.25 CPU
-          PidsLimit: 50,
-          ReadonlyRootfs: true,
+          Memory: 512 * 1024 * 1024, // 512MB for LazyVim
+          CpuQuota: 50000, // 0.5 CPU for better performance
+          PidsLimit: 100,
+          ReadonlyRootfs: false, // Allow LazyVim to work properly
           NetworkMode: 'none',
-          Tmpfs: {
-            '/tmp': 'size=50m',
-            '/var/tmp': 'size=10m'
-          },
           SecurityOpt: [
             'no-new-privileges:true'
           ]
