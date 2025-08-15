@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { terminalConfig } from '../config/terminal-theme';
 
 interface TerminalProps {
   onData: (data: string) => void;
@@ -39,22 +40,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
         // Check if component is still mounted
         if (!terminalRef.current) return;
 
-        // Initialize xterm.js
-        const xterm = new Terminal({
-          cursorBlink: true,
-          fontFamily: 'Monaco, "Lucida Console", monospace',
-          fontSize: 16,
-          lineHeight: 1.2,
-          cols: 120,
-          rows: 30,
-          theme: {
-            background: '#000000',
-            foreground: '#00ff00',
-            cursor: '#00ff00',
-            selection: '#ffffff40',
-          },
-          allowProposedApi: true,
-        });
+        // Initialize xterm.js with your personalized config
+        const xterm = new Terminal(terminalConfig);
 
         // Initialize fit addon
         const fitAddon = new FitAddon();
@@ -62,8 +49,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
 
         // Open terminal
         xterm.open(terminalRef.current!);
-        fitAddon.fit();
-
+        
         // Store references
         xtermRef.current = xterm;
         fitAddonRef.current = fitAddon;
@@ -76,8 +62,18 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
 
         // Handle terminal resize
         const resizeDisposable = xterm.onResize(({ cols, rows }) => {
+          console.log('Terminal resized to:', cols, 'x', rows);
           onResize(cols, rows);
         });
+
+        // Fit terminal after a short delay to ensure DOM is ready
+        setTimeout(() => {
+          fitAddon.fit();
+          // Send initial resize to backend
+          const { cols, rows } = xterm;
+          console.log('Initial terminal size:', cols, 'x', rows);
+          onResize(cols, rows);
+        }, 100);
 
         // Focus terminal and handle clicks
         xterm.focus();
@@ -90,6 +86,45 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
         const currentTerminalElement = terminalRef.current!;
         currentTerminalElement.addEventListener('click', handleClick);
 
+        // Add clipboard integration
+        const handlePaste = async (event: ClipboardEvent) => {
+          event.preventDefault();
+          try {
+            const text = await navigator.clipboard.readText();
+            xterm.paste(text);
+          } catch (err) {
+            console.warn('Failed to read clipboard:', err);
+          }
+        };
+
+        const handleCopy = async () => {
+          try {
+            const selection = xterm.getSelection();
+            if (selection) {
+              await navigator.clipboard.writeText(selection);
+            }
+          } catch (err) {
+            console.warn('Failed to write to clipboard:', err);
+          }
+        };
+
+        // Add keyboard shortcuts for copy/paste
+        const handleKeyDown = (event: KeyboardEvent) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+            event.preventDefault();
+            handlePaste(event as any);
+          } else if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+            const selection = xterm.getSelection();
+            if (selection) {
+              event.preventDefault();
+              handleCopy();
+            }
+          }
+        };
+
+        currentTerminalElement.addEventListener('paste', handlePaste);
+        currentTerminalElement.addEventListener('keydown', handleKeyDown);
+
         // Handle window resize
         const handleResize = () => {
           fitAddon.fit();
@@ -97,11 +132,20 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
 
         window.addEventListener('resize', handleResize);
         setIsReady(true);
+        
+        // Additional resize after component is fully ready
+        setTimeout(() => {
+          fitAddon.fit();
+          const { cols, rows } = xterm;
+          onResize(cols, rows);
+        }, 200);
 
         // Store cleanup functions
         cleanupFunctions = [
           () => window.removeEventListener('resize', handleResize),
           () => currentTerminalElement.removeEventListener('click', handleClick),
+          () => currentTerminalElement.removeEventListener('paste', handlePaste),
+          () => currentTerminalElement.removeEventListener('keydown', handleKeyDown),
           () => dataDisposable.dispose(),
           () => resizeDisposable.dispose(),
           () => xterm.dispose()
@@ -141,8 +185,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
 
   // Method to fit terminal
   const fitTerminal = () => {
-    if (fitAddonRef.current) {
+    if (fitAddonRef.current && xtermRef.current) {
       fitAddonRef.current.fit();
+      // Trigger resize event to notify backend
+      const { cols, rows } = xtermRef.current;
+      onResize(cols, rows);
     }
   };
 
@@ -156,11 +203,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, r
   return (
     <div 
       ref={terminalRef}
-      className="w-full h-full bg-black"
+      className="w-full h-full"
       style={{ 
         minHeight: '100vh',
-        padding: '20px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        backgroundColor: terminalConfig.theme.background,
       }}
     />
   );
