@@ -34,19 +34,17 @@ class SessionManager {
   createLocalSession(sessionId, socket) {
     console.log(`Creating local shell session for ${sessionId}`);
 
-    // Spawn local shell for development
-    const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/zsh';
-    const terminal = pty.spawn(shell, ['-i'], {
+    // Spawn local shell - using sh for compatibility
+    const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
+    const terminal = pty.spawn(shell, [], {
       name: 'xterm-color',
       cols: 120,
       rows: 30,
-      cwd: process.env.HOME || process.env.USERPROFILE || '/tmp',
+      cwd: '/tmp',
       env: {
-        ...process.env,
         TERM: 'xterm-256color',
-        ZSH: process.env.ZSH || '/Users/twaldin/.oh-my-zsh',
-        ZSH_THEME: 'candy',
-        SHELL: '/bin/zsh'
+        PATH: '/usr/local/bin:/usr/bin:/bin',
+        HOME: '/tmp'
       }
     });
 

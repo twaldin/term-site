@@ -23,7 +23,7 @@ export function createWebSocketManager(): WebSocketManager {
     const isDev = process.env.NODE_ENV === 'development';
     return isDev 
       ? 'http://localhost:3001'
-      : process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+      : process.env.NEXT_PUBLIC_API_URL || 'https://term-site-backend.fly.dev';
   };
 
   const connect = () => {
