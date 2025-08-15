@@ -21,10 +21,15 @@ COPY container/Dockerfile ./terminal.Dockerfile
 
 # Create terminal image build script
 RUN echo '#!/bin/sh' > /app/build-terminal-image.sh && \
+    echo 'set -e' >> /app/build-terminal-image.sh && \
     echo 'echo "Building terminal-portfolio image..."' >> /app/build-terminal-image.sh && \
-    echo 'docker build -f /app/terminal.Dockerfile -t terminal-portfolio:latest /app' >> /app/build-terminal-image.sh && \
-    echo 'echo "Terminal image built successfully"' >> /app/build-terminal-image.sh && \
-    echo 'docker images terminal-portfolio:latest' >> /app/build-terminal-image.sh && \
+    echo 'if docker build -f /app/terminal.Dockerfile -t terminal-portfolio:latest /app; then' >> /app/build-terminal-image.sh && \
+    echo '  echo "Terminal image built successfully"' >> /app/build-terminal-image.sh && \
+    echo '  docker images terminal-portfolio:latest' >> /app/build-terminal-image.sh && \
+    echo 'else' >> /app/build-terminal-image.sh && \
+    echo '  echo "ERROR: Failed to build terminal image"' >> /app/build-terminal-image.sh && \
+    echo '  exit 1' >> /app/build-terminal-image.sh && \
+    echo 'fi' >> /app/build-terminal-image.sh && \
     chmod +x /app/build-terminal-image.sh
 
 # Expose port
