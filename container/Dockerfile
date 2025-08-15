@@ -13,8 +13,7 @@ RUN apt-get update && apt-get install -y \
     ripgrep \
     fzf \
     less \
-    bat \
-    exa \
+    batcat \
     git \
     curl \
     wget \
@@ -23,10 +22,11 @@ RUN apt-get update && apt-get install -y \
     procps \
     coreutils \
     findutils \
-    ncurses-term \
+    ncurses-base \
     zsh \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
+    && ln -sf /usr/bin/batcat /usr/local/bin/bat \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dotfiles from build context (submodule)
