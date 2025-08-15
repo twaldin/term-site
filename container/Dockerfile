@@ -1,14 +1,20 @@
-FROM alpine:3.19
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install essential tools and create user
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     bash \
     vim \
     neovim \
     nano \
     grep \
+    ripgrep \
     fzf \
     less \
+    bat \
+    exa \
     git \
     curl \
     wget \
@@ -17,11 +23,11 @@ RUN apk add --no-cache \
     procps \
     coreutils \
     findutils \
-    ncurses \
-    shadow \
+    ncurses-term \
     zsh \
-    && adduser -D -s /bin/zsh -h /home/portfolio portfolio \
-    && mkdir -p /home/portfolio/.bashrc.d
+    && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
+    && mkdir -p /home/portfolio/.bashrc.d \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy dotfiles from build context (submodule)
 COPY dotfiles /home/portfolio/.dotfiles
