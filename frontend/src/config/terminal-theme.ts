@@ -35,18 +35,18 @@ export const terminalConfig = {
   // Font settings matching your ghostty config
   fontFamily: 'JetBrains Mono, "JetBrainsMono Nerd Font Mono", "Fira Code", "Monaco", "Consolas", monospace',
   fontSize: 18, // Matching your ghostty font-size
-  fontWeight: 'normal',
-  fontWeightBold: 'bold',
+  fontWeight: 'normal' as const,
+  fontWeightBold: 'bold' as const,
   lineHeight: 1.2,
   
   // Terminal behavior
   cursorBlink: true,
-  cursorStyle: 'block',
-  bellStyle: 'none',
+  cursorStyle: 'block' as const,
+  bellStyle: 'none' as const,
   
   // Scrolling
   scrollback: 10000,
-  fastScrollModifier: 'alt',
+  fastScrollModifier: 'alt' as const,
   
   // Other settings
   allowProposedApi: true,
