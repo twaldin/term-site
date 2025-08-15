@@ -40,18 +40,6 @@ jobs:
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed to: $URL"
       
-      - name: Update Vercel Environment
-        if: github.ref == 'refs/heads/main'
-        run: |
-          # Update production backend URL in Vercel
-          curl -X PATCH "https://api.vercel.com/v10/projects/${{ secrets.VERCEL_PROJECT_ID }}/env" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "key": "NEXT_PUBLIC_API_URL",
-              "value": "${{ steps.deploy.outputs.url }}",
-              "target": ["production"]
-            }'
       
   deploy-frontend:
     needs: deploy-backend
@@ -60,13 +48,14 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Deploy to Vercel
+        working-directory: ./frontend
         run: |
           npm i -g vercel
           
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            vercel --prod --token=${{ secrets.VERCEL_TOKEN }} \
+            vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes \
               --env NEXT_PUBLIC_API_URL=${{ needs.deploy-backend.outputs.backend-url }}
           else
-            vercel --token=${{ secrets.VERCEL_TOKEN }} \
+            vercel --token=${{ secrets.VERCEL_TOKEN }} --yes \
               --env NEXT_PUBLIC_API_URL=${{ needs.deploy-backend.outputs.backend-url }}
           fi

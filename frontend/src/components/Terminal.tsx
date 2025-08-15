@@ -23,8 +23,8 @@ interface TerminalRef {
 const Terminal = forwardRef<TerminalRef, TerminalProps>(
   ({ onData, onResize }, ref) => {
     const terminalRef = useRef<HTMLDivElement>(null);
-    const xtermRef = useRef<any>(null);
-    const fitAddonRef = useRef<any>(null);
+    const xtermRef = useRef<import("@xterm/xterm").Terminal | null>(null);
+    const fitAddonRef = useRef<import("@xterm/addon-fit").FitAddon | null>(null);
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
@@ -124,7 +124,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           const handleKeyDown = (event: KeyboardEvent) => {
             if ((event.ctrlKey || event.metaKey) && event.key === "v") {
               event.preventDefault();
-              handlePaste(event as any);
+              handlePaste(event as ClipboardEvent);
             } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
               const selection = xterm.getSelection();
               if (selection) {
@@ -216,7 +216,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       writeToTerminal,
       clearTerminal,
       fitTerminal,
-    }), [isReady]);
+    }), [isReady, fitTerminal]);
 
     return (
       <div

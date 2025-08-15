@@ -5,8 +5,8 @@ import Terminal from '@/components/Terminal';
 import { createWebSocketManager, WebSocketManager } from '@/lib/websocket';
 
 export default function Home() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+  const [, setIsConnected] = useState(false);
+  const [, setConnectionStatus] = useState('Disconnected');
   const wsManagerRef = useRef<WebSocketManager | null>(null);
   const terminalRef = useRef<{ writeToTerminal: (data: string) => void; clearTerminal: () => void; fitTerminal: () => void } | null>(null);
 
@@ -70,14 +70,17 @@ export default function Home() {
     }
   }, []);
 
-  const handleReconnect = () => {
+  const handleReconnect = useCallback(() => {
     if (wsManagerRef.current) {
       wsManagerRef.current.disconnect();
       setTimeout(() => {
         wsManagerRef.current?.connect();
       }, 1000);
     }
-  };
+  }, []);
+
+  // Keep the function available for potential future use
+  console.log('Reconnect handler available:', handleReconnect);
 
   return (
     <div className="w-full h-screen bg-black overflow-hidden">
