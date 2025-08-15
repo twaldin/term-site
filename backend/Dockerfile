@@ -1,26 +1,21 @@
-FROM node:18-alpine
+FROM docker:24-dind
 
-# Install build dependencies for node-pty
-RUN apk add --no-cache python3 make g++
+# Install Node.js and dependencies
+RUN apk add --no-cache nodejs npm python3 make g++
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from backend directory
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy source code
-COPY . .
+# Copy source code from backend directory
+COPY backend/ .
 
-# Expose port (Cloud Run uses PORT env var)
+# Expose port
 EXPOSE 3000
 
-# Add non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-USER nodejs
-
-# Start the server
-CMD ["npm", "start"]
+# Start Docker daemon in background and then start the server
+CMD dockerd-entrypoint.sh & sleep 5 && npm start

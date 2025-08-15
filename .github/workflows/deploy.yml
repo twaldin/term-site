@@ -1,0 +1,72 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, develop, 'feature/*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    outputs:
+      backend-url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      
+      - name: Deploy to Fly.io
+        id: deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            APP_NAME="term-site-backend"
+          else
+            # Create branch-specific app name
+            BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g' | cut -c1-20)
+            APP_NAME="term-site-backend-${BRANCH_NAME}"
+            
+            # Check if app exists, create if not
+            flyctl apps list | grep -q "$APP_NAME" || flyctl apps create "$APP_NAME" --org personal
+          fi
+          
+          # Deploy
+          flyctl deploy --app "$APP_NAME" --ha=false
+          
+          # Get URL
+          URL="https://${APP_NAME}.fly.dev"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $URL"
+      
+      - name: Update Vercel Environment
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Update production backend URL in Vercel
+          curl -X PATCH "https://api.vercel.com/v10/projects/${{ secrets.VERCEL_PROJECT_ID }}/env" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "key": "NEXT_PUBLIC_API_URL",
+              "value": "${{ steps.deploy.outputs.url }}",
+              "target": ["production"]
+            }'
+      
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Vercel
+        run: |
+          npm i -g vercel
+          
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            vercel --prod --token=${{ secrets.VERCEL_TOKEN }} \
+              --env NEXT_PUBLIC_API_URL=${{ needs.deploy-backend.outputs.backend-url }}
+          else
+            vercel --token=${{ secrets.VERCEL_TOKEN }} \
+              --env NEXT_PUBLIC_API_URL=${{ needs.deploy-backend.outputs.backend-url }}
+          fi

@@ -90,9 +90,9 @@ app.get('/stats', (req, res) => {
   });
 });
 
-// Start server (Cloud Run uses PORT env var)
+// Start server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Terminal backend server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

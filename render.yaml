@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: term-site-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: oregon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: FORCE_LOCAL_SHELL
+        value: true
+    autoDeploy: false

@@ -13,6 +13,6 @@
     }
   ],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://terminal-backend-YOUR_HASH-uc.a.run.app"
+    "NEXT_PUBLIC_API_URL": "https://term-site-backend.fly.dev"
   }
 }
