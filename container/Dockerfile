@@ -7,11 +7,8 @@ RUN apk add --no-cache \
     neovim \
     nano \
     grep \
-    ripgrep \
     fzf \
     less \
-    bat \
-    exa \
     git \
     curl \
     wget \
