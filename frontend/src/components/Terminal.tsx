@@ -1,7 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { terminalConfig } from '../config/terminal-theme';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { terminalConfig } from "../config/terminal-theme";
 
 interface TerminalProps {
   onData: (data: string) => void;
@@ -14,204 +20,218 @@ interface TerminalRef {
   fitTerminal: () => void;
 }
 
-const Terminal = forwardRef<TerminalRef, TerminalProps>(({ onData, onResize }, ref) => {
-  const terminalRef = useRef<HTMLDivElement>(null);
-  const xtermRef = useRef<any>(null);
-  const fitAddonRef = useRef<any>(null);
-  const [isReady, setIsReady] = useState(false);
+const Terminal = forwardRef<TerminalRef, TerminalProps>(
+  ({ onData, onResize }, ref) => {
+    const terminalRef = useRef<HTMLDivElement>(null);
+    const xtermRef = useRef<any>(null);
+    const fitAddonRef = useRef<any>(null);
+    const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    if (!terminalRef.current || typeof window === 'undefined') return;
+    useEffect(() => {
+      if (!terminalRef.current || typeof window === "undefined") return;
 
-    // Cleanup any existing terminal first
-    if (xtermRef.current) {
-      xtermRef.current.dispose();
-      xtermRef.current = null;
-      fitAddonRef.current = null;
-    }
+      // Cleanup any existing terminal first
+      if (xtermRef.current) {
+        xtermRef.current.dispose();
+        xtermRef.current = null;
+        fitAddonRef.current = null;
+      }
 
-    let cleanupFunctions: (() => void)[] = [];
+      let cleanupFunctions: (() => void)[] = [];
 
-    // Dynamic import to avoid SSR issues
-    import('@xterm/xterm').then(({ Terminal }) => {
-      import('@xterm/addon-fit').then(({ FitAddon }) => {
-        import('@xterm/xterm/css/xterm.css');
+      // Dynamic import to avoid SSR issues
+      import("@xterm/xterm").then(({ Terminal }) => {
+        import("@xterm/addon-fit").then(({ FitAddon }) => {
+          import("@xterm/xterm/css/xterm.css");
 
-        // Check if component is still mounted
-        if (!terminalRef.current) return;
+          // Check if component is still mounted
+          if (!terminalRef.current) return;
 
-        // Initialize xterm.js with your personalized config
-        const xterm = new Terminal(terminalConfig);
+          // Initialize xterm.js with your personalized config
+          const xterm = new Terminal(terminalConfig);
 
-        // Initialize fit addon
-        const fitAddon = new FitAddon();
-        xterm.loadAddon(fitAddon);
+          // Initialize fit addon
+          const fitAddon = new FitAddon();
+          xterm.loadAddon(fitAddon);
 
-        // Open terminal
-        xterm.open(terminalRef.current!);
-        
-        // Store references
-        xtermRef.current = xterm;
-        fitAddonRef.current = fitAddon;
+          // Open terminal
+          xterm.open(terminalRef.current!);
 
-        // Handle terminal input
-        const dataDisposable = xterm.onData((data) => {
-          console.log('xterm.js onData received:', JSON.stringify(data), 'char codes:', data.split('').map(c => c.charCodeAt(0)));
-          onData(data);
-        });
+          // Store references
+          xtermRef.current = xterm;
+          fitAddonRef.current = fitAddon;
 
-        // Handle terminal resize
-        const resizeDisposable = xterm.onResize(({ cols, rows }) => {
-          console.log('Terminal resized to:', cols, 'x', rows);
-          onResize(cols, rows);
-        });
+          // Handle terminal input
+          const dataDisposable = xterm.onData((data) => {
+            console.log(
+              "xterm.js onData received:",
+              JSON.stringify(data),
+              "char codes:",
+              data.split("").map((c) => c.charCodeAt(0)),
+            );
+            onData(data);
+          });
 
-        // Fit terminal after a short delay to ensure DOM is ready
-        setTimeout(() => {
-          fitAddon.fit();
-          // Send initial resize to backend
-          const { cols, rows } = xterm;
-          console.log('Initial terminal size:', cols, 'x', rows);
-          onResize(cols, rows);
-        }, 100);
+          // Handle terminal resize
+          const resizeDisposable = xterm.onResize(({ cols, rows }) => {
+            console.log("Terminal resized to:", cols, "x", rows);
+            onResize(cols, rows);
+          });
 
-        // Focus terminal and handle clicks
-        xterm.focus();
-        
-        // Add click handler to ensure focus
-        const handleClick = () => {
+          // Fit terminal after a short delay to ensure DOM is ready
+          setTimeout(() => {
+            fitAddon.fit();
+            // Send initial resize to backend
+            const { cols, rows } = xterm;
+            console.log("Initial terminal size:", cols, "x", rows);
+            onResize(cols, rows);
+          }, 100);
+
+          // Focus terminal and handle clicks
           xterm.focus();
-        };
-        
-        const currentTerminalElement = terminalRef.current!;
-        currentTerminalElement.addEventListener('click', handleClick);
 
-        // Add clipboard integration
-        const handlePaste = async (event: ClipboardEvent) => {
-          event.preventDefault();
-          try {
-            const text = await navigator.clipboard.readText();
-            xterm.paste(text);
-          } catch (err) {
-            console.warn('Failed to read clipboard:', err);
-          }
-        };
+          // Add click handler to ensure focus
+          const handleClick = () => {
+            xterm.focus();
+          };
 
-        const handleCopy = async () => {
-          try {
-            const selection = xterm.getSelection();
-            if (selection) {
-              await navigator.clipboard.writeText(selection);
-            }
-          } catch (err) {
-            console.warn('Failed to write to clipboard:', err);
-          }
-        };
+          const currentTerminalElement = terminalRef.current!;
+          currentTerminalElement.addEventListener("click", handleClick);
 
-        // Add keyboard shortcuts for copy/paste
-        const handleKeyDown = (event: KeyboardEvent) => {
-          if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+          // Add clipboard integration
+          const handlePaste = async (event: ClipboardEvent) => {
             event.preventDefault();
-            handlePaste(event as any);
-          } else if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
-            const selection = xterm.getSelection();
-            if (selection) {
-              event.preventDefault();
-              handleCopy();
+            try {
+              const text = await navigator.clipboard.readText();
+              xterm.paste(text);
+            } catch (err) {
+              console.warn("Failed to read clipboard:", err);
             }
+          };
+
+          const handleCopy = async () => {
+            try {
+              const selection = xterm.getSelection();
+              if (selection) {
+                await navigator.clipboard.writeText(selection);
+              }
+            } catch (err) {
+              console.warn("Failed to write to clipboard:", err);
+            }
+          };
+
+          // Add keyboard shortcuts for copy/paste
+          const handleKeyDown = (event: KeyboardEvent) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+              event.preventDefault();
+              handlePaste(event as any);
+            } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
+              const selection = xterm.getSelection();
+              if (selection) {
+                event.preventDefault();
+                handleCopy();
+              }
+            }
+          };
+
+          currentTerminalElement.addEventListener("paste", handlePaste);
+          currentTerminalElement.addEventListener("keydown", handleKeyDown);
+
+          // Handle window resize
+          const handleResize = () => {
+            fitAddon.fit();
+          };
+
+          window.addEventListener("resize", handleResize);
+          setIsReady(true);
+
+          // Additional resize after component is fully ready
+          setTimeout(() => {
+            fitAddon.fit();
+            const { cols, rows } = xterm;
+            onResize(cols, rows);
+          }, 200);
+
+          // Store cleanup functions
+          cleanupFunctions = [
+            () => window.removeEventListener("resize", handleResize),
+            () =>
+              currentTerminalElement.removeEventListener("click", handleClick),
+            () =>
+              currentTerminalElement.removeEventListener("paste", handlePaste),
+            () =>
+              currentTerminalElement.removeEventListener(
+                "keydown",
+                handleKeyDown,
+              ),
+            () => dataDisposable.dispose(),
+            () => resizeDisposable.dispose(),
+            () => xterm.dispose(),
+          ];
+        });
+      });
+
+      // Return cleanup function
+      return () => {
+        console.log("Terminal component cleanup triggered");
+        cleanupFunctions.forEach((cleanup) => {
+          try {
+            cleanup();
+          } catch (error) {
+            console.error("Error during terminal cleanup:", error);
           }
-        };
+        });
+        xtermRef.current = null;
+        fitAddonRef.current = null;
+        setIsReady(false);
+      };
+    }, [onData, onResize]);
 
-        currentTerminalElement.addEventListener('paste', handlePaste);
-        currentTerminalElement.addEventListener('keydown', handleKeyDown);
-
-        // Handle window resize
-        const handleResize = () => {
-          fitAddon.fit();
-        };
-
-        window.addEventListener('resize', handleResize);
-        setIsReady(true);
-        
-        // Additional resize after component is fully ready
-        setTimeout(() => {
-          fitAddon.fit();
-          const { cols, rows } = xterm;
-          onResize(cols, rows);
-        }, 200);
-
-        // Store cleanup functions
-        cleanupFunctions = [
-          () => window.removeEventListener('resize', handleResize),
-          () => currentTerminalElement.removeEventListener('click', handleClick),
-          () => currentTerminalElement.removeEventListener('paste', handlePaste),
-          () => currentTerminalElement.removeEventListener('keydown', handleKeyDown),
-          () => dataDisposable.dispose(),
-          () => resizeDisposable.dispose(),
-          () => xterm.dispose()
-        ];
-      });
-    });
-
-    // Return cleanup function
-    return () => {
-      console.log('Terminal component cleanup triggered');
-      cleanupFunctions.forEach(cleanup => {
-        try {
-          cleanup();
-        } catch (error) {
-          console.error('Error during terminal cleanup:', error);
-        }
-      });
-      xtermRef.current = null;
-      fitAddonRef.current = null;
-      setIsReady(false);
+    // Method to write data to terminal
+    const writeToTerminal = (data: string) => {
+      if (xtermRef.current) {
+        xtermRef.current.write(data);
+      }
     };
-  }, [onData, onResize]);
 
-  // Method to write data to terminal
-  const writeToTerminal = (data: string) => {
-    if (xtermRef.current) {
-      xtermRef.current.write(data);
-    }
-  };
+    // Method to clear terminal
+    const clearTerminal = () => {
+      if (xtermRef.current) {
+        xtermRef.current.clear();
+      }
+    };
 
-  // Method to clear terminal
-  const clearTerminal = () => {
-    if (xtermRef.current) {
-      xtermRef.current.clear();
-    }
-  };
+    // Method to fit terminal
+    const fitTerminal = () => {
+      if (fitAddonRef.current && xtermRef.current) {
+        fitAddonRef.current.fit();
+        // Trigger resize event to notify backend
+        const { cols, rows } = xtermRef.current;
+        onResize(cols, rows);
+      }
+    };
 
-  // Method to fit terminal
-  const fitTerminal = () => {
-    if (fitAddonRef.current && xtermRef.current) {
-      fitAddonRef.current.fit();
-      // Trigger resize event to notify backend
-      const { cols, rows } = xtermRef.current;
-      onResize(cols, rows);
-    }
-  };
+    // Expose methods via ref
+    useImperativeHandle(ref, () => ({
+      writeToTerminal,
+      clearTerminal,
+      fitTerminal,
+    }), [isReady]);
 
-  // Expose methods via ref
-  useImperativeHandle(ref, () => ({
-    writeToTerminal,
-    clearTerminal,
-    fitTerminal,
-  }), [isReady]);
+    return (
+      <div
+        ref={terminalRef}
+        className="w-full h-full"
+        style={{
+          minHeight: "100vh",
+          boxSizing: "border-box",
+          backgroundColor: terminalConfig.theme.background,
+        }}
+      />
+    );
+  },
+);
 
-  return (
-    <div 
-      ref={terminalRef}
-      className="w-full h-full"
-      style={{ 
-        minHeight: '100vh',
-        boxSizing: 'border-box',
-        backgroundColor: terminalConfig.theme.background,
-      }}
-    />
-  );
-});
-
-Terminal.displayName = 'Terminal';
+Terminal.displayName = "Terminal";
 export default Terminal;
+
