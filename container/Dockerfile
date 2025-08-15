@@ -3,6 +3,7 @@ FROM alpine:3.19
 # Install essential tools and create user
 RUN apk add --no-cache \
     bash \
+    vim \
     neovim \
     nano \
     grep \
@@ -21,11 +22,6 @@ RUN apk add --no-cache \
     findutils \
     ncurses \
     shadow \
-    nodejs \
-    npm \
-    python3 \
-    py3-pip \
-    build-base \
     zsh \
     && adduser -D -s /bin/zsh -h /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d
@@ -33,14 +29,43 @@ RUN apk add --no-cache \
 # Copy dotfiles from build context (submodule)
 COPY dotfiles /home/portfolio/.dotfiles
 
-# Create config directory and symlinks to dotfiles
+# Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
-    ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
-    ln -sf /home/portfolio/.dotfiles/nvim /home/portfolio/.config/nvim
+    mkdir -p /home/portfolio/.local/share && \
+    mkdir -p /home/portfolio/.local/state && \
+    mkdir -p /home/portfolio/.local/bin && \
+    mkdir -p /home/portfolio/.cache && \
+    mkdir -p /home/portfolio/.config/nvim && \
+    mkdir -p /home/portfolio/workspace && \
+    mkdir -p /home/portfolio/tmp
 
-# Set proper ownership
-RUN chown -R portfolio:portfolio /home/portfolio/.dotfiles && \
-    chown -R portfolio:portfolio /home/portfolio/.config && \
+# Create simple nvim config (no LazyVim) with TokyoNight colors
+RUN echo 'set number' > /home/portfolio/.config/nvim/init.vim && \
+    echo 'set relativenumber' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'set tabstop=2' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'set shiftwidth=2' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'set expandtab' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'syntax enable' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'set background=dark' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Normal ctermfg=15 ctermbg=0' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Comment ctermfg=8' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight String ctermfg=10' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Keyword ctermfg=12' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Function ctermfg=14' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Type ctermfg=13' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight LineNr ctermfg=8' >> /home/portfolio/.config/nvim/init.vim
+
+# Create basic .vimrc with same config  
+RUN ln -sf /home/portfolio/.config/nvim/init.vim /home/portfolio/.vimrc
+
+# Create symlink to your original zshrc
+RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
+
+# Set proper ownership for all user directories
+RUN chown -R portfolio:portfolio /home/portfolio/.config && \
+    chown -R portfolio:portfolio /home/portfolio/.local && \
+    chown -R portfolio:portfolio /home/portfolio/workspace && \
+    chown -R portfolio:portfolio /home/portfolio/tmp && \
     chown -h portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch to portfolio user to install Oh My Zsh
@@ -48,7 +73,7 @@ USER portfolio
 WORKDIR /home/portfolio
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Restore our custom zshrc symlink (Oh My Zsh overwrites it)
+# Restore your original zshrc symlink (Oh My Zsh overwrites it)
 RUN rm -f /home/portfolio/.zshrc && \
     ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
 
@@ -104,9 +129,25 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
 
-# Switch to non-root user
+# Create a restricted shell environment
+RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
+    echo 'export HOME=/home/portfolio' >> /home/portfolio/secure-shell.sh && \
+    echo 'export USER=portfolio' >> /home/portfolio/secure-shell.sh && \
+    echo 'export SHELL=/bin/zsh' >> /home/portfolio/secure-shell.sh && \
+    echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
+    echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
+    chmod +x /home/portfolio/secure-shell.sh && \
+    chown portfolio:portfolio /home/portfolio/secure-shell.sh
+
+# Switch to non-root user and set working directory
 USER portfolio
 WORKDIR /home/portfolio
 
-# Default command
-CMD ["/bin/bash"]
+# Set environment variables for security
+ENV HOME=/home/portfolio
+ENV USER=portfolio
+ENV SHELL=/bin/zsh
+ENV PATH=/home/portfolio/scripts:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Default command starts secure shell
+CMD ["/home/portfolio/secure-shell.sh"]
