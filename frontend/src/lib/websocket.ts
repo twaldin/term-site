@@ -8,7 +8,7 @@ export interface WebSocketManager {
   onOutput: (callback: (data: string) => void) => void;
   onConnect: (callback: () => void) => void;
   onDisconnect: (callback: () => void) => void;
-  onError: (callback: (error: any) => void) => void;
+  onError: (callback: (error: Error) => void) => void;
   resize: (cols: number, rows: number) => void;
 }
 
@@ -16,7 +16,7 @@ export function createWebSocketManager(): WebSocketManager {
   let socket: Socket | null = null;
   let connectCallback: (() => void) | null = null;
   let disconnectCallback: (() => void) | null = null;
-  let errorCallback: ((error: any) => void) | null = null;
+  let errorCallback: ((error: Error) => void) | null = null;
   let outputCallback: ((data: string) => void) | null = null;
 
   const getWebSocketUrl = (): string => {
@@ -89,7 +89,7 @@ export function createWebSocketManager(): WebSocketManager {
     disconnectCallback = callback;
   };
 
-  const onError = (callback: (error: any) => void) => {
+  const onError = (callback: (error: Error) => void) => {
     errorCallback = callback;
   };
 
