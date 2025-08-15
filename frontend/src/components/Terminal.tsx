@@ -25,7 +25,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const terminalRef = useRef<HTMLDivElement>(null);
     const xtermRef = useRef<import("@xterm/xterm").Terminal | null>(null);
     const fitAddonRef = useRef<import("@xterm/addon-fit").FitAddon | null>(null);
-    const [isReady, setIsReady] = useState(false);
+    const [, setIsReady] = useState(false);
 
     useEffect(() => {
       if (!terminalRef.current || typeof window === "undefined") return;
@@ -42,7 +42,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       // Dynamic import to avoid SSR issues
       import("@xterm/xterm").then(({ Terminal }) => {
         import("@xterm/addon-fit").then(({ FitAddon }) => {
-          import("@xterm/xterm/css/xterm.css");
+          // CSS is imported via next.config or global CSS
 
           // Check if component is still mounted
           if (!terminalRef.current) return;
@@ -121,10 +121,15 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           };
 
           // Add keyboard shortcuts for copy/paste
-          const handleKeyDown = (event: KeyboardEvent) => {
+          const handleKeyDown = async (event: KeyboardEvent) => {
             if ((event.ctrlKey || event.metaKey) && event.key === "v") {
               event.preventDefault();
-              handlePaste(event as ClipboardEvent);
+              try {
+                const text = await navigator.clipboard.readText();
+                xterm.paste(text);
+              } catch (err) {
+                console.warn("Failed to read clipboard:", err);
+              }
             } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
               const selection = xterm.getSelection();
               if (selection) {
@@ -201,22 +206,19 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       }
     };
 
-    // Method to fit terminal
-    const fitTerminal = () => {
-      if (fitAddonRef.current && xtermRef.current) {
-        fitAddonRef.current.fit();
-        // Trigger resize event to notify backend
-        const { cols, rows } = xtermRef.current;
-        onResize(cols, rows);
-      }
-    };
-
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       writeToTerminal,
       clearTerminal,
-      fitTerminal,
-    }), [isReady, fitTerminal]);
+      fitTerminal: () => {
+        if (fitAddonRef.current && xtermRef.current) {
+          fitAddonRef.current.fit();
+          // Trigger resize event to notify backend
+          const { cols, rows } = xtermRef.current;
+          onResize(cols, rows);
+        }
+      },
+    }), [onResize]);
 
     return (
       <div
