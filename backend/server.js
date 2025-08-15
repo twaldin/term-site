@@ -11,7 +11,7 @@ const server = http.createServer(app);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [process.env.FRONTEND_URL || 'https://your-domain.vercel.app'] 
-    : ['http://localhost:3000'],
+    : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
 
@@ -20,7 +20,7 @@ const io = socketIo(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
       ? [process.env.FRONTEND_URL || 'https://your-domain.vercel.app'] 
-      : ['http://localhost:3000'],
+      : ['http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST'],
     credentials: true
   },
@@ -90,8 +90,8 @@ app.get('/stats', (req, res) => {
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
+// Start server  
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Terminal backend server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
