@@ -30,21 +30,30 @@ RUN apk add --no-cache \
     && adduser -D -s /bin/zsh -h /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d
 
-# Install Oh My Zsh
-RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-
 # Copy dotfiles from build context (submodule)
 COPY dotfiles /home/portfolio/.dotfiles
 
-# Create symlinks to dotfiles
-RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
+# Create config directory and symlinks to dotfiles
+RUN mkdir -p /home/portfolio/.config && \
+    ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     ln -sf /home/portfolio/.dotfiles/nvim /home/portfolio/.config/nvim
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio/.dotfiles && \
-    chown -R portfolio:portfolio /home/portfolio/.oh-my-zsh && \
     chown -R portfolio:portfolio /home/portfolio/.config && \
     chown -h portfolio:portfolio /home/portfolio/.zshrc
+
+# Switch to portfolio user to install Oh My Zsh
+USER portfolio
+WORKDIR /home/portfolio
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+# Restore our custom zshrc symlink (Oh My Zsh overwrites it)
+RUN rm -f /home/portfolio/.zshrc && \
+    ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
+
+# Switch back to root to continue setup
+USER root
 
 # Create directory structure for portfolio content
 RUN mkdir -p /home/portfolio/portfolio && \
