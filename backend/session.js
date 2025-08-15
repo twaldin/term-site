@@ -111,7 +111,7 @@ class SessionManager {
           CpuQuota: 50000, // 0.5 CPU for better performance
           PidsLimit: 100,
           ReadonlyRootfs: false, // Allow LazyVim to work properly
-          NetworkMode: 'none',
+          NetworkMode: 'bridge', // Allow network access for package installation
           SecurityOpt: [
             'no-new-privileges:true'
           ]
