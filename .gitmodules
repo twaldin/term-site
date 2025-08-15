@@ -1,6 +1,3 @@
 [submodule "dotfiles"]
 	path = dotfiles
 	url = https://github.com/twaldin/dotfiles.git
-[submodule "frontend/dotfiles"]
-	path = frontend/dotfiles
-	url = https://github.com/twaldin/dotfiles.git
