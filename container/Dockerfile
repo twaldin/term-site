@@ -3,8 +3,12 @@ FROM ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install essential tools and create user
-RUN apt-get update && apt-get install -y \
+# Enable universe repository and install essential tools
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y \
     bash \
     vim \
     neovim \
@@ -13,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     ripgrep \
     fzf \
     less \
-    batcat \
+    bat \
     git \
     curl \
     wget \
@@ -26,7 +30,6 @@ RUN apt-get update && apt-get install -y \
     zsh \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
-    && ln -sf /usr/bin/batcat /usr/local/bin/bat \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dotfiles from build context (submodule)
