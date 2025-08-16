@@ -13,10 +13,10 @@ class SessionManager {
     this.preloadImage();
   }
   
-  async cleanupDocker() {
-    console.log('Cleaning up Docker to free space...');
+  async cleanupDockerSmart() {
+    console.log('Smart Docker cleanup - keeping only recent images...');
     try {
-      // Remove all stopped containers
+      // Remove all stopped containers first
       const containers = await this.docker.listContainers({ all: true });
       for (const containerInfo of containers) {
         if (containerInfo.State !== 'running') {
@@ -30,27 +30,49 @@ class SessionManager {
         }
       }
       
-      // Prune system to remove unused data
-      try {
-        await this.docker.pruneContainers();
-        console.log('Pruned unused containers');
-      } catch (err) {
-        console.log('Could not prune containers:', err.message);
+      // Get all images sorted by creation date (newest first)
+      const images = await this.docker.listImages();
+      const portfolioImages = images
+        .filter(img => img.RepoTags && img.RepoTags.some(tag => tag.includes('terminal-portfolio')))
+        .sort((a, b) => b.Created - a.Created); // Sort by creation time, newest first
+      
+      // Keep only the most recent portfolio image, remove the rest
+      if (portfolioImages.length > 1) {
+        console.log(`Found ${portfolioImages.length} portfolio images, keeping newest, removing ${portfolioImages.length - 1} old ones`);
+        for (let i = 1; i < portfolioImages.length; i++) {
+          try {
+            const image = this.docker.getImage(portfolioImages[i].Id);
+            await image.remove({ force: true });
+            console.log(`Removed old portfolio image: ${portfolioImages[i].Id}`);
+          } catch (err) {
+            console.log(`Could not remove old image ${portfolioImages[i].Id}:`, err.message);
+          }
+        }
       }
       
-      // Remove ALL images except what we're about to pull
-      const images = await this.docker.listImages();
-      for (const img of images) {
+      // Remove any dangling/untagged images to free up space
+      const danglingImages = images.filter(img => !img.RepoTags || img.RepoTags.includes('<none>:<none>'));
+      for (const img of danglingImages) {
         try {
           const image = this.docker.getImage(img.Id);
           await image.remove({ force: true });
-          console.log(`Removed image: ${img.Id}`);
+          console.log(`Removed dangling image: ${img.Id}`);
         } catch (err) {
-          console.log(`Could not remove image ${img.Id}:`, err.message);
+          console.log(`Could not remove dangling image ${img.Id}:`, err.message);
         }
       }
+      
+      // Prune system to remove unused data
+      try {
+        await this.docker.pruneImages({ filters: { dangling: ['true'] } });
+        await this.docker.pruneContainers();
+        console.log('Pruned unused Docker resources');
+      } catch (err) {
+        console.log('Could not prune Docker resources:', err.message);
+      }
+      
     } catch (err) {
-      console.error('Error during Docker cleanup:', err);
+      console.error('Error during smart Docker cleanup:', err);
     }
   }
   
@@ -79,8 +101,8 @@ class SessionManager {
         return;
       }
       
-      // Clean up Docker to free space
-      await this.cleanupDocker();
+      // Smart cleanup - keep only the most recent image
+      await this.cleanupDockerSmart();
       
       // Pull fresh image with explicit latest tag
       console.log('Pulling fresh image from Docker Hub...');
@@ -104,6 +126,8 @@ class SessionManager {
             } else {
               console.log(`Successfully pulled fresh ${imageName} from registry`);
               this.imagePreloaded = true;
+              // Clean up any duplicates that might have been created during pull
+              this.cleanupDockerSmart().catch(err => console.log('Post-pull cleanup failed:', err));
               resolve(res);
             }
           });
