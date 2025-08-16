@@ -91,11 +91,12 @@ WORKDIR /home/portfolio
 # Install Oh My Posh
 RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin
 
-# Create the zshrc symlink to use our updated dotfiles with oh-my-posh
-RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
+# Create custom .zshrc with navigation functions
+RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Load navigation functions" >> /home/portfolio/.zshrc && \
-    echo "source /home/portfolio/navigation.sh" >> /home/portfolio/.zshrc
+    echo "source /home/portfolio/navigation.sh" >> /home/portfolio/.zshrc && \
+    chown portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
 USER root
