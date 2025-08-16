@@ -52,7 +52,7 @@ COPY container/blog/ /home/portfolio/blog/
 
 # Install npm packages for enhanced terminal scripts
 RUN cd /home/portfolio/scripts && \
-    npm install chalk@5.5.0 figlet@1.8.2 gradient-string@3.0.0 marked@15.0.12 marked-terminal@7.3.0 cli-highlight@2.1.11 boxen@8.0.1
+    npm install chalk@4.1.2 figlet@1.8.2 gradient-string@2.0.2 marked@4.3.0 marked-terminal@5.2.0 cli-highlight@2.1.11 boxen@7.1.1
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
