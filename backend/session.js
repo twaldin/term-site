@@ -160,7 +160,11 @@ class SessionManager {
 
       // Handle container output
       stream.on('data', (data) => {
-        socket.emit('output', data.toString());
+        const output = data.toString();
+        // Filter out Docker debug messages that shouldn't be shown to users
+        if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
+          socket.emit('output', output);
+        }
       });
 
       // Handle container close
