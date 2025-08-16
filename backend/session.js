@@ -311,12 +311,24 @@ class SessionManager {
         hijack: true
       });
 
+      // Track if we've sent the welcome command
+      let welcomeSent = false;
+
       // Handle container output
       stream.on('data', (data) => {
         const output = data.toString();
         // Filter out Docker debug messages that shouldn't be shown to users
         if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
           socket.emit('output', output);
+          
+          // Check if the prompt has appeared and we haven't sent welcome yet
+          if (!welcomeSent && (output.includes('╰─') || output.includes('portfolio@twaldin'))) {
+            welcomeSent = true;
+            // Small delay to ensure prompt is fully rendered
+            setTimeout(() => {
+              this.autoTypeWelcome(sessionId);
+            }, 200);
+          }
         }
       });
 
@@ -338,14 +350,6 @@ class SessionManager {
       };
 
       this.sessions.set(sessionId, session);
-
-      // Set session timeout
-      this.setSessionTimeout(sessionId);
-
-      // Auto-type "welcome" command after container starts
-      setTimeout(() => {
-        this.autoTypeWelcome(sessionId);
-      }, 500); // Wait for shell prompt to appear
 
       console.log(`Container session created for ${sessionId}`);
       return Promise.resolve();
