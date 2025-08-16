@@ -36,8 +36,7 @@ RUN apt-get install -y \
     && mkdir -p /home/portfolio/.bashrc.d \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dotfiles from build context (submodule)
-COPY dotfiles /home/portfolio/.dotfiles
+# Clone dotfiles repository will be done later after user creation
 
 # Copy welcome scripts
 COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
@@ -85,15 +84,17 @@ WORKDIR /home/portfolio
 # Install Oh My Posh
 RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin
 
-# Clone project repositories directly into container
-RUN mkdir -p /home/portfolio/projects && \
+# Clone dotfiles and project repositories directly into container
+RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
+    mkdir -p /home/portfolio/projects && \
     cd /home/portfolio/projects && \
     git clone https://github.com/twaldin/stm32-games.git && \
     git clone https://github.com/twaldin/sulfur-recipies.git && \
     git clone https://github.com/twaldin/term-site.git && \
     ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
     ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
-    ln -sf /home/portfolio/scripts/sulfur-recipies.sh /home/portfolio/projects/sulfur-recipies/sulfur-recipies.sh
+    ln -sf /home/portfolio/scripts/sulfur-recipies.sh /home/portfolio/projects/sulfur-recipies/sulfur-recipies.sh && \
+    ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh
 
 # Create custom .zshrc with navigation aliases
 RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
@@ -139,8 +140,6 @@ RUN chmod +x /home/portfolio/scripts/*.sh && \
     chmod +x /home/portfolio/scripts/contact && \
     chmod +x /home/portfolio/scripts/help
 
-# Create symlink for dotfiles script
-RUN ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio

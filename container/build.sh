@@ -7,12 +7,9 @@ echo "Building terminal portfolio container..."
 # Ensure we're in the right directory (term-site root)
 cd "$(dirname "$0")/.."
 
-# Initialize and update dotfiles submodule
-echo "Initializing dotfiles submodule..."
-git submodule init dotfiles
-git submodule update dotfiles
+# No submodules needed - all repositories are cloned directly in Docker
 
-# Build the Docker image from the root directory (so it can access dotfiles submodule)
+# Build the Docker image from the root directory
 docker build -f container/Dockerfile -t terminal-portfolio:latest .
 
 if [ $? -eq 0 ]; then
