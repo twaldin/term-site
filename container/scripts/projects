@@ -27,26 +27,26 @@ echo -e "${RESET}\n"
 echo -e "${GREEN}1. STM32 Games${RESET}"
 echo -e "   ${WHITE}Handheld game console with STM32 microcontroller${RESET}"
 echo -e "   ${YELLOW}Tech:${RESET} C, STM32F103C8, ST7789 LCD, libopencm3"
-echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}stm32-games${RESET} to explore"
+echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}stm32-games${RESET} to view info and navigate"
 echo
 
 echo -e "${GREEN}2. Terminal Site${RESET}"
 echo -e "   ${WHITE}Web-based terminal portfolio in Docker containers${RESET}"
 echo -e "   ${YELLOW}Tech:${RESET} Next.js, Node.js, Socket.IO, Docker, TypeScript"
-echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}term-site${RESET} to explore"
+echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}term-site${RESET} to view info and navigate"
 echo
 
 echo -e "${GREEN}3. Sulfur Recipes${RESET}"
 echo -e "   ${WHITE}Recipe database web app for Sulfur game${RESET}"
 echo -e "   ${YELLOW}Tech:${RESET} Next.js, React, Tailwind CSS, shadcn/ui"
-echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}sulfur-recipies${RESET} to explore"
+echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}sulfur-recipies${RESET} to view info and navigate"
 echo
 
 echo -e "${GREEN}4. Dotfiles${RESET}"
 echo -e "   ${WHITE}Development environment configuration files${RESET}"
 echo -e "   ${YELLOW}Tech:${RESET} Zsh, LazyVim, Neovim, Lua, Ghostty"
-echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}dotfiles${RESET} to explore"
+echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}dotfiles${RESET} to view info and navigate"
 echo
 
-echo -e "\n${DIM}${WHITE}Each project contains browsable source code, documentation, and project details.${RESET}"
-echo -e "${CYAN}Type 'welcome' to return to main dashboard${RESET}"
+echo -e "\n${DIM}${WHITE}Commands will show project info and automatically navigate to the directory.${RESET}"
+echo -e "${CYAN}Type 'home' to return to main dashboard${RESET}"
