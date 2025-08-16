@@ -55,7 +55,7 @@ const gradients = {
 };
 
 // Typewriter effect function
-async function typewriter(text, delay = 50, color = 'white') {
+async function typewriter(text, delay = 15, color = 'white') {
   const colorFunc = chalk.hex(theme[color] || color);
   for (let i = 0; i <= text.length; i++) {
     process.stdout.write('\r' + colorFunc(text.slice(0, i)));
