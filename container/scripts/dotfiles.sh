@@ -1,112 +1,110 @@
 #!/bin/bash
 
-# Function to run node utilities
-run_node_util() {
-  cd /home/portfolio/scripts && node -e "$1"
-}
+# Colors
+CYAN='\033[38;5;117m'
+GREEN='\033[38;5;121m'
+WHITE='\033[38;5;255m'
+YELLOW='\033[38;5;227m'
+BLUE='\033[38;5;111m'
+RED='\033[38;5;210m'
+RESET='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
 
-# Function for typewriter effect
+# Simple typewriter function
 typewriter() {
-  local text="$1"
-  local color="${2:-white}"
-  run_node_util "
-    const { typewriter } = require('./utils.js');
-    (async () => {
-      await typewriter('$text', undefined, '$color');
-    })();
-    "
+    local text="$1"
+    local delay=0.001  # Ultra fast delay
+    
+    for ((i=0; i<${#text}; i++)); do
+        printf "%s" "${text:$i:1}"
+        sleep $delay
+    done
+    echo
 }
 
-# Function for animated separator
+# Simple animated separator
 animated_separator() {
-  local width="${1:-80}"
-  local char="${2:-═}"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { animatedSeparator } = require('./utils.js');
-    (async () => {
-      await animatedSeparator($width, '$char', '$gradient');
-    })();
-    "
+    local char="$1"
+    local width="$2"
+    local delay=0.001
+    
+    for ((i=0; i<width; i++)); do
+        printf "${GREEN}%s${RESET}" "$char"
+        sleep $delay
+    done
+    echo
 }
 
-# Function for create box
+# Simple box function
 create_box() {
-  local title="$1"
-  local content="$2"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { gradientBox } = require('./utils.js');
-    console.log(gradientBox('$content', { gradientName: '$gradient', title: '$title' }));
-    "
+    local title="$1"
+    local content="$2"
+    echo -e "${GREEN}┌─ ${BOLD}${title}${RESET}${GREEN} ───────────────────────────────────────────────────────────┐${RESET}"
+    echo -e "${GREEN}│${RESET} ${WHITE}Personal development environment configuration files for Zsh shell${RESET}   ${GREEN}│${RESET}"
+    echo -e "${GREEN}│${RESET} ${WHITE}and Neovim editor using the LazyVim distribution.${RESET}                   ${GREEN}│${RESET}"
+    echo -e "${GREEN}└─────────────────────────────────────────────────────────────────────┘${RESET}"
 }
 
 clear
 
-# Generate ASCII with typewriter animation
-gradient_ascii_typewriter "dotfiles" "pastel" "Univers"
+# ASCII header with figlet and color
+echo -e "${BOLD}${GREEN}"
+figlet -f Univers "dotfiles" 2>/dev/null || figlet "dotfiles"
+echo -e "${RESET}"
 
 echo ""
 
 # Create boxed content for main info
-echo "$(create_box "Info" "Personal development environment configuration files for Zsh shell
-and Neovim editor using the LazyVim distribution." "primary")"
+create_box "Info" "Development environment configuration"
 
 echo ""
-
-# Animated separator
 animated_separator "~" 60
-
 echo ""
 
-typewriter "You are now in the projects/dotfiles directory" "highlight"
-typewriter "Use ls, cat, nvim, or other commands to explore" "dim"
+typewriter "${YELLOW}You are now in the projects/dotfiles directory${RESET}"
+typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 
 echo ""
 
 # Commands section
-typewriter "Commands:" "primary"
-typewriter "   ls                               - List dotfile directories" "info"
-typewriter "   cat README.md                    - View setup documentation" "info"
-typewriter "   cat zsh/zshrc                    - View Zsh configuration" "info"
-typewriter "   cd nvim && ls                    - Explore Neovim setup" "info"
-typewriter "   cat nvim/lua/config/options.lua  - View Neovim options" "info"
-typewriter "   tree -L 3                        - Show detailed structure" "info"
-typewriter "   cd ..                            - Go back to portfolio directory" "info"
-typewriter "   projects                         - Return to projects overview" "info"
-typewriter "   home                             - Return to main dashboard" "info"
+typewriter "${GREEN}Commands:${RESET}"
+typewriter "   ${YELLOW}ls${RESET}                               - List dotfile directories"
+typewriter "   ${YELLOW}cat README.md${RESET}                    - View setup documentation"
+typewriter "   ${YELLOW}cat zsh/zshrc${RESET}                    - View Zsh configuration"
+typewriter "   ${YELLOW}cd nvim && ls${RESET}                    - Explore Neovim setup"
+typewriter "   ${YELLOW}cat nvim/lua/config/options.lua${RESET}  - View Neovim options"
+typewriter "   ${YELLOW}tree -L 3${RESET}                        - Show detailed structure"
+typewriter "   ${YELLOW}cd ..${RESET}                            - Go back to portfolio directory"
+typewriter "   ${YELLOW}projects${RESET}                         - Return to projects overview"
+typewriter "   ${YELLOW}home${RESET}                             - Return to main dashboard"
 
 echo ""
-
-# Animated separator
 animated_separator "-" 50
-
 echo ""
 
 # Git repository information
-typewriter "Git:" "primary"
+typewriter "${GREEN}Git:${RESET}"
 if [ -d ".git" ]; then
   # Show current branch
   branch=$(git branch --show-current 2>/dev/null || echo "main")
-  typewriter "   Branch: ${branch}" "highlight"
+  typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
 
   # Show recent commits with nice formatting
-  typewriter "   Recent commits:" "secondary"
+  typewriter "   ${BLUE}Recent commits:${RESET}"
   git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    typewriter "     • $line" "dim"
+    typewriter "     ${DIM}•${RESET} $line"
   done
 
   # Show repository status
   if git status --porcelain | grep -q .; then
-    typewriter "   Status: Modified files present" "warning"
+    typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
   else
-    typewriter "   Status: Clean working directory" "success"
+    typewriter "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
   fi
 else
-  typewriter "   Not a git repository" "dim"
+  typewriter "   ${DIM}Not a git repository${RESET}"
 fi
 
 echo ""
-
-# Animated separator
 animated_separator "=" 60

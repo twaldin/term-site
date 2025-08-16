@@ -1,106 +1,66 @@
 #!/bin/bash
 
-# Enhanced Welcome Dashboard for Timothy Waldin with dynamic features
-# Uses Node.js utilities for advanced terminal effects
+# Colors
+CYAN='\033[38;5;117m'
+GREEN='\033[38;5;121m'
+WHITE='\033[38;5;255m'
+YELLOW='\033[38;5;227m'
+BLUE='\033[38;5;111m'
+MAGENTA='\033[38;5;219m'
+RESET='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
 
-# Function to run node utilities
-run_node_util() {
-  cd /home/portfolio/scripts && node -e "$1"
-}
-
-# Function for typewriter effect via Node.js
+# Simple typewriter function
 typewriter() {
-  local text="$1"
-  local color="${2:-white}"
-  run_node_util "
-    const { typewriter } = require('./utils.js');
-    (async () => {
-      await typewriter('$text', undefined, '$color');
-    })();
-    "
+    local text="$1"
+    local delay=0.001  # Ultra fast delay
+    
+    for ((i=0; i<${#text}; i++)); do
+        printf "%s" "${text:$i:1}"
+        sleep $delay
+    done
+    echo
 }
 
-# Function for gradient ASCII
-gradient_ascii() {
-  local text="$1"
-  local gradient="${2:-tokyo}"
-  local font="${3:-Univers}"
-  run_node_util "
-    const { gradientAscii } = require('./utils.js');
-    console.log(gradientAscii('$text', '$gradient', '$font'));
-    "
-}
-
-# Function for gradient ASCII with horizontal typewriter
-gradient_ascii_typewriter() {
-  local text="$1"
-  local gradient="${2:-tokyo}"
-  local font="${3:-Univers}"
-  run_node_util "
-    const { gradientAsciiTypewriter } = require('./utils.js');
-    (async () => {
-      await gradientAsciiTypewriter('$text', '$gradient', '$font');
-    })();
-    "
-}
-
-# Function for gradient border
-gradient_border() {
-  local width="${1:-80}"
-  local char="${2:-═}"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { gradientBorder } = require('./utils.js');
-    console.log(gradientBorder($width, '$char', '$gradient'));
-    "
-}
-
-# Function for animated separator
+# Simple animated separator
 animated_separator() {
-  local width="${1:-80}"
-  local char="${2:-═}"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { animatedSeparator } = require('./utils.js');
-    (async () => {
-      await animatedSeparator($width, '$char', '$gradient');
-    })();
-    "
-
-# Function for gradient box
-gradient_box() {
-  local content="$1"
-  local gradient="${2:-tokyo}"
-  local title="${3:-}"
-  local title_option=""
-  if [ ! -z "$title" ]; then
-    title_option=", title: \"$title\""
-  fi
-  run_node_util "
-    const { gradientBox } = require('./utils.js');
-    console.log(gradientBox('$content', { gradientName: '$gradient'$title_option }));
-    "
+    local char="$1"
+    local width="$2"
+    local delay=0.001
+    
+    for ((i=0; i<width; i++)); do
+        printf "${CYAN}%s${RESET}" "$char"
+        sleep $delay
+    done
+    echo
 }
 
-# Clear screen and start
 clear
-animated_separator 139 "═" "primary"
-gradient_ascii_typewriter "twald.in" "ocean" "Univers"
-echo ""
-typewriter "󰇮 tim@waldin.net" "cyan"
-typewriter " https://github.com/twaldin" "yellow"
-typewriter " https://linkedin.com/in/twaldin" "magenta"
-typewriter "󰋾 https://instagram.com/timn.w" "green"
+
+# Top separator
+animated_separator "═" 139
+
+# ASCII header with figlet and color
+echo -e "${BOLD}${CYAN}"
+figlet -f Univers "twald.in" 2>/dev/null || figlet "twald.in"
+echo -e "${RESET}"
 
 echo ""
-animated_separator 139 "═" "primary"
+typewriter "${CYAN}󰇮 tim@waldin.net${RESET}"
+typewriter "${YELLOW} https://github.com/twaldin${RESET}"
+typewriter "${MAGENTA} https://linkedin.com/in/twaldin${RESET}"
+typewriter "${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
+
+echo ""
+animated_separator "═" 139
 
 # Welcome message with typewriter
 echo ""
-typewriter "Welcome to twald.in terminal portfolio" "primary"
-typewriter "This is a fully interactive ubuntu linux terminal hosting my projects and blog" "primary"
-typewriter "You can explore my projects and this filesystem using all normal tools (eg. cd, ls, fzf, nvim, etc." "muted"
-typewriter "Type projects to see my projects - Type blog to see my blog - Type help to see all commands." "muted"
+typewriter "${GREEN}Welcome to twald.in terminal portfolio${RESET}"
+typewriter "${WHITE}This is a fully interactive ubuntu linux terminal hosting my projects and blog${RESET}"
+typewriter "${DIM}You can explore my projects and this filesystem using all normal tools (eg. cd, ls, fzf, nvim, etc.${RESET}"
+typewriter "${DIM}Type projects to see my projects - Type blog to see my blog - Type help to see all commands.${RESET}"
 echo ""
 
-animated_separator 139 "═" "primary"
+animated_separator "═" 139

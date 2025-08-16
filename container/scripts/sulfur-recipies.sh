@@ -1,130 +1,122 @@
 #!/bin/bash
 
-# Function to run node utilities
-run_node_util() {
-  cd /home/portfolio/scripts && node -e "$1"
-}
+# Colors
+CYAN='\033[38;5;117m'
+GREEN='\033[38;5;121m'
+WHITE='\033[38;5;255m'
+YELLOW='\033[38;5;227m'
+BLUE='\033[38;5;111m'
+RED='\033[38;5;210m'
+RESET='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
 
-# Function for typewriter effect
+# Simple typewriter function
 typewriter() {
-  local text="$1"
-  local color="${2:-white}"
-  run_node_util "
-    const { typewriter } = require('./utils.js');
-    (async () => {
-      await typewriter('$text', undefined, '$color');
-    })();
-    "
+    local text="$1"
+    local delay=0.001  # Ultra fast delay
+    
+    for ((i=0; i<${#text}; i++)); do
+        printf "%s" "${text:$i:1}"
+        sleep $delay
+    done
+    echo
 }
 
-# Function for animated separator
+# Simple animated separator
 animated_separator() {
-  local width="${1:-80}"
-  local char="${2:-═}"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { animatedSeparator } = require('./utils.js');
-    (async () => {
-      await animatedSeparator($width, '$char', '$gradient');
-    })();
-    "
+    local char="$1"
+    local width="$2"
+    local delay=0.001
+    
+    for ((i=0; i<width; i++)); do
+        printf "${YELLOW}%s${RESET}" "$char"
+        sleep $delay
+    done
+    echo
 }
 
-# Function for create box
+# Simple box function
 create_box() {
-  local title="$1"
-  local content="$2"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { gradientBox } = require('./utils.js');
-    console.log(gradientBox('$content', { gradientName: '$gradient', title: '$title' }));
-    "
+    local title="$1"
+    local content="$2"
+    echo -e "${YELLOW}┌─ ${BOLD}${title}${RESET}${YELLOW} ───────────────────────────────────────────────────────────┐${RESET}"
+    echo -e "${YELLOW}│${RESET} ${WHITE}A comprehensive recipe database web application for the Sulfur game,${RESET}     ${YELLOW}│${RESET}"
+    echo -e "${YELLOW}│${RESET} ${WHITE}featuring automated data scraping with advanced filtering and search.${RESET}   ${YELLOW}│${RESET}"
+    echo -e "${YELLOW}│${RESET} ${WHITE}Allows for filtering by HP, HP/s, and sorting by ingredient and variation.${RESET} ${YELLOW}│${RESET}"
+    echo -e "${YELLOW}└─────────────────────────────────────────────────────────────────────┘${RESET}"
 }
 
 clear
 
-# Generate ASCII with typewriter animation
-# Generate ASCII with typewriter animation
-node -e "
-const { gradientAsciiTypewriter } = require('./utils.js');
-(async () => {
-  await gradientAsciiTypewriter('sulfur recipies', 'fire', 'Univers');
-})();
-"
+# ASCII header with figlet and color
+echo -e "${BOLD}${YELLOW}"
+figlet -f Univers "sulfur recipies" 2>/dev/null || figlet "sulfur recipies"
+echo -e "${RESET}"
 
 echo ""
 
 # Create boxed content for main info
-echo "$(create_box "Info" "A comprehensive recipe database web application for the Sulfur game,
-featuring automated data scraping with advanced filtering and search.
-Allows for filtering by HP, HP/s, and sorting by ingredient and variation." "primary")"
+create_box "Info" "Recipe database for Sulfur game"
 
 echo ""
 
 # Tech Stack section
-typewriter "Tech Stack:" "primary"
-typewriter "   • Next.js 15, React 19, TypeScript" "info"
-typewriter "   • Tailwind CSS 3 with animations" "info"
-typewriter "   • Radix UI component library" "info"
-typewriter "   • shadcn/ui design system" "info"
-typewriter "   • Next-themes for dark/light mode" "info"
-typewriter "   • Lucide React icons" "info"
+typewriter "${GREEN}Tech Stack:${RESET}"
+typewriter "   ${YELLOW}•${RESET} Next.js 15, React 19, TypeScript"
+typewriter "   ${YELLOW}•${RESET} Tailwind CSS 3 with animations"
+typewriter "   ${YELLOW}•${RESET} Radix UI component library"
+typewriter "   ${YELLOW}•${RESET} shadcn/ui design system"
+typewriter "   ${YELLOW}•${RESET} Next-themes for dark/light mode"
+typewriter "   ${YELLOW}•${RESET} Lucide React icons"
 
 echo ""
-
-# Animated separator
 animated_separator "*" 60
-
 echo ""
 
-typewriter "You are now in the projects/sulfur-recipies directory" "highlight"
-typewriter "Use ls, cat, nvim, or other commands to explore" "dim"
+typewriter "${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
+typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 
 echo ""
 
 # Commands section
-typewriter "Commands:" "primary"
-typewriter "   ls                              - List project files" "info"
-typewriter "   cat README.md                   - View project documentation" "info"
-typewriter "   cd app && ls                    - Explore Next.js app structure" "info"
-typewriter "   cd components && ls             - View React components" "info"
-typewriter "   cat data/recipes.json | head -20 - Preview recipe data" "info"
-typewriter "   tree -L 2                       - Show project structure" "info"
-typewriter "   cd ..                           - Go back to portfolio directory" "info"
-typewriter "   projects                        - Return to projects overview" "info"
-typewriter "   home                            - Return to main dashboard" "info"
+typewriter "${GREEN}Commands:${RESET}"
+typewriter "   ${YELLOW}ls${RESET}                              - List project files"
+typewriter "   ${YELLOW}cat README.md${RESET}                   - View project documentation"
+typewriter "   ${YELLOW}cd app && ls${RESET}                    - Explore Next.js app structure"
+typewriter "   ${YELLOW}cd components && ls${RESET}             - View React components"
+typewriter "   ${YELLOW}cat data/recipes.json | head -20${RESET} - Preview recipe data"
+typewriter "   ${YELLOW}tree -L 2${RESET}                       - Show project structure"
+typewriter "   ${YELLOW}cd ..${RESET}                           - Go back to portfolio directory"
+typewriter "   ${YELLOW}projects${RESET}                        - Return to projects overview"
+typewriter "   ${YELLOW}home${RESET}                            - Return to main dashboard"
 
 echo ""
-
-# Animated separator
 animated_separator "~" 50
-
 echo ""
 
 # Git repository information
-typewriter "Git:" "primary"
+typewriter "${GREEN}Git:${RESET}"
 if [ -d ".git" ]; then
   # Show current branch
   branch=$(git branch --show-current 2>/dev/null || echo "main")
-  typewriter "   Branch: ${branch}" "highlight"
+  typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
 
   # Show recent commits with nice formatting
-  typewriter "   Recent commits:" "secondary"
+  typewriter "   ${BLUE}Recent commits:${RESET}"
   git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    typewriter "     • $line" "dim"
+    typewriter "     ${DIM}•${RESET} $line"
   done
 
   # Show repository status
   if git status --porcelain | grep -q .; then
-    typewriter "   Status: Modified files present" "warning"
+    typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
   else
-    typewriter "   Status: Clean working directory" "success"
+    typewriter "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
   fi
 else
-  typewriter "   Not a git repository" "dim"
+  typewriter "   ${DIM}Not a git repository${RESET}"
 fi
 
 echo ""
-
-# Animated separator
 animated_separator "=" 60
