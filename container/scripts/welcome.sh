@@ -14,7 +14,7 @@ ascii_typewriter "tim waldin" "Univers" "${BOLD}${CYAN}"
 
 echo ""
 typewriter "${BOLD}${WHITE} links${RESET}"
-typewriter "${CYAN}󰇮 \e]8;;mailto:tim@waldin.net\e\\tim@waldin.net\e]8;;\e\\${RESET}   ${YELLOW} \e]8;;https://github.com/twaldin\e\\github\e]8;;\e\\${RESET}   ${MAGENTA} \e]8;;https://linkedin.com/in/twaldin\e\\linkedin\e]8;;\e\\${RESET}    ${GREEN}󰋾 \e]8;;https://instagram.com/timn.w\e\\instagram\e]8;;\e\\${RESET}"
+typewriter "${CYAN}󰇮 \033]8;;mailto:tim@waldin.net\033\\tim@waldin.net\033]8;;\033\\${RESET}   ${YELLOW} \033]8;;https://github.com/twaldin\033\\github\033]8;;\033\\${RESET}   ${MAGENTA} \033]8;;https://linkedin.com/in/twaldin\033\\linkedin\033]8;;\033\\${RESET}    ${GREEN}󰋾 \033]8;;https://instagram.com/timn.w\033\\instagram\033]8;;\033\\${RESET}"
 
 typewriter "${DIM}Type \"help\" for a list of available commands.${RESET}"
 typewriter "${DIM}Type \"blog\" to see my blog${RESET}"
