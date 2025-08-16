@@ -22,14 +22,29 @@ jobs:
       
       - name: Build terminal image
         run: |
-          # Build the terminal image
-          docker build -f container/Dockerfile -t terminal-portfolio:latest .
+          # Show what files we're building with
+          echo "Files in container directory:"
+          ls -la container/
+          echo "Content of welcome.sh (first 10 lines):"
+          head -n 10 container/welcome.sh
           
-          # Tag for Docker Hub
+          # Build the terminal image with no cache to ensure latest changes
+          docker build --no-cache -f container/Dockerfile -t terminal-portfolio:latest .
+          
+          # Verify the welcome script is in the image
+          echo "Verifying welcome.sh in built image:"
+          docker run --rm terminal-portfolio:latest head -n 5 /home/portfolio/scripts/welcome.sh
+          
+          # Tag for Docker Hub with both latest and a unique tag
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
           docker tag terminal-portfolio:latest ${{ secrets.DOCKER_USERNAME }}/terminal-portfolio:latest
+          docker tag terminal-portfolio:latest ${{ secrets.DOCKER_USERNAME }}/terminal-portfolio:$TIMESTAMP
           
-          # Push to registry
+          # Push both tags to registry
           docker push ${{ secrets.DOCKER_USERNAME }}/terminal-portfolio:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/terminal-portfolio:$TIMESTAMP
+          
+          echo "Built and pushed image with timestamp: $TIMESTAMP"
 
   deploy-backend:
     needs: build-terminal-image
