@@ -99,37 +99,48 @@ create_box() {
   echo -e "$top_border"
   
   # Process content line by line, wrapping if necessary
-  while IFS= read -r line; do
-    # Remove color codes to get actual length
-    local line_clean=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
-    local line_length=${#line_clean}
-    local content_width=$((box_width - 4))  # Account for "│ " and " │"
-    
-    if [ $line_length -le $content_width ]; then
-      # Line fits, pad with spaces
-      local padding=$((content_width - line_length))
-      local spaces=""
-      for ((i=0; i<padding; i++)); do
-        spaces+=" "
-      done
-      echo -e "${color}│${RESET} ${WHITE}${line}${RESET}${spaces} ${color}│${RESET}"
-    else
-      # Line needs wrapping
-      local start=0
-      while [ $start -lt $line_length ]; do
-        local chunk="${line_clean:$start:$content_width}"
-        local chunk_length=${#chunk}
-        local padding=$((content_width - chunk_length))
+  # Handle empty content case
+  if [ -z "$content" ]; then
+    # Empty box, just show one empty line
+    local content_width=$((box_width - 4))
+    local spaces=""
+    for ((i=0; i<content_width; i++)); do
+      spaces+=" "
+    done
+    echo -e "${color}│${RESET} ${spaces} ${color}│${RESET}"
+  else
+    while IFS= read -r line; do
+      # Remove color codes to get actual length
+      local line_clean=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
+      local line_length=${#line_clean}
+      local content_width=$((box_width - 4))  # Account for "│ " and " │"
+      
+      if [ $line_length -le $content_width ]; then
+        # Line fits, pad with spaces
+        local padding=$((content_width - line_length))
         local spaces=""
         for ((i=0; i<padding; i++)); do
           spaces+=" "
         done
-        # For wrapped lines, we lose color formatting (simplified approach)
-        echo -e "${color}│${RESET} ${WHITE}${chunk}${RESET}${spaces} ${color}│${RESET}"
-        start=$((start + content_width))
-      done
-    fi
-  done <<< "$content"
+        echo -e "${color}│${RESET} ${WHITE}${line}${RESET}${spaces} ${color}│${RESET}"
+      else
+        # Line needs wrapping
+        local start=0
+        while [ $start -lt $line_length ]; do
+          local chunk="${line_clean:$start:$content_width}"
+          local chunk_length=${#chunk}
+          local padding=$((content_width - chunk_length))
+          local spaces=""
+          for ((i=0; i<padding; i++)); do
+            spaces+=" "
+          done
+          # For wrapped lines, we lose color formatting (simplified approach)
+          echo -e "${color}│${RESET} ${WHITE}${chunk}${RESET}${spaces} ${color}│${RESET}"
+          start=$((start + content_width))
+        done
+      fi
+    done <<< "$content"
+  fi
   
   # Build the bottom border
   local bottom_border="${color}└"
@@ -139,4 +150,27 @@ create_box() {
   bottom_border+="┘${RESET}"
   
   echo -e "$bottom_border"
+}
+
+# Create a clickable hyperlink with color
+# Usage: hyperlink "display_text" "url" "color_code"
+# Example: hyperlink "GitHub" "https://github.com/username" "$YELLOW"
+hyperlink() {
+  local text="$1"
+  local url="$2"
+  local color="${3:-$CYAN}"  # Default to cyan if no color specified
+  
+  # Terminal hyperlink format: ESC]8;;URL\ESC\TEXT\ESC]8;;\ESC\
+  # Using printf for more reliable escape sequence handling
+  printf "%b\033]8;;%s\033\\%s\033]8;;\033\\%b" "$color" "$url" "$text" "$RESET"
+}
+
+# Create an email link
+# Usage: email_link "display_text" "email_address" "color_code"
+email_link() {
+  local text="$1"
+  local email="$2"
+  local color="${3:-$CYAN}"
+  
+  hyperlink "$text" "mailto:$email" "$color"
 }
