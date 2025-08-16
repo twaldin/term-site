@@ -14,7 +14,9 @@ typewriter() {
   local color="${2:-white}"
   run_node_util "
     const { typewriter } = require('./utils.js');
-    typewriter('$text', undefined, '$color');
+    (async () => {
+      await typewriter('$text', undefined, '$color');
+    })();
     "
 }
 
@@ -36,7 +38,9 @@ gradient_ascii_typewriter() {
   local font="${3:-Univers}"
   run_node_util "
     const { gradientAsciiTypewriter } = require('./utils.js');
-    await gradientAsciiTypewriter('$text', '$gradient', '$font');
+    (async () => {
+      await gradientAsciiTypewriter('$text', '$gradient', '$font');
+    })();
     "
 }
 
@@ -58,9 +62,10 @@ animated_separator() {
   local gradient="${3:-tokyo}"
   run_node_util "
     const { animatedSeparator } = require('./utils.js');
-    animatedSeparator($width, '$char', '$gradient');
+    (async () => {
+      await animatedSeparator($width, '$char', '$gradient');
+    })();
     "
-}
 
 # Function for gradient box
 gradient_box() {
@@ -93,7 +98,7 @@ animated_separator 139 "═" "primary"
 # Welcome message with typewriter
 echo ""
 typewriter "Welcome to twald.in terminal portfolio" "primary"
-typewriter "This is a fully interactive linux terminal e:wnviroment showcasing my projects and blog"
+typewriter "This is a fully interactive ubuntu linux terminal hosting my projects and blog" "primary"
 typewriter "You can explore my projects and this filesystem using all normal tools (eg. cd, ls, fzf, nvim, etc." "muted"
 typewriter "Type projects to see my projects - Type blog to see my blog - Type help to see all commands." "muted"
 echo ""
