@@ -91,9 +91,45 @@ class SessionManager {
     console.log(`Creating container session for ${sessionId}`);
 
     try {
+      const imageName = 'twaldin/terminal-portfolio:latest';
+      
+      // Check if image exists, if not pull it
+      try {
+        await this.docker.getImage(imageName).inspect();
+        console.log(`Image ${imageName} found locally`);
+      } catch (error) {
+        if (error.statusCode === 404) {
+          console.log(`Image ${imageName} not found locally, pulling from registry...`);
+          try {
+            await new Promise((resolve, reject) => {
+              this.docker.pull(imageName, (err, stream) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                
+                this.docker.modem.followProgress(stream, (err, res) => {
+                  if (err) {
+                    reject(err);
+                  } else {
+                    console.log(`Successfully pulled ${imageName}`);
+                    resolve(res);
+                  }
+                });
+              });
+            });
+          } catch (pullError) {
+            console.error(`Failed to pull image ${imageName}:`, pullError);
+            throw new Error(`Failed to pull terminal image: ${pullError.message}`);
+          }
+        } else {
+          throw error;
+        }
+      }
+
       // Create Docker container
       const container = await this.docker.createContainer({
-        Image: 'twaldin/terminal-portfolio:latest',
+        Image: imageName,
         Tty: true,
         OpenStdin: true,
         StdinOnce: false,
