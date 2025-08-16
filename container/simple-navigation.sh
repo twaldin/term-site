@@ -8,16 +8,16 @@ projects() {
 }
 
 # STM32 Games - cd and show info
-alias stm32-games='cd projects/stm32-games && /home/portfolio/scripts/stm32-games'
+alias stm32-games='cd projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'
 
 # Term Site - cd and show info  
-alias term-site='cd projects/term-site && /home/portfolio/scripts/term-site'
+alias term-site='cd projects/term-site && /home/portfolio/scripts/term-site.sh'
 
 # Sulfur Recipes - cd and show info
-alias sulfur-recipies='cd projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies'
+alias sulfur-recipies='cd projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'
 
 # Dotfiles - cd and show info
-alias dotfiles='cd projects/dotfiles && /home/portfolio/scripts/dotfiles'
+alias dotfiles='cd projects/dotfiles && /home/portfolio/scripts/dotfiles.sh'
 
 # Home navigation function
 home() {
