@@ -20,7 +20,7 @@ DIM='\033[2m'            # Dim text
 COLS=${COLUMNS:-$(tput cols 2>/dev/null || echo 120)}
 
 # Get the actual ASCII art width for reference
-ASCII_WIDTH=140
+ASCII_WIDTH=123
 
 # Center text function
 center_text() {
@@ -36,10 +36,10 @@ center_text() {
 separator() {
   local char="${1:-═}"
   local color="${2:-$GRAY}"
-  
+
   # Get current terminal width dynamically
   local current_cols=$(tput cols 2>/dev/null || echo $COLS)
-  
+
   printf "${color}"
   printf "${char}%.0s" $(seq 1 $current_cols)
   printf "${RESET}\n"
@@ -47,13 +47,16 @@ separator() {
 
 # Function to print ASCII art
 print_ascii() {
-  echo -e " ${BOLD}${CYAN}   .    o8o                                                   oooo        .o8   o8o                                            .   "
-  echo "  .o8    \`\"'                                                   \`888       \"888   \`\"'                                          .o8   "
-  echo ".o888oo oooo  ooo. .oo.  .oo.       oooo oooo    ooo  .oooo.    888   .oooo888  oooo  ooo. .oo.       ooo. .oo.    .ooooo.   .o888oo "
-  echo "  888   \`888  \`888P\"Y88bP\"Y88b       \`88. \`88.  .8'  \`P  )88b   888  d88' \`888  \`888  \`888P\"Y88b      \`888P\"Y88b   d88' \`88b   888   "
-  echo "  888    888   888   888   888        \`88..]88..8'    .oP\"888   888  888   888  888    888   888       888   888  888ooo888    888   "
-  echo "  888 .  888   888   888   888  .o.    \`888'\`888'    d8(  888   888  888   888  888    888   888  .o.  888   888  888    .o    888 . "
-  echo -e "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \` Y8bod8P'   \"888\" ${RESET}"
+  echo -e "${BOLD}${CYAN}"
+  echo "         88                                                         88           88  88                                                     "
+  echo "  ,d     \"\"                                                         88           88  \"\"                                               ,d    "
+  echo "  88                                                                88           88                                                   88    "
+  echo "MM88MMM  88  88,dPYba,,adPYba,      8b      db      d8  ,adPPYYba,  88   ,adPPYb,88  88  8b,dPPYba,        8b,dPPYba,    ,adPPYba,  MM88MMM "
+  echo "  88     88  88P'   \"88\"    \"8a     \`8b    d88b    d8'  \"\"     \`Y8  88  a8\"    \`Y88  88  88P'   \`\"8a       88P'   \`\"8a  a8P_____88    88    "
+  echo "  88     88  88      88      88      \`8b  d8'\`8b  d8'   ,adPPPPP88  88  8b       88  88  88       88       88       88  8PP\"\"\"\"\"\"\"    88    "
+  echo "  88,    88  88      88      88  888  \`8bd8'  \`8bd8'    88,    ,88  88  \"8a,   ,d88  88  88       88  888  88       88  \"8b,   ,aa    88,   "
+  echo "  \"Y888  88  88      88      88  888    YP      YP      \`\"8bbdP\"Y8  88   \`\"8bbdP\"Y8  88  88       88  888  88       88   \`\"Ybbd8\"'    \"Y888 "
+  echo -e "${RESET}"
 }
 
 # Clear screen and start
