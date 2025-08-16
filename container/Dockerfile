@@ -119,7 +119,7 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.zshrc && \
+    echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
@@ -149,9 +149,6 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
 
 # Set execute permissions for scripts
 RUN chmod +x /home/portfolio/scripts/*.sh && \
-    chmod +x /home/portfolio/scripts/welcome && \
-    chmod +x /home/portfolio/scripts/contact && \
-    chmod +x /home/portfolio/scripts/help && \
     chmod +x /home/portfolio/scripts/blog
 
 
@@ -168,7 +165,7 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.bashrc && \
+    echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
     echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.bashrc
 
