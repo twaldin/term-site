@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Colors
+CYAN='\033[38;5;117m'
+MAGENTA='\033[38;5;177m'
+WHITE='\033[38;5;255m'
+GREEN='\033[38;5;121m'
+RESET='\033[0m'
+BOLD='\033[1m'
+
+clear
+echo -e "${BOLD}${CYAN}📞 Get In Touch${RESET}\n"
+
+echo -e "${GREEN}Professional Contact:${RESET}"
+echo -e "  ${MAGENTA}📧 timothy@example.com${RESET}"
+echo -e "  ${MAGENTA}💼 https://linkedin.com/in/twaldin${RESET}"
+echo
+
+echo -e "${GREEN}Development & Code:${RESET}"
+echo -e "  ${MAGENTA}🐙 https://github.com/twaldin${RESET}"
+echo -e "  ${MAGENTA}🏢 https://studyspot.io${RESET}"
+echo
+
+echo -e "${GREEN}Social:${RESET}"
+echo -e "  ${MAGENTA}📸 https://instagram.com/twaldin${RESET}"
+echo
+
+echo -e "${GREEN}Collaboration Opportunities:${RESET}"
+echo -e "  ${WHITE}• Open source contributions${RESET}"
+echo -e "  ${WHITE}• Startup partnerships${RESET}"
+echo -e "  ${WHITE}• Speaking engagements${RESET}"
+echo -e "  ${WHITE}• Mentorship programs${RESET}"
+
+echo -e "\n${CYAN}Type 'welcome' to return to main dashboard${RESET}"

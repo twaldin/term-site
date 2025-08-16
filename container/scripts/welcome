@@ -1,0 +1,3 @@
+#!/bin/bash
+# Welcome command - shows the full welcome dashboard
+exec /home/portfolio/scripts/welcome.sh

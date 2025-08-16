@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Colors
+CYAN='\033[38;5;117m'
+GREEN='\033[38;5;121m'
+WHITE='\033[38;5;255m'
+YELLOW='\033[38;5;227m'
+RESET='\033[0m'
+BOLD='\033[1m'
+
+clear
+echo -e "${BOLD}${CYAN}🚀 Featured Projects${RESET}\n"
+
+echo -e "${GREEN}1. TerminalSite${RESET}"
+echo -e "   ${WHITE}Interactive web-based terminal portfolio${RESET}"
+echo -e "   ${YELLOW}Tech:${RESET} Docker, Node.js, React, Socket.io, Oh-my-posh"
+echo -e "   ${YELLOW}URL:${RESET}  https://github.com/twaldin/term-site"
+echo
+
+echo -e "${GREEN}2. StudySpot${RESET}"
+echo -e "   ${WHITE}Collaborative study platform for students${RESET}"
+echo -e "   ${YELLOW}Tech:${RESET} Next.js, TypeScript, PostgreSQL, Redis"
+echo -e "   ${YELLOW}URL:${RESET}  https://studyspot.io"
+echo
+
+echo -e "${GREEN}3. Personal dotfiles${RESET}"
+echo -e "   ${WHITE}Neovim, Zsh, and development environment setup${RESET}"
+echo -e "   ${YELLOW}Tech:${RESET} Lua, Zsh, Oh-my-posh, LazyVim"
+echo -e "   ${YELLOW}URL:${RESET}  https://github.com/twaldin/dotfiles"
+echo
+
+echo -e "\n${CYAN}Type 'welcome' to return to main dashboard${RESET}"
