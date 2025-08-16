@@ -3,6 +3,8 @@
 
 # Projects overview function
 projects() {
+  # Navigate to projects directory first
+  cd ~/projects
   # Run the projects script to show overview
   /home/portfolio/scripts/projects
 }
