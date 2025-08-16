@@ -7,10 +7,10 @@ echo "Building terminal portfolio container..."
 # Ensure we're in the right directory (term-site root)
 cd "$(dirname "$0")/.."
 
-# Initialize and update git submodules
-echo "Initializing git submodules..."
-git submodule init
-git submodule update
+# Initialize and update dotfiles submodule
+echo "Initializing dotfiles submodule..."
+git submodule init dotfiles
+git submodule update dotfiles
 
 # Build the Docker image from the root directory (so it can access dotfiles submodule)
 docker build -f container/Dockerfile -t terminal-portfolio:latest .
