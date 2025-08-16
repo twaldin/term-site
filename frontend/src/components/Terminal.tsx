@@ -50,14 +50,26 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
           // Calculate dynamic font size to ensure ASCII art fits
           const asciiWidth = 123; // Width of your new ASCII art in characters
+          
+          // Get more accurate available space measurement
+          const viewportWidth = window.innerWidth;
+          const documentWidth = document.documentElement.clientWidth;
           const containerWidth = terminalRef.current!.clientWidth;
-          const padding = 20; // Reduce padding for tighter fit
-          const usableWidth = containerWidth - padding;
+          const containerRect = terminalRef.current!.getBoundingClientRect();
+          
+          // Use the most restrictive width (accounting for browser chrome/sidebars)
+          const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
+          
+          console.log(`Viewport: ${viewportWidth}px, Document: ${documentWidth}px, Container: ${containerWidth}px, Rect: ${containerRect.width}px, Using: ${actualWidth}px`);
+          
+          // Minimal padding for very tight spaces
+          const padding = Math.min(10, actualWidth * 0.02); // 2% padding or 10px, whichever is smaller
+          const usableWidth = actualWidth - padding;
           
           // Calculate font size that allows ASCII to fit with some margin
           const charWidthRatio = 0.6; // Typical monospace character width/height ratio
           const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-          const dynamicFontSize = Math.max(6, Math.min(16, maxFontSize)); // More aggressive sizing
+          const dynamicFontSize = Math.max(4, Math.min(16, maxFontSize)); // Even more aggressive sizing
           
           // Create dynamic config with calculated font size
           const dynamicConfig = {
@@ -65,7 +77,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             fontSize: dynamicFontSize
           };
           
-          console.log(`Container: ${containerWidth}px, ASCII: ${asciiWidth} chars, Font: ${dynamicFontSize}px`);
+          console.log(`Using: ${actualWidth}px, ASCII: ${asciiWidth} chars, Font: ${dynamicFontSize}px`);
           
           // Initialize xterm.js with dynamic config
           const xterm = new Terminal(dynamicConfig);
@@ -177,12 +189,16 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             if (terminalRef.current && xterm && fitAddon) {
               // Recalculate font size on resize
               const asciiWidth = 123;
+              const viewportWidth = window.innerWidth;
+              const documentWidth = document.documentElement.clientWidth;
               const containerWidth = terminalRef.current.clientWidth;
-              const padding = 20;
-              const usableWidth = containerWidth - padding;
+              const containerRect = terminalRef.current.getBoundingClientRect();
+              const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
+              const padding = Math.min(10, actualWidth * 0.02);
+              const usableWidth = actualWidth - padding;
               const charWidthRatio = 0.6;
               const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-              const newFontSize = Math.max(6, Math.min(16, maxFontSize));
+              const newFontSize = Math.max(4, Math.min(16, maxFontSize));
               
               // Update font size if it changed significantly
               const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
