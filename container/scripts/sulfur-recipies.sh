@@ -1,12 +1,56 @@
 #!/bin/bash
 
-# Source utilities
-source "$(dirname "$0")/utils.js"
+# Function to run node utilities
+run_node_util() {
+  cd /home/portfolio/scripts && node -e "$1"
+}
+
+# Function for typewriter effect
+typewriter() {
+  local text="$1"
+  local color="${2:-white}"
+  run_node_util "
+    const { typewriter } = require('./utils.js');
+    (async () => {
+      await typewriter('$text', undefined, '$color');
+    })();
+    "
+}
+
+# Function for animated separator
+animated_separator() {
+  local width="${1:-80}"
+  local char="${2:-═}"
+  local gradient="${3:-tokyo}"
+  run_node_util "
+    const { animatedSeparator } = require('./utils.js');
+    (async () => {
+      await animatedSeparator($width, '$char', '$gradient');
+    })();
+    "
+}
+
+# Function for create box
+create_box() {
+  local title="$1"
+  local content="$2"
+  local gradient="${3:-tokyo}"
+  run_node_util "
+    const { gradientBox } = require('./utils.js');
+    console.log(gradientBox('$content', { gradientName: '$gradient', title: '$title' }));
+    "
+}
 
 clear
 
 # Generate ASCII with typewriter animation
-gradient_ascii_typewriter "sulfur recipies" "fire" "Univers"
+# Generate ASCII with typewriter animation
+node -e "
+const { gradientAsciiTypewriter } = require('./utils.js');
+(async () => {
+  await gradientAsciiTypewriter('sulfur recipies', 'fire', 'Univers');
+})();
+"
 
 echo ""
 

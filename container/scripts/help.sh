@@ -14,7 +14,9 @@ typewriter() {
     local color="${2:-white}"
     run_node_util "
     const { typewriter } = require('./utils.js');
-    typewriter('$text', undefined, '$color');
+    (async () => {
+      await typewriter('$text', undefined, '$color');
+    })();
     "
 }
 
@@ -36,9 +38,10 @@ animated_separator() {
     local gradient="${3:-tokyo}"
     run_node_util "
     const { animatedSeparator } = require('./utils.js');
-    animatedSeparator($width, '$char', '$gradient');
+    (async () => {
+      await animatedSeparator($width, '$char', '$gradient');
+    })();
     "
-}
 
 clear
 
