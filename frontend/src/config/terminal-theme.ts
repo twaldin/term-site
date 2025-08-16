@@ -1,34 +1,34 @@
-// Terminal theme configuration matching ghostty setup
-// Based on your ghostty config: tokyonight theme, JetBrainsMono font, 18px
+// Terminal theme configuration matching oh-my-posh stelbent-compact.minimal
+// Updated to match the prompt colors from oh-my-posh theme
 
 export const terminalTheme = {
-  // TokyoNight color palette
-  background: '#1a1b26',
-  foreground: '#c0caf5',
-  cursor: '#c0caf5',
-  cursorAccent: '#1a1b26',
-  selection: '#283457',
-  selectionForeground: '#c0caf5',
+  // Background and foreground to complement oh-my-posh prompt
+  background: '#100e23',  // Dark background matching prompt foreground
+  foreground: '#ffffff',  // White text for good contrast
+  cursor: '#91ddff',      // Light blue cursor matching path segment
+  cursorAccent: '#100e23',
+  selection: '#757575',   // Gray for selection matching secondary text
+  selectionForeground: '#ffffff',
   
-  // ANSI colors (matching tokyonight_night from your nvim config)
-  black: '#15161e',
-  red: '#f7768e',
-  green: '#9ece6a',
-  yellow: '#e0af68',
-  blue: '#7aa2f7',
-  magenta: '#bb9af7',
-  cyan: '#7dcfff',
-  white: '#a9b1d6',
+  // ANSI colors harmonized with oh-my-posh stelbent theme
+  black: '#100e23',       // Dark background color
+  red: '#ff8080',         // Error color from status segment
+  green: '#95ffa4',       // Git clean state color
+  yellow: '#ffee58',      // Terraform segment color
+  blue: '#91ddff',        // Path segment color
+  magenta: '#89d1dc',     // Git ahead color
+  cyan: '#7dcfff',        // Keeping complementary cyan
+  white: '#ffffff',       // Clean white
   
-  // Bright colors
-  brightBlack: '#414868',
-  brightRed: '#ff899d',
-  brightGreen: '#9fe044',
+  // Bright colors with enhanced versions
+  brightBlack: '#757575', // Secondary text color
+  brightRed: '#ff9248',   // Git modified color
+  brightGreen: '#9fe044', // Bright green
   brightYellow: '#faba4a',
   brightBlue: '#8db0ff',
   brightMagenta: '#c7a9ff',
   brightCyan: '#a4daff',
-  brightWhite: '#c0caf5',
+  brightWhite: '#ffffff',
 };
 
 export const terminalConfig = {
