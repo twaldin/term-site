@@ -67,13 +67,76 @@ ascii_typewriter() {
   done <<< "$ascii_output"
 }
 
-# Simple box function with customizable colors
+# Robust box function with dynamic sizing and multi-line support
 create_box() {
   local title="$1"
   local content="$2"
   local color="${3:-$CYAN}"
+  local box_width="${4:-80}"  # Default width if not specified
   
-  echo -e "${color}┌─ ${BOLD}${title}${RESET}${color} ───────────────────────────────────────────────────────────┐${RESET}"
-  echo -e "${color}│${RESET} ${WHITE}${content}${RESET}"
-  echo -e "${color}└─────────────────────────────────────────────────────────────────────┘${RESET}"
+  # Calculate the actual terminal width if available
+  if [ -n "$COLUMNS" ]; then
+    box_width=$((COLUMNS > box_width ? box_width : COLUMNS - 2))
+  fi
+  
+  # Calculate title length without color codes
+  local title_clean=$(echo "$title" | sed 's/\x1b\[[0-9;]*m//g')
+  local title_length=${#title_clean}
+  
+  # Calculate how many dashes we need after the title
+  local dash_count=$((box_width - title_length - 6))  # 6 accounts for "┌─ " and " ┐"
+  if [ $dash_count -lt 1 ]; then
+    dash_count=1
+  fi
+  
+  # Build the top border
+  local top_border="${color}┌─ ${BOLD}${title}${RESET}${color} "
+  for ((i=0; i<dash_count; i++)); do
+    top_border+="─"
+  done
+  top_border+="┐${RESET}"
+  
+  echo -e "$top_border"
+  
+  # Process content line by line, wrapping if necessary
+  while IFS= read -r line; do
+    # Remove color codes to get actual length
+    local line_clean=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
+    local line_length=${#line_clean}
+    local content_width=$((box_width - 4))  # Account for "│ " and " │"
+    
+    if [ $line_length -le $content_width ]; then
+      # Line fits, pad with spaces
+      local padding=$((content_width - line_length))
+      local spaces=""
+      for ((i=0; i<padding; i++)); do
+        spaces+=" "
+      done
+      echo -e "${color}│${RESET} ${WHITE}${line}${RESET}${spaces} ${color}│${RESET}"
+    else
+      # Line needs wrapping
+      local start=0
+      while [ $start -lt $line_length ]; do
+        local chunk="${line_clean:$start:$content_width}"
+        local chunk_length=${#chunk}
+        local padding=$((content_width - chunk_length))
+        local spaces=""
+        for ((i=0; i<padding; i++)); do
+          spaces+=" "
+        done
+        # For wrapped lines, we lose color formatting (simplified approach)
+        echo -e "${color}│${RESET} ${WHITE}${chunk}${RESET}${spaces} ${color}│${RESET}"
+        start=$((start + content_width))
+      done
+    fi
+  done <<< "$content"
+  
+  # Build the bottom border
+  local bottom_border="${color}└"
+  for ((i=0; i<box_width-2; i++)); do
+    bottom_border+="─"
+  done
+  bottom_border+="┘${RESET}"
+  
+  echo -e "$bottom_border"
 }
