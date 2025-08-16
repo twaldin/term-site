@@ -40,13 +40,13 @@ separator() {
 
 # Function to print ASCII art
 print_ascii() {
-  echo " ${BOLD}${CYAN}   .    o8o                                                   oooo        .o8   o8o                                            .   "
+  echo -e " ${BOLD}${CYAN}   .    o8o                                                   oooo        .o8   o8o                                            .   "
   echo "  .o8    \`\"'                                                   \`888       \"888   \`\"'                                          .o8   "
   echo ".o888oo oooo  ooo. .oo.  .oo.       oooo oooo    ooo  .oooo.    888   .oooo888  oooo  ooo. .oo.       ooo. .oo.    .ooooo.   .o888oo "
   echo "  888   \`888  \`888P\"Y88bP\"Y88b       \`88. \`88.  .8'  \`P  )88b   888  d88' \`888  \`888  \`888P\"Y88b      \`888P\"Y88b   d88' \`88b   888   "
   echo "  888    888   888   888   888        \`88..]88..8'    .oP\"888   888  888   888  888    888   888       888   888  888ooo888    888   "
   echo "  888 .  888   888   888   888  .o.    \`888'\`888'    d8(  888   888  888   888  888    888   888  .o.  888   888  888    .o    888 . "
-  echo "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \` Y8bod8P'   \"888\" ${RESET}"
+  echo -e "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \` Y8bod8P'   \"888\" ${RESET}"
 }
 
 # Clear screen and start
