@@ -23,34 +23,22 @@ echo "  88,   \"8b,   ,aa  88          88      88      88            aa    ]8I  
 echo "  \"Y888  \`\"Ybbd8\"'  88          88      88      88            \`\"YbbdP\"'  88    \"Y888  \`\"Ybbd8\"' "
 echo -e "${RESET}\n"
 
-echo -e "${GREEN}Description:${RESET}"
+echo -e "${GREEN}Info:${RESET}"
 echo -e "   ${WHITE}A web-based terminal portfolio that provides visitors with a real Linux${RESET}"
 echo -e "   ${WHITE}terminal experience running in isolated Docker containers.${RESET}"
 echo
 
-echo -e "${GREEN}Key Technologies:${RESET}"
-echo -e "   ${YELLOW}Frontend:${RESET} Next.js 15, React 19, TypeScript, Tailwind CSS"
-echo -e "   ${YELLOW}Backend:${RESET} Node.js, Express, Socket.IO WebSockets"
-echo -e "   ${YELLOW}Terminal:${RESET} xterm.js, node-pty, Alpine Linux containers"
-echo -e "   ${YELLOW}Deployment:${RESET} Docker, gVisor runtime, Vercel + Hetzner VPS"
-echo -e "   ${YELLOW}Security:${RESET} Container isolation, read-only filesystems"
+echo -e "${GREEN}Tech Stack:${RESET}"
+echo -e "   ${YELLOW}Frontend:${RESET} Next.js 15, React 19, TypeScript, Docker"
+echo -e "   ${YELLOW}Backend:${RESET} Node.js to spawn docker containers, Express, Socket.IO WebSockets"
+echo -e "   ${YELLOW}Terminal:${RESET} xterm.js for frontend, node-pty for execution, Ubuntu Linux docker containers for filesystem"
 echo
 
-echo -e "${GREEN}Main Features:${RESET}"
-echo -e "   ${YELLOW}•${RESET} Real terminal emulation with xterm.js"
-echo -e "   ${YELLOW}•${RESET} Docker container isolation per user session"
-echo -e "   ${YELLOW}•${RESET} WebSocket communication for real-time terminal I/O"
-echo -e "   ${YELLOW}•${RESET} Security through gVisor runtime and resource limits"
-echo -e "   ${YELLOW}•${RESET} Custom terminal commands and portfolio navigation"
-echo -e "   ${YELLOW}•${RESET} Auto-scaling container management"
-echo
-
-echo -e "${GREEN}Navigation:${RESET}"
 echo -e "   ${YELLOW}You are now in the projects/term-site directory${RESET}"
 echo -e "   ${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 echo
 
-echo -e "${GREEN}Quick Commands (available in project directory):${RESET}"
+echo -e "${GREEN}Commands:${RESET}"
 echo -e "   ${YELLOW}ls${RESET}                         - List project files"
 echo -e "   ${YELLOW}cat README.md${RESET}              - View project documentation"
 echo -e "   ${YELLOW}cd frontend && ls${RESET}          - Explore Next.js frontend"
@@ -63,24 +51,25 @@ echo -e "   ${YELLOW}home${RESET}                       - Return to main dashboa
 echo
 
 # Git repository information
-echo -e "${GREEN}Git Repository:${RESET}"
+echo -e "${GREEN}Git:${RESET}"
 if [ -d ".git" ]; then
-    # Show current branch
-    branch=$(git branch --show-current 2>/dev/null || echo "main")
-    echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
-    
-    # Show recent commits with nice formatting
-    echo -e "   ${BLUE}Recent commits:${RESET}"
-    git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-        echo -e "     ${DIM}•${RESET} $line"
-    done
-    
-    # Show repository status
-    if git status --porcelain | grep -q .; then
-        echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
-    else
-        echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
-    fi
+  # Show current branch
+  branch=$(git branch --show-current 2>/dev/null || echo "main")
+  echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+
+  # Show recent commits with nice formatting
+  echo -e "   ${BLUE}Recent commits:${RESET}"
+  git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
+    echo -e "     ${DIM}•${RESET} $line"
+  done
+
+  # Show repository status
+  if git status --porcelain | grep -q .; then
+    echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+  else
+    echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+  fi
 else
-    echo -e "   ${DIM}Not a git repository${RESET}"
+  echo -e "   ${DIM}Not a git repository${RESET}"
 fi
+

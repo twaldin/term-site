@@ -23,33 +23,14 @@ echo "\"8a,   ,d88  \"8a,   ,a8\"   88,      88     88  88  \"8b,   ,aa  aa    ]
 echo " \`\"8bbdP\"Y8   \`\"YbbdP\"'    \"Y888    88     88  88   \`\"Ybbd8\"'  \`\"YbbdP\"' "
 echo -e "${RESET}\n"
 
-echo -e "${GREEN}Description:${RESET}"
+echo -e "${GREEN}${BOLD}Info:${RESET}"
 echo -e "   ${WHITE}Personal development environment configuration files for Zsh shell${RESET}"
 echo -e "   ${WHITE}and Neovim editor using the LazyVim distribution.${RESET}"
 echo
-
-echo -e "${GREEN}Key Technologies:${RESET}"
-echo -e "   ${YELLOW}•${RESET} Zsh shell configuration"
-echo -e "   ${YELLOW}•${RESET} Neovim with LazyVim framework"
-echo -e "   ${YELLOW}•${RESET} Lua configuration language"
-echo -e "   ${YELLOW}•${RESET} Ghostty terminal emulator"
-echo -e "   ${YELLOW}•${RESET} TypeScript theme configuration"
-echo
-
-echo -e "${GREEN}Main Features:${RESET}"
-echo -e "   ${YELLOW}•${RESET} Modular Zsh configuration"
-echo -e "   ${YELLOW}•${RESET} LazyVim-based Neovim setup with plugins"
-echo -e "   ${YELLOW}•${RESET} Terminal emulator theming (Ghostty)"
-echo -e "   ${YELLOW}•${RESET} Container-ready dotfile deployment"
-echo -e "   ${YELLOW}•${RESET} Symlink-based configuration management"
-echo
-
-echo -e "${GREEN}Navigation:${RESET}"
 echo -e "   ${YELLOW}You are now in the projects/dotfiles directory${RESET}"
 echo -e "   ${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 echo
-
-echo -e "${GREEN}Quick Commands (available in project directory):${RESET}"
+echo -e "${GREEN}Commands:${RESET}"
 echo -e "   ${YELLOW}ls${RESET}                               - List dotfile directories"
 echo -e "   ${YELLOW}cat README.md${RESET}                    - View setup documentation"
 echo -e "   ${YELLOW}cat zsh/zshrc${RESET}                    - View Zsh configuration"
@@ -62,24 +43,25 @@ echo -e "   ${YELLOW}home${RESET}                             - Return to main d
 echo
 
 # Git repository information
-echo -e "${GREEN}Git Repository:${RESET}"
+echo -e "${GREEN}Git:${RESET}"
 if [ -d ".git" ]; then
-    # Show current branch
-    branch=$(git branch --show-current 2>/dev/null || echo "main")
-    echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
-    
-    # Show recent commits with nice formatting
-    echo -e "   ${BLUE}Recent commits:${RESET}"
-    git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-        echo -e "     ${DIM}•${RESET} $line"
-    done
-    
-    # Show repository status
-    if git status --porcelain | grep -q .; then
-        echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
-    else
-        echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
-    fi
+  # Show current branch
+  branch=$(git branch --show-current 2>/dev/null || echo "main")
+  echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+
+  # Show recent commits with nice formatting
+  echo -e "   ${BLUE}Recent commits:${RESET}"
+  git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
+    echo -e "     ${DIM}•${RESET} $line"
+  done
+
+  # Show repository status
+  if git status --porcelain | grep -q .; then
+    echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+  else
+    echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+  fi
 else
-    echo -e "   ${DIM}Not a git repository${RESET}"
+  echo -e "   ${DIM}Not a git repository${RESET}"
 fi
+
