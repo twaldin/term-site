@@ -46,26 +46,17 @@ echo -e "   ${YELLOW}•${RESET} 80MHz overclocked operation"
 echo -e "   ${YELLOW}•${RESET} Font rendering system"
 echo
 
-echo -e "${GREEN}Project Structure:${RESET}"
-cd /home/portfolio/projects/stm32-games 2>/dev/null || {
-    echo -e "   ${RED}Error: Project directory not found${RESET}"
-    echo -e "   ${CYAN}Type 'welcome' to return to main dashboard${RESET}"
-    exit 1
-}
-
-echo -e "   ${BLUE}Current location:${RESET} $(pwd)"
-echo -e "   ${DIM}Use 'ls', 'cat', 'nvim', or other commands to explore${RESET}"
+echo -e "${GREEN}Navigation:${RESET}"
+echo -e "   ${YELLOW}This command automatically navigates to projects/stm32-games${RESET}"
+echo -e "   ${DIM}You'll be in the project directory when this finishes${RESET}"
 echo
 
-echo -e "${GREEN}Quick Commands:${RESET}"
+echo -e "${GREEN}Quick Commands (available in project directory):${RESET}"
 echo -e "   ${YELLOW}ls${RESET}                    - List project files"
 echo -e "   ${YELLOW}cat README.md${RESET}         - View project documentation"
 echo -e "   ${YELLOW}cat main.c${RESET}            - View main application code"
 echo -e "   ${YELLOW}cat snake.c${RESET}           - View Snake game implementation"
 echo -e "   ${YELLOW}tree${RESET}                  - Show complete file structure"
+echo -e "   ${YELLOW}cd ..${RESET}                 - Go back to portfolio directory"
 echo -e "   ${YELLOW}projects${RESET}              - Return to projects overview"
-echo -e "   ${YELLOW}welcome${RESET}               - Return to main dashboard"
-echo
-
-# Change to project directory for user exploration
-exec /bin/zsh
+echo -e "   ${YELLOW}home${RESET}                  - Return to main dashboard"

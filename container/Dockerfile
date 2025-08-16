@@ -43,6 +43,7 @@ COPY dotfiles /home/portfolio/.dotfiles
 COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
 COPY container/scripts/ /home/portfolio/scripts/
 COPY container/projects/ /home/portfolio/projects/
+COPY container/navigate-functions.sh /home/portfolio/navigate-functions.sh
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
@@ -126,7 +127,8 @@ RUN chmod +x /home/portfolio/scripts/*.sh && \
     chmod +x /home/portfolio/scripts/stm32-games && \
     chmod +x /home/portfolio/scripts/term-site && \
     chmod +x /home/portfolio/scripts/sulfur-recipies && \
-    chmod +x /home/portfolio/scripts/dotfiles
+    chmod +x /home/portfolio/scripts/dotfiles && \
+    chmod +x /home/portfolio/navigate-functions.sh
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
@@ -143,6 +145,8 @@ RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'export USER=portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export SHELL=/bin/zsh' >> /home/portfolio/secure-shell.sh && \
     echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
+    echo '# Load navigation functions' >> /home/portfolio/secure-shell.sh && \
+    echo 'source /home/portfolio/navigate-functions.sh' >> /home/portfolio/secure-shell.sh && \
     echo '# Show welcome dashboard on login' >> /home/portfolio/secure-shell.sh && \
     echo '/home/portfolio/scripts/welcome.sh' >> /home/portfolio/secure-shell.sh && \
     echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
