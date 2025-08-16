@@ -48,8 +48,27 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           // Check if component is still mounted
           if (!terminalRef.current) return;
 
-          // Initialize xterm.js with your personalized config
-          const xterm = new Terminal(terminalConfig);
+          // Calculate dynamic font size to ensure ASCII art fits
+          const asciiWidth = 140; // Width of your ASCII art in characters  
+          const containerWidth = terminalRef.current!.clientWidth;
+          const padding = 40; // Account for scrollbars and padding
+          const usableWidth = containerWidth - padding;
+          
+          // Calculate font size that allows ASCII to fit with some margin
+          const charWidthRatio = 0.6; // Typical monospace character width/height ratio
+          const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
+          const dynamicFontSize = Math.max(8, Math.min(terminalConfig.fontSize, maxFontSize));
+          
+          // Create dynamic config with calculated font size
+          const dynamicConfig = {
+            ...terminalConfig,
+            fontSize: dynamicFontSize
+          };
+          
+          console.log(`Container: ${containerWidth}px, ASCII: ${asciiWidth} chars, Font: ${dynamicFontSize}px`);
+          
+          // Initialize xterm.js with dynamic config
+          const xterm = new Terminal(dynamicConfig);
 
           // Initialize fit addon
           const fitAddon = new FitAddon();
@@ -153,9 +172,26 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           currentTerminalElement.addEventListener("paste", handlePaste);
           currentTerminalElement.addEventListener("keydown", handleKeyDown);
 
-          // Handle window resize
+          // Handle window resize and recalculate font size
           const handleResize = () => {
-            fitAddon.fit();
+            if (terminalRef.current && xterm && fitAddon) {
+              // Recalculate font size on resize
+              const asciiWidth = 140;
+              const containerWidth = terminalRef.current.clientWidth;
+              const padding = 40;
+              const usableWidth = containerWidth - padding;
+              const charWidthRatio = 0.6;
+              const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
+              const newFontSize = Math.max(8, Math.min(terminalConfig.fontSize, maxFontSize));
+              
+              // Update font size if it changed significantly
+              if (Math.abs(xterm.options.fontSize - newFontSize) > 1) {
+                xterm.options.fontSize = newFontSize;
+                console.log(`Resized - New font size: ${newFontSize}px`);
+              }
+              
+              fitAddon.fit();
+            }
           };
 
           window.addEventListener("resize", handleResize);
