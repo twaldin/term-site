@@ -10,6 +10,9 @@ RUN apt-get update --fix-missing && \
 # Add universe repository and update again
 RUN add-apt-repository universe && apt-get update
 
+# Install Node.js repository
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+
 # Install all required packages in one layer
 RUN apt-get install -y \
     bash \
@@ -32,15 +35,22 @@ RUN apt-get install -y \
     findutils \
     ncurses-base \
     zsh \
+    nodejs \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone dotfiles repository will be done later after user creation
 
-# Copy welcome scripts
+# Copy welcome scripts and enhanced versions
 COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
+COPY container/welcome-enhanced.sh /home/portfolio/scripts/welcome-enhanced.sh
 COPY container/scripts/ /home/portfolio/scripts/
+COPY container/blog/ /home/portfolio/blog/
+
+# Install npm packages for enhanced terminal scripts
+RUN cd /home/portfolio/scripts && \
+    npm install chalk@5.5.0 figlet@1.8.2 gradient-string@3.0.0 marked@15.0.12 marked-terminal@7.3.0 cli-highlight@2.1.11 boxen@8.0.1
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
@@ -105,10 +115,11 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
     echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.zshrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.zshrc && \
     echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.zshrc && \
+    echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
@@ -138,7 +149,8 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
 RUN chmod +x /home/portfolio/scripts/*.sh && \
     chmod +x /home/portfolio/scripts/welcome && \
     chmod +x /home/portfolio/scripts/contact && \
-    chmod +x /home/portfolio/scripts/help
+    chmod +x /home/portfolio/scripts/help && \
+    chmod +x /home/portfolio/scripts/blog
 
 
 # Create basic directory structure (empty but functional)
@@ -152,10 +164,11 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
     echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.bashrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.bashrc && \
     echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.bashrc && \
-    echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.bashrc
+    echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.bashrc && \
+    echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
@@ -168,7 +181,7 @@ RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
     echo '# Navigation aliases are loaded in .zshrc' >> /home/portfolio/secure-shell.sh && \
     echo '# Show welcome dashboard on login' >> /home/portfolio/secure-shell.sh && \
-    echo '/home/portfolio/scripts/welcome.sh' >> /home/portfolio/secure-shell.sh && \
+    echo '/home/portfolio/scripts/welcome-enhanced.sh' >> /home/portfolio/secure-shell.sh && \
     echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
     chmod +x /home/portfolio/secure-shell.sh && \
     chown portfolio:portfolio /home/portfolio/secure-shell.sh
