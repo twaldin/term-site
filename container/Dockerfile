@@ -43,7 +43,7 @@ COPY dotfiles /home/portfolio/.dotfiles
 COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
 COPY container/scripts/ /home/portfolio/scripts/
 COPY container/projects/ /home/portfolio/projects/
-COPY container/navigate-functions.sh /home/portfolio/navigation.sh
+# No longer needed - using aliases instead
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
@@ -87,11 +87,19 @@ WORKDIR /home/portfolio
 # Install Oh My Posh
 RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin
 
-# Create custom .zshrc with navigation functions
+# Create custom .zshrc with navigation aliases
 RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
-    echo "# Load navigation functions" >> /home/portfolio/.zshrc && \
-    echo "source /home/portfolio/navigation.sh" >> /home/portfolio/.zshrc && \
+    echo "# Portfolio navigation aliases" >> /home/portfolio/.zshrc && \
+    echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias dotfiles='cd ~/projects/dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.zshrc && \
+    echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
@@ -119,19 +127,31 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
 
 # Set execute permissions for scripts
 RUN chmod +x /home/portfolio/scripts/*.sh && \
-    chmod +x /home/portfolio/scripts/welcome.sh && \
     chmod +x /home/portfolio/scripts/welcome && \
-    chmod +x /home/portfolio/scripts/projects && \
     chmod +x /home/portfolio/scripts/contact && \
-    chmod +x /home/portfolio/scripts/help && \
-    chmod +x /home/portfolio/navigation.sh
+    chmod +x /home/portfolio/scripts/help
+
+# Create symlinks in project directories for local script execution
+RUN ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
+    ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
+    ln -sf /home/portfolio/scripts/sulfur-recipies.sh /home/portfolio/projects/sulfur-recipies/sulfur-recipies.sh && \
+    ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/projects/dotfiles/dotfiles.sh
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
 
-# Add PATH for scripts and load navigation functions
+# Add PATH for scripts and portfolio aliases
 RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashrc && \
-    echo 'source /home/portfolio/navigation.sh' >> /home/portfolio/.bashrc
+    echo "# Portfolio navigation aliases" >> /home/portfolio/.bashrc && \
+    echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias dotfiles='cd ~/projects/dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.bashrc && \
+    echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
@@ -142,8 +162,7 @@ RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'export USER=portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export SHELL=/bin/zsh' >> /home/portfolio/secure-shell.sh && \
     echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
-    echo '# Load navigation functions' >> /home/portfolio/secure-shell.sh && \
-    echo 'source /home/portfolio/navigation.sh' >> /home/portfolio/secure-shell.sh && \
+    echo '# Navigation aliases are loaded in .zshrc' >> /home/portfolio/secure-shell.sh && \
     echo '# Show welcome dashboard on login' >> /home/portfolio/secure-shell.sh && \
     echo '/home/portfolio/scripts/welcome.sh' >> /home/portfolio/secure-shell.sh && \
     echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
