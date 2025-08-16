@@ -55,8 +55,8 @@ echo -e "   ${YELLOW}•${RESET} Automated web scraping from sulfur.wiki.gg"
 echo
 
 echo -e "${GREEN}Navigation:${RESET}"
-echo -e "   ${YELLOW}This command automatically navigates to projects/sulfur-recipies${RESET}"
-echo -e "   ${DIM}You'll be in the project directory when this finishes${RESET}"
+echo -e "   ${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
+echo -e "   ${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 echo
 
 echo -e "${GREEN}Quick Commands (available in project directory):${RESET}"
