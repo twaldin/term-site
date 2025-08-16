@@ -23,7 +23,7 @@ typewriter() {
 gradient_ascii() {
     local text="$1"
     local gradient="${2:-tokyo}"
-    local font="${3:-block}"
+    local font="${3:-Univers}"
     run_node_util "
     const { gradientAscii } = require('./utils.js');
     console.log(gradientAscii('$text', '$gradient', '$font'));
@@ -80,60 +80,52 @@ clear
 animated_separator 139 "═" "primary" 5
 
 # Dynamic ASCII Art Header with gradient
-gradient_ascii "twald.in" "ocean" "block"
+gradient_ascii "twald.in" "ocean" "Univers"
 
 # Contact links with typewriter effect
 echo ""
-typewriter "󰇮 tim@waldin.net" 30 "cyan" &
-sleep 0.5
-typewriter " https://studyspot.us" 30 "magenta" &
-sleep 0.5  
-typewriter " https://github.com/twaldin" 30 "yellow" &
-sleep 0.5
-typewriter "󰋾 https://instagram.com/timn.w" 30 "green" &
-wait
+typewriter "󰇮 tim@waldin.net" 10 "cyan"
+typewriter " https://studyspot.us" 10 "magenta"
+typewriter " https://github.com/twaldin" 10 "yellow"
+typewriter "󰋾 https://instagram.com/timn.w" 10 "green"
 
 echo ""
 animated_separator 139 "═" "primary" 8
 
 # Welcome message with typewriter
 echo ""
-typewriter "Welcome to twald.in portfolio! 🚀" 40 "primary"
-typewriter "Explore with familiar cmd line tools like cd, ls, etc." 35 "white"
-typewriter "Type help for available commands" 35 "muted"
+typewriter "Welcome to twald.in portfolio! 🚀" 10 "primary"
+typewriter "Explore with familiar cmd line tools like cd, ls, etc." 10 "white"
+typewriter "Type help for available commands" 10 "muted"
 echo ""
 
 animated_separator 139 "═" "primary" 8
 
 # Projects section with enhanced styling
 echo ""
-gradient_ascii "PROJECTS" "secondary" "block"
+gradient_ascii "PROJECTS" "secondary" "Univers"
 echo ""
 typewriter "Type projects to explore my code repositories:" 35 "white"
 echo ""
 
 # Project items with typewriter delays
-typewriter "  • STM32 Games - Handheld console with C/ARM" 25 "cyan" &
-sleep 0.3
-typewriter "  • Terminal Site - This portfolio (Next.js/Docker)" 25 "cyan" &
-sleep 0.3
-typewriter "  • Sulfur Recipes - Game recipe database (React)" 25 "cyan" &
-sleep 0.3
-typewriter "  • Dotfiles - Dev environment configs (Zsh/LazyVim)" 25 "cyan" &
-wait
+typewriter "  • STM32 Games - Handheld console with C/ARM" 10 "cyan"
+typewriter "  • Terminal Site - This portfolio (Next.js/Docker)" 10 "cyan"
+typewriter "  • Sulfur Recipes - Game recipe database (React)" 10 "cyan"
+typewriter "  • Dotfiles - Dev environment configs (Zsh/LazyVim)" 10 "cyan"
 
 echo ""
 animated_separator 139 "═" "primary" 8
 
 # Blog section 
 echo ""
-gradient_ascii "BLOG" "accent" "block"
+gradient_ascii "BLOG" "accent" "Univers"
 echo ""
 typewriter "📚 Check out my terminal blog system:" 35 "white"
 echo ""
-typewriter "  • blog           - List all posts" 25 "cyan"
-typewriter "  • blog read 001  - Read a specific post" 25 "cyan"  
-typewriter "  • blog search    - Search through posts" 25 "cyan"
+typewriter "  • blog           - List all posts" 10 "cyan"
+typewriter "  • blog read 001  - Read a specific post" 10 "cyan"  
+typewriter "  • blog search    - Search through posts" 10 "cyan"
 echo ""
 
 animated_separator 139 "═" "primary" 8

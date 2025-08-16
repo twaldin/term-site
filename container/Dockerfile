@@ -49,6 +49,7 @@ COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
 COPY container/welcome-enhanced.sh /home/portfolio/scripts/welcome-enhanced.sh
 COPY container/scripts/ /home/portfolio/scripts/
 COPY container/blog/ /home/portfolio/blog/
+COPY container/Univers.flf /usr/share/figlet/Univers.flf
 
 # Install npm packages for enhanced terminal scripts
 RUN cd /home/portfolio/scripts && \
