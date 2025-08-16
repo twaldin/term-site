@@ -322,8 +322,9 @@ class SessionManager {
           socket.emit('output', output);
           
           // Check if the prompt has appeared and we haven't sent welcome yet
-          if (!welcomeSent && (output.includes('╰─') || output.includes('portfolio@twaldin'))) {
+          if (!welcomeSent && output.includes('twaldin')) {
             welcomeSent = true;
+            console.log(`Prompt detected for session ${sessionId}, auto-typing welcome...`);
             // Small delay to ensure prompt is fully rendered
             setTimeout(() => {
               this.autoTypeWelcome(sessionId);
