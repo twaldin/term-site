@@ -48,14 +48,14 @@ separator() {
 # Function to print ASCII art
 print_ascii() {
   echo -e "${BOLD}${CYAN}"
-  echo "         88                                                         88           88  88                                                     "
-  echo "  ,d     \"\"                                                         88           88  \"\"                                               ,d    "
-  echo "  88                                                                88           88                                                   88    "
-  echo "MM88MMM  88  88,dPYba,,adPYba,      8b      db      d8  ,adPPYYba,  88   ,adPPYb,88  88  8b,dPPYba,        8b,dPPYba,    ,adPPYba,  MM88MMM "
-  echo "  88     88  88P'   \"88\"    \"8a     \`8b    d88b    d8'  \"\"     \`Y8  88  a8\"    \`Y88  88  88P'   \`\"8a       88P'   \`\"8a  a8P_____88    88    "
-  echo "  88     88  88      88      88      \`8b  d8'\`8b  d8'   ,adPPPPP88  88  8b       88  88  88       88       88       88  8PP\"\"\"\"\"\"\"    88    "
-  echo "  88,    88  88      88      88  888  \`8bd8'  \`8bd8'    88,    ,88  88  \"8a,   ,d88  88  88       88  888  88       88  \"8b,   ,aa    88,   "
-  echo "  \"Y888  88  88      88      88  888    YP      YP      \`\"8bbdP\"Y8  88   \`\"8bbdP\"Y8  88  88       88  888  88       88   \`\"Ybbd8\"'    \"Y888 "
+  echo "         88                                                         88           88  88"
+  echo "  ,d     \"\"                                                         88           88  \"\"                                               ,d"
+  echo "  88                                                                88           88                                                   88"
+  echo "MM88MMM  88  88,dPYba,,adPYba,      8b      db      d8  ,adPPYYba,  88   ,adPPYb,88  88  8b,dPPYba,        8b,dPPYba,    ,adPPYba,  MM88MMM"
+  echo "  88     88  88P'   \"88\"    \"8a     \`8b    d88b    d8'  \"\"     \`Y8  88  a8\"    \`Y88  88  88P'   \`\"8a       88P'   \`\"8a  a8P_____88    88"
+  echo "  88     88  88      88      88      \`8b  d8'\`8b  d8'   ,adPPPPP88  88  8b       88  88  88       88       88       88  8PP\"\"\"\"\"\"\"    88"
+  echo "  88,    88  88      88      88  888  \`8bd8'  \`8bd8'    88,    ,88  88  \"8a,   ,d88  88  88       88  888  88       88  \"8b,   ,aa    88,"
+  echo "  \"Y888  88  88      88      88  888    YP      YP      \`\"8bbdP\"Y8  88   \`\"8bbdP\"Y8  88  88       88  888  88       88   \`\"Ybbd8\"'    \"Y888"
   echo -e "${RESET}"
 }
 
