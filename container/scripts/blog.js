@@ -8,31 +8,36 @@ const { highlight } = require('cli-highlight');
 const { chalk, theme, gradients, typewriter, gradientAscii, gradientBorder, gradientBox } = require('./utils.js');
 
 // Configure marked with terminal renderer
-marked.setOptions({
-  renderer: new TerminalRenderer({
-    // Styling options
-    heading: chalk.hex(theme.primary).bold,
-    blockquote: chalk.hex(theme.muted).italic,
-    code: (code, lang) => {
-      if (lang) {
-        try {
-          return highlight(code, { language: lang, theme: 'tokyo-night' });
-        } catch (e) {
-          return chalk.hex(theme.yellow)(code);
-        }
+const terminalRenderer = new TerminalRenderer({
+  // Basic styling that works reliably
+  heading: chalk.hex(theme.primary).bold,
+  blockquote: chalk.hex(theme.muted).italic,
+  code: (code, lang) => {
+    if (lang) {
+      try {
+        return highlight(code, { language: lang, theme: 'base16' });
+      } catch (e) {
+        return chalk.hex(theme.yellow)(code);
       }
-      return chalk.hex(theme.yellow)(code);
-    },
-    codespan: chalk.hex(theme.yellow),
-    strong: chalk.hex(theme.secondary).bold,
-    em: chalk.hex(theme.accent).italic,
-    link: chalk.hex(theme.cyan).underline,
-    list: chalk.hex(theme.white),
-    listitem: chalk.hex(theme.white),
-    paragraph: chalk.hex(theme.white),
-    tab: 4,
-    width: 80
-  })
+    }
+    return chalk.hex(theme.yellow)(code);
+  },
+  codespan: chalk.hex(theme.yellow),
+  strong: chalk.hex(theme.secondary).bold,
+  em: chalk.hex(theme.accent).italic,
+  link: chalk.hex(theme.cyan).underline,
+  paragraph: chalk.hex(theme.white),
+  tab: 2,
+  width: 100,
+  showSectionPrefix: false,
+  unescape: true
+});
+
+marked.setOptions({
+  renderer: terminalRenderer,
+  breaks: true,
+  gfm: true,
+  tables: true
 });
 
 class BlogSystem {
@@ -308,16 +313,11 @@ The result is a terminal environment that's both beautiful and functional! ✨
       await gradientBorder(80, '═', 'primary');
       console.log('');
 
-      // Render markdown with typewriter effect for dramatic reveal
+      // Render markdown with terminal styling
       const rendered = marked.parse(markdown);
-      const lines = rendered.split('\n');
       
-      for (const line of lines) {
-        console.log(line);
-        if (line.trim()) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
+      // Output the rendered content directly (it's already styled by marked-terminal)
+      console.log(rendered);
 
       console.log('');
       await gradientBorder(80, '═', 'primary');
