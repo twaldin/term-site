@@ -93,7 +93,7 @@ class SessionManager {
     try {
       // Create Docker container
       const container = await this.docker.createContainer({
-        Image: 'terminal-portfolio:latest',
+        Image: 'twaldin/terminal-portfolio:latest',
         Tty: true,
         OpenStdin: true,
         StdinOnce: false,
