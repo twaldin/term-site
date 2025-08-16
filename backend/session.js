@@ -13,6 +13,47 @@ class SessionManager {
     this.preloadImage();
   }
   
+  async cleanupDocker() {
+    console.log('Cleaning up Docker to free space...');
+    try {
+      // Remove all stopped containers
+      const containers = await this.docker.listContainers({ all: true });
+      for (const containerInfo of containers) {
+        if (containerInfo.State !== 'running') {
+          try {
+            const container = this.docker.getContainer(containerInfo.Id);
+            await container.remove({ force: true });
+            console.log(`Removed stopped container: ${containerInfo.Id}`);
+          } catch (err) {
+            console.log(`Could not remove container ${containerInfo.Id}:`, err.message);
+          }
+        }
+      }
+      
+      // Prune system to remove unused data
+      try {
+        await this.docker.pruneContainers();
+        console.log('Pruned unused containers');
+      } catch (err) {
+        console.log('Could not prune containers:', err.message);
+      }
+      
+      // Remove ALL images except what we're about to pull
+      const images = await this.docker.listImages();
+      for (const img of images) {
+        try {
+          const image = this.docker.getImage(img.Id);
+          await image.remove({ force: true });
+          console.log(`Removed image: ${img.Id}`);
+        } catch (err) {
+          console.log(`Could not remove image ${img.Id}:`, err.message);
+        }
+      }
+    } catch (err) {
+      console.error('Error during Docker cleanup:', err);
+    }
+  }
+  
   async preloadImage() {
     const imageName = 'twaldin/terminal-portfolio:latest';
     console.log(`Preloading Docker image ${imageName} on startup...`);
@@ -38,24 +79,8 @@ class SessionManager {
         return;
       }
       
-      // ALWAYS remove ALL existing versions of the image to prevent any caching
-      try {
-        console.log('Removing ALL cached versions of the image...');
-        const images = await this.docker.listImages();
-        for (const img of images) {
-          if (img.RepoTags && img.RepoTags.some(tag => tag.includes('twaldin/terminal-portfolio'))) {
-            try {
-              const image = this.docker.getImage(img.Id);
-              await image.remove({ force: true });
-              console.log(`Removed cached image: ${img.Id} (${img.RepoTags.join(', ')})`);
-            } catch (err) {
-              console.log(`Could not remove ${img.Id}:`, err.message);
-            }
-          }
-        }
-      } catch (err) {
-        console.log(`Error cleaning up old images:`, err.message);
-      }
+      // Clean up Docker to free space
+      await this.cleanupDocker();
       
       // Pull fresh image with explicit latest tag
       console.log('Pulling fresh image from Docker Hub...');

@@ -38,6 +38,7 @@ primary_region = "iad"
   cpus = 2
   memory_mb = 2048
 
+# Increased volume size to handle Docker images
 [mounts]
   source = "docker_data"
   destination = "/var/lib/docker"
