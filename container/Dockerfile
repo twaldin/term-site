@@ -175,16 +175,15 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
 
-# Create a restricted shell environment with welcome screen
+# Create a restricted shell environment that auto-types welcome
 RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'export HOME=/home/portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export USER=portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export SHELL=/bin/zsh' >> /home/portfolio/secure-shell.sh && \
     echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
     echo '# Navigation aliases are loaded in .zshrc' >> /home/portfolio/secure-shell.sh && \
-    echo '# Show welcome dashboard on login' >> /home/portfolio/secure-shell.sh && \
-    echo '/home/portfolio/scripts/welcome.sh' >> /home/portfolio/secure-shell.sh && \
-    echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
+    echo '# Auto-type welcome command on login' >> /home/portfolio/secure-shell.sh && \
+    echo '(sleep 0.5 && echo -n "w" && sleep 0.05 && echo -n "e" && sleep 0.05 && echo -n "l" && sleep 0.05 && echo -n "c" && sleep 0.05 && echo -n "o" && sleep 0.05 && echo -n "m" && sleep 0.05 && echo -n "e" && sleep 0.05 && echo "") | zsh -i' >> /home/portfolio/secure-shell.sh && \
     chmod +x /home/portfolio/secure-shell.sh && \
     chown portfolio:portfolio /home/portfolio/secure-shell.sh
 
