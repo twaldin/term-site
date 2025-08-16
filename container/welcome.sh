@@ -61,23 +61,10 @@ separator "═" "$CYAN"
 print_ascii
 echo
 
-# Main Info Section
+#Socials Section
 separator "─" "$BLUE"
 
-echo -e "\n${BOLD}${WHITE}  👨‍💻 Timothy Waldin${RESET}"
-echo -e "${CYAN}     Computer Engineering Major @ Purdue University${RESET}"
-echo -e "${GREEN}     Chief Technology Officer @ StudySpot${RESET}"
-echo
-
-# Links Section
-separator "─" "$YELLOW"
-echo -e "\n${BOLD}${WHITE}  🔗 Connect With Me${RESET}"
-
-echo -e "\n${CYAN}  📧 Email:${RESET}      ${MAGENTA}timothy@example.com${RESET} ${DIM}(click to email)${RESET}"
-echo -e "${CYAN}  🐙 GitHub:${RESET}     ${MAGENTA}https://github.com/twaldin${RESET} ${DIM}(click to open)${RESET}"
-echo -e "${CYAN}  💼 LinkedIn:${RESET}   ${MAGENTA}https://linkedin.com/in/twaldin${RESET} ${DIM}(click to open)${RESET}"
-echo -e "${CYAN}  📸 Instagram:${RESET}  ${MAGENTA}https://instagram.com/twaldin${RESET} ${DIM}(click to open)${RESET}"
-echo -e "${CYAN}  🏢 StudySpot:${RESET}  ${MAGENTA}https://studyspot.io${RESET} ${DIM}(click to open)${RESET}"
+echo -e "\n${CYAN}󰇮 tim@waldin.net ${RESET}${MAGENTA} https://studyspot.us ${RESEST}${YELLOW} https://github.com/twaldin${RESET}${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
 
 # Projects Section
 separator "─" "$GREEN"
