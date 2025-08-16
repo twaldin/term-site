@@ -65,7 +65,7 @@ separator "═" "$CYAN"
 
 # ASCII Art Header
 print_ascii
-echo -e "\n${CYAN}󰇮 tim@waldin.net${RESET}    ${MAGENTA} https://studyspot.us${RESEST}   ${YELLOW} https://github.com/twaldin${RESET}   ${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
+echo -e "${CYAN}󰇮 tim@waldin.net${RESET}    ${MAGENTA} https://studyspot.us${RESEST}   ${YELLOW} https://github.com/twaldin${RESET}   ${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
 separator "═" "$CYAN"
 
 center_text "Welcome to my portfolio terminal! You can explore with familiar cmd line tools like cd, ls, etc." "$WHITE$DIM"
@@ -73,10 +73,10 @@ center_text "Type 'help' for available commands" "$GRAY"
 
 separator "═" "$CYAN"
 
-echo -e "\n${GREEN}${BOLD}📁 Projects${RESET}"
+echo -e "${GREEN}${BOLD}📁 Projects${RESET}"
 echo -e "${WHITE}Type ${YELLOW}${BOLD}projects${RESET}${WHITE} to explore my code repositories:${RESET}"
 echo -e "  ${CYAN}•${RESET} ${WHITE}STM32 Games${RESET} - Handheld console with C/ARM"
-echo -e "  ${CYAN}•${RESET} ${WHITE}Terminal Site${RESET} - This portfolio (Next.js/Docker)"  
+echo -e "  ${CYAN}•${RESET} ${WHITE}Terminal Site${RESET} - This portfolio (Next.js/Docker)"
 echo -e "  ${CYAN}•${RESET} ${WHITE}Sulfur Recipes${RESET} - Game recipe database (React)"
 echo -e "  ${CYAN}•${RESET} ${WHITE}Dotfiles${RESET} - Dev environment configs (Zsh/LazyVim)"
 

@@ -43,7 +43,7 @@ COPY dotfiles /home/portfolio/.dotfiles
 COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
 COPY container/scripts/ /home/portfolio/scripts/
 COPY container/projects/ /home/portfolio/projects/
-COPY container/simple-navigation.sh /home/portfolio/navigation.sh
+COPY container/navigate-functions.sh /home/portfolio/navigation.sh
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
