@@ -92,7 +92,10 @@ WORKDIR /home/portfolio
 RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin
 
 # Create the zshrc symlink to use our updated dotfiles with oh-my-posh
-RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
+RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
+    echo "" >> /home/portfolio/.zshrc && \
+    echo "# Load navigation functions" >> /home/portfolio/.zshrc && \
+    echo "source /home/portfolio/navigation.sh" >> /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
 USER root
@@ -129,8 +132,9 @@ RUN chmod +x /home/portfolio/scripts/*.sh && \
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
 
-# Add PATH for scripts
-RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashrc
+# Add PATH for scripts and load navigation functions
+RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashrc && \
+    echo 'source /home/portfolio/navigation.sh' >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
