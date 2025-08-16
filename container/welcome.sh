@@ -40,15 +40,13 @@ separator() {
 
 # Function to print ASCII art
 print_ascii() {
-  echo -e "${BOLD}${CYAN}"
-  echo "    .    o8o                                                   oooo        .o8  o8o                                            .   "
-  echo "  .o8    \`\"'                                                   \`888       \"888  \`\"'                                          .o8   "
-  echo ".o888oo oooo  ooo. .oo.  .oo.       oooo oooo    ooo  .oooo.    888   .oooo888 oooo  ooo. .oo.       ooo. .oo.    .ooooo.   .o888oo "
-  echo "  888   \`888  \`888P\"Y88bP\"Y88b       \`88. \`88.  .8'  \`P  )88b   888  d88' \`888 \`888  \`888P\"Y88b      \`888P\"Y88b   d88' \`88b   888   "
-  echo "  888    888   888   888   888        \`88..]88..8'    .oP\"888   888  888   888  888   888   888       888   888  888ooo888    888   "
-  echo "  888 .  888   888   888   888  .o.    \`888'\`888'    d8(  888   888  888   888  888   888   888  .o.  888   888  888    .o    888 . "
-  echo "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \` Y8bod8P'   \"888\" "
-  echo -e "${RESET}"
+  echo " ${BOLD}${CYAN}   .    o8o                                                   oooo        .o8   o8o                                            .   "
+  echo "  .o8    \`\"'                                                   \`888       \"888   \`\"'                                          .o8   "
+  echo ".o888oo oooo  ooo. .oo.  .oo.       oooo oooo    ooo  .oooo.    888   .oooo888  oooo  ooo. .oo.       ooo. .oo.    .ooooo.   .o888oo "
+  echo "  888   \`888  \`888P\"Y88bP\"Y88b       \`88. \`88.  .8'  \`P  )88b   888  d88' \`888  \`888  \`888P\"Y88b      \`888P\"Y88b   d88' \`88b   888   "
+  echo "  888    888   888   888   888        \`88..]88..8'    .oP\"888   888  888   888  888    888   888       888   888  888ooo888    888   "
+  echo "  888 .  888   888   888   888  .o.    \`888'\`888'    d8(  888   888  888   888  888    888   888  .o.  888   888  888    .o    888 . "
+  echo "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \` Y8bod8P'   \"888\" ${RESET}"
 }
 
 # Clear screen and start
@@ -59,40 +57,10 @@ separator "═" "$CYAN"
 
 # ASCII Art Header
 print_ascii
-separator "─" "$BLUE"
 echo -e "\n${CYAN}󰇮 tim@waldin.net${RESET}    ${MAGENTA} https://studyspot.us${RESEST}   ${YELLOW} https://github.com/twaldin${RESET}   ${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
-separator "─" "$GREEN"
-echo -e "\n${BOLD}${WHITE}  Projects${RESET}"
-
-echo -e "\n${GREEN}  term-site:${RESET}   ${WHITE}Interactive terminal portfolio website${RESET}"
-echo -e "${DIM}                    Built with Docker, node-pty, xterm.js, and Next.js on typescript${RESET}"
-
-echo -e "\n${GREEN}  StudySpot:${RESET}      ${WHITE}Collaborative AI study platform for students${RESET}"
-echo -e "${DIM}                    Student community website with student group study/course material and a RAG assistant with tools${RESET}"
-echo -e "${DIM}                    Built on Next.js with a Cloudflare Workers Node.js runtime Assistant API which serves the chat streaming${RESET}"
-echo -e "${DIM}                    Provided experience working with llm native systems, such as vector dbs, tool call writing, conversation format, and more${RESET}"
-
-echo -e "\n${GREEN}  dotfiles:${RESET}       ${WHITE}Personal development environment configuration${RESET}"
-echo -e "${DIM}                    Neovim, Zsh, Oh-my-posh setup${RESET}"
-
-separator "─" "$RED"
-echo -e "\n${BOLD}${WHITE}  ⌨️  Available Commands${RESET}"
-
-echo -e "\n${RED}  help${RESET}        Show available commands and features"
-echo -e "${RED}  projects${RESET}    View detailed project information"
-echo -e "${RED}  skills${RESET}      Deep dive into technical expertise"
-echo -e "${RED}  contact${RESET}     Get in touch and collaboration info"
-echo -e "${RED}  clear${RESET}       Clear the terminal screen"
-echo -e "${RED}  exit${RESET}        End terminal session"
-
-# Fun Commands
-echo -e "\n${DIM}${GRAY}  Fun commands: ${WHITE}whoami, fortune, cowsay, figlet, htop${RESET}"
-
-# Footer
-echo
 separator "═" "$CYAN"
 
-center_text "Welcome to my terminal portfolio! Feel free to explore." "$WHITE$DIM"
+center_text "Welcome to my terminal portfolio! Feel free to explore with the familiar command line interface, or use the custom commands to get around.." "$WHITE$DIM"
 center_text "Type 'help' for available commands or just start exploring!" "$GRAY"
 
 separator "═" "$CYAN"
