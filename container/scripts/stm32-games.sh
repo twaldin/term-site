@@ -13,55 +13,63 @@ DIM='\033[2m'
 
 # Simple typewriter function with echo -e support
 typewriter() {
-    local text="$1"
-    local delay=0.001  # Ultra fast delay
-    
-    # Use echo -e to process escape sequences, then extract character by character
-    local processed_text=$(echo -e "$text")
-    
-    for ((i=0; i<${#processed_text}; i++)); do
-        printf "%s" "${processed_text:$i:1}"
-        sleep $delay
-    done
-    echo
+  local text="$1"
+  local delay=0.001 # Ultra fast delay
+
+  # Use echo -e to process escape sequences, then extract character by character
+  local processed_text=$(echo -e "$text")
+
+  for ((i = 0; i < ${#processed_text}; i++)); do
+    printf "%s" "${processed_text:$i:1}"
+    sleep $delay
+  done
 }
 
 # Simple animated separator
 animated_separator() {
-    local char="$1"
-    local width="$2"
-    local delay=0.001
-    
-    for ((i=0; i<width; i++)); do
-        printf "${BLUE}%s${RESET}" "$char"
-        sleep $delay
-    done
-    echo
+  local char="$1"
+  local width="$2"
+  local delay=0.001
+
+  for ((i = 0; i < width; i++)); do
+    printf "\033[38;5;111m%s\033[0m" "$char"
+    sleep $delay
+  done
+}
+
+# ASCII typewriter function - displays figlet output line by line
+ascii_typewriter() {
+  local text="$1"
+  local font="${2:-Univers}"
+  local color="${3:-${BOLD}${BLUE}}"
+
+  # Generate ASCII art and capture in variable
+  local ascii_output
+  ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
+
+  # Split into lines and display each with typewriter effect
+  while IFS= read -r line; do
+    typewriter "${color}${line}${RESET}"
+  done <<<"$ascii_output"
 }
 
 # Simple box function
 create_box() {
-    local title="$1"
-    local content="$2"
-    echo -e "${BLUE}┌─ ${BOLD}${title}${RESET}${BLUE} ───────────────────────────────────────────────────────────┐${RESET}"
-    echo -e "${BLUE}│${RESET} ${WHITE}A handheld game console project built with STM32F103C8T6 microcontroller${RESET} ${BLUE}│${RESET}"
-    echo -e "${BLUE}│${RESET} ${WHITE}featuring classic games like Snake with an ST7789 LCD display.${RESET}          ${BLUE}│${RESET}"
-    echo -e "${BLUE}└─────────────────────────────────────────────────────────────────────┘${RESET}"
+  local title="$1"
+  local content="$2"
+  echo -e "${BLUE}┌─ ${BOLD}${title}${RESET}${BLUE} ───────────────────────────────────────────────────────────┐${RESET}"
+  echo -e "${BLUE}│${RESET} ${WHITE}A handheld game console project built with STM32F103C8T6 microcontroller${RESET} ${BLUE}│${RESET}"
+  echo -e "${BLUE}│${RESET} ${WHITE}featuring classic games like Snake with an ST7789 LCD display.${RESET}          ${BLUE}│${RESET}"
+  echo -e "${BLUE}└─────────────────────────────────────────────────────────────────────┘${RESET}"
 }
 
 clear
 
-# ASCII header with figlet and color
-echo -e "${BOLD}${BLUE}"
-figlet -f Univers "stm32 games" 2>/dev/null || figlet "stm32 games"
-echo -e "${RESET}"
-
-echo ""
+# ASCII header with progressive typewriter display
+ascii_typewriter "stm32 games" "Univers" "${BOLD}${BLUE}"
 
 # Create boxed content for main info
 create_box "Info" "STM32 handheld game console"
-
-echo ""
 
 # Tech Stack section
 typewriter "${GREEN}Tech Stack:${RESET}"
@@ -71,14 +79,10 @@ typewriter "   ${YELLOW}•${RESET} ST7789 SPI LCD display driver"
 typewriter "   ${YELLOW}•${RESET} libopencm3 firmware library"
 typewriter "   ${YELLOW}•${RESET} ARM GCC toolchain"
 
-echo ""
 animated_separator "~" 60
-echo ""
 
 typewriter "${YELLOW}You are now in the projects/stm32-games directory${RESET}"
 typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
-
-echo ""
 
 # Commands section
 typewriter "${GREEN}Commands:${RESET}"
@@ -91,9 +95,7 @@ typewriter "   ${YELLOW}cd ..${RESET}                 - Go back to portfolio dir
 typewriter "   ${YELLOW}projects${RESET}              - Return to projects overview"
 typewriter "   ${YELLOW}home${RESET}                  - Return to main dashboard"
 
-echo ""
 animated_separator "-" 50
-echo ""
 
 # Git repository information
 typewriter "${GREEN}Git:${RESET}"
@@ -118,5 +120,5 @@ else
   typewriter "   ${DIM}Not a git repository${RESET}"
 fi
 
-echo ""
 animated_separator "=" 60
+
