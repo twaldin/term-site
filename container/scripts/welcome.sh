@@ -13,30 +13,44 @@ DIM='\033[2m'
 
 # Simple typewriter function with echo -e support
 typewriter() {
-    local text="$1"
-    local delay=0.001  # Ultra fast delay
-    
-    # Use echo -e to process escape sequences, then extract character by character
-    local processed_text=$(echo -e "$text")
-    
-    for ((i=0; i<${#processed_text}; i++)); do
-        printf "%s" "${processed_text:$i:1}"
-        sleep $delay
-    done
-    echo
+  local text="$1"
+  local delay=0.001 # Ultra fast delay
+
+  # Use echo -e to process escape sequences, then extract character by character
+  local processed_text=$(echo -e "$text")
+
+  for ((i = 0; i < ${#processed_text}; i++)); do
+    printf "%s" "${processed_text:$i:1}"
+    sleep $delay
+  done
 }
 
 # Simple animated separator
 animated_separator() {
-    local char="$1"
-    local width="$2"
-    local delay=0.001
-    
-    for ((i=0; i<width; i++)); do
-        printf "\033[38;5;117m%s\033[0m" "$char"
-        sleep $delay
-    done
-    echo
+  local char="$1"
+  local width="$2"
+  local delay=0.001
+
+  for ((i = 0; i < width; i++)); do
+    printf "\033[38;5;117m%s\033[0m" "$char"
+    sleep $delay
+  done
+}
+
+# ASCII typewriter function - displays figlet output line by line
+ascii_typewriter() {
+  local text="$1"
+  local font="${2:-Univers}"
+  local color="${3:-${BOLD}${CYAN}}"
+
+  # Generate ASCII art and capture in variable
+  local ascii_output
+  ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
+
+  # Split into lines and display each with typewriter effect
+  while IFS= read -r line; do
+    typewriter "${color}${line}${RESET}"
+  done <<<"$ascii_output"
 }
 
 clear
@@ -44,12 +58,9 @@ clear
 # Top separator
 animated_separator "═" 139
 
-# ASCII header with figlet and color
-echo -e "${BOLD}${CYAN}"
-figlet -f Univers "twald.in" 2>/dev/null || figlet "twald.in"
-echo -e "${RESET}"
+# ASCII header with progressive typewriter display
+ascii_typewriter "twald.in" "Univers" "${BOLD}${CYAN}"
 
-echo ""
 typewriter "${CYAN}󰇮 tim@waldin.net${RESET}"
 typewriter "${YELLOW} https://github.com/twaldin${RESET}"
 typewriter "${MAGENTA} https://linkedin.com/in/twaldin${RESET}"
@@ -67,3 +78,4 @@ typewriter "${DIM}Type projects to see my projects - Type blog to see my blog - 
 echo ""
 
 animated_separator "═" 139
+
