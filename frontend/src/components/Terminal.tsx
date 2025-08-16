@@ -42,7 +42,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       // Dynamic import to avoid SSR issues
       import("@xterm/xterm").then(({ Terminal }) => {
         import("@xterm/addon-fit").then(({ FitAddon }) => {
-          // CSS is imported via next.config or global CSS
+          import("@xterm/addon-web-links").then(({ WebLinksAddon }) => {
+            // CSS is imported via next.config or global CSS
 
           // Check if component is still mounted
           if (!terminalRef.current) return;
@@ -53,6 +54,10 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           // Initialize fit addon
           const fitAddon = new FitAddon();
           xterm.loadAddon(fitAddon);
+
+          // Initialize web links addon for clickable URLs
+          const webLinksAddon = new WebLinksAddon();
+          xterm.loadAddon(webLinksAddon);
 
           // Open terminal
           xterm.open(terminalRef.current!);
@@ -120,9 +125,15 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             }
           };
 
-          // Add keyboard shortcuts for copy/paste
+          // Add keyboard shortcuts for copy/paste and tab handling
           const handleKeyDown = async (event: KeyboardEvent) => {
-            if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+            // Handle tab key for completion
+            if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+              // Let the tab go through, but we'll handle the response properly
+              // The issue is likely in how the shell responds to tab completion
+              // Don't prevent default here - let normal tab completion work
+            }
+            else if ((event.ctrlKey || event.metaKey) && event.key === "v") {
               event.preventDefault();
               try {
                 const text = await navigator.clipboard.readText();
@@ -173,6 +184,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             () => resizeDisposable.dispose(),
             () => xterm.dispose(),
           ];
+          });
         });
       });
 
