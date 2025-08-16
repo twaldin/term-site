@@ -66,10 +66,13 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           const padding = Math.min(10, actualWidth * 0.02); // 2% padding or 10px, whichever is smaller
           const usableWidth = actualWidth - padding;
           
-          // Calculate font size that allows ASCII to fit with some margin
-          const charWidthRatio = 0.6; // Typical monospace character width/height ratio
-          const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-          const dynamicFontSize = Math.max(4, Math.min(16, maxFontSize)); // Even more aggressive sizing
+          // Calculate font size with conservative character width estimation
+          // Use a more conservative ratio and add safety margin
+          const charWidthRatio = 0.7; // More conservative estimate for character width
+          const safetyMargin = 0.85; // Use only 85% of calculated space for safety
+          const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
+          const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
+          const dynamicFontSize = Math.max(4, Math.min(16, conservativeFontSize));
           
           // Create dynamic config with calculated font size
           const dynamicConfig = {
@@ -77,7 +80,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             fontSize: dynamicFontSize
           };
           
-          console.log(`Using: ${actualWidth}px, ASCII: ${asciiWidth} chars, Font: ${dynamicFontSize}px`);
+          console.log(`Space: ${actualWidth}px, Usable: ${usableWidth}px, Theoretical: ${theoreticalFontSize}px, Conservative: ${conservativeFontSize}px, Final: ${dynamicFontSize}px`);
           
           // Initialize xterm.js with dynamic config
           const xterm = new Terminal(dynamicConfig);
@@ -184,9 +187,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           currentTerminalElement.addEventListener("paste", handlePaste);
           currentTerminalElement.addEventListener("keydown", handleKeyDown);
 
-          // Handle window resize and recalculate font size
+          // Debounced resize handler to prevent too frequent updates
+          let resizeTimeout: NodeJS.Timeout;
           const handleResize = () => {
-            if (terminalRef.current && xterm && fitAddon) {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+              if (terminalRef.current && xterm && fitAddon) {
               // Recalculate font size on resize
               const asciiWidth = 123;
               const viewportWidth = window.innerWidth;
@@ -196,9 +202,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
               const padding = Math.min(10, actualWidth * 0.02);
               const usableWidth = actualWidth - padding;
-              const charWidthRatio = 0.6;
-              const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-              const newFontSize = Math.max(4, Math.min(16, maxFontSize));
+              const charWidthRatio = 0.7;
+              const safetyMargin = 0.85;
+              const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
+              const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
+              const newFontSize = Math.max(4, Math.min(16, conservativeFontSize));
               
               // Update font size if it changed significantly
               const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
@@ -208,7 +216,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               }
               
               fitAddon.fit();
-            }
+              }
+            }, 150); // 150ms debounce
           };
 
           window.addEventListener("resize", handleResize);
@@ -223,7 +232,10 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
           // Store cleanup functions
           cleanupFunctions = [
-            () => window.removeEventListener("resize", handleResize),
+            () => {
+              clearTimeout(resizeTimeout);
+              window.removeEventListener("resize", handleResize);
+            },
             () =>
               currentTerminalElement.removeEventListener("click", handleClick),
             () =>
