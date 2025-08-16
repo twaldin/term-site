@@ -151,7 +151,7 @@ async function showWelcome() {
   console.clear();
   
   // Generate gradient ASCII art
-  const title = gradientAscii('WELCOME', 'tokyo', 'univers');
+  const title = gradientAscii('WELCOME', 'tokyo', 'block');
   console.log(title);
   
   // Animated border

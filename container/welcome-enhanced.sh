@@ -23,7 +23,7 @@ typewriter() {
 gradient_ascii() {
     local text="$1"
     local gradient="${2:-tokyo}"
-    local font="${3:-univers}"
+    local font="${3:-block}"
     run_node_util "
     const { gradientAscii } = require('./utils.js');
     console.log(gradientAscii('$text', '$gradient', '$font'));
@@ -60,7 +60,7 @@ gradient_box() {
     local title="${3:-}"
     local title_option=""
     if [ ! -z "$title" ]; then
-        title_option=", title: '$title'"
+        title_option=", title: \"$title\""
     fi
     run_node_util "
     const { gradientBox } = require('./utils.js');
@@ -80,7 +80,7 @@ clear
 animated_separator 139 "═" "primary" 5
 
 # Dynamic ASCII Art Header with gradient
-gradient_ascii "tim@waldin.net" "rainbow" "univers"
+gradient_ascii "twald.in" "ocean" "block"
 
 # Contact links with typewriter effect
 echo ""
@@ -98,18 +98,18 @@ animated_separator 139 "═" "primary" 8
 
 # Welcome message with typewriter
 echo ""
-typewriter "Welcome to my enhanced terminal portfolio! 🚀" 40 "primary"
+typewriter "Welcome to twald.in portfolio! 🚀" 40 "primary"
 typewriter "Explore with familiar cmd line tools like cd, ls, etc." 35 "white"
-typewriter "Type 'help' for available commands" 35 "muted"
+typewriter "Type help for available commands" 35 "muted"
 echo ""
 
 animated_separator 139 "═" "primary" 8
 
 # Projects section with enhanced styling
 echo ""
-gradient_ascii "PROJECTS" "secondary" "univers"
+gradient_ascii "PROJECTS" "secondary" "block"
 echo ""
-typewriter "Type 'projects' to explore my code repositories:" 35 "white"
+typewriter "Type projects to explore my code repositories:" 35 "white"
 echo ""
 
 # Project items with typewriter delays
@@ -127,7 +127,7 @@ animated_separator 139 "═" "primary" 8
 
 # Blog section 
 echo ""
-gradient_ascii "BLOG" "accent" "univers"
+gradient_ascii "BLOG" "accent" "block"
 echo ""
 typewriter "📚 Check out my terminal blog system:" 35 "white"
 echo ""

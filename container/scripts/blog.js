@@ -137,7 +137,7 @@ Creating a portfolio that runs entirely in the terminal was an exciting challeng
 ### Dynamic ASCII Art
 \`\`\`bash
 # Using figlet with Univers font
-figlet -f univers "tim@waldin.net"
+figlet -f block "twald.in"
 \`\`\`
 
 ### Gradient Borders
@@ -221,7 +221,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
 
   async listPosts() {
     try {
-      console.log(gradientAscii('BLOG', 'tokyo', 'univers'));
+      console.log(gradientAscii('BLOG', 'tokyo', 'block'));
       await gradientBorder(80, '═', 'tokyo');
       
       const files = fs.readdirSync(this.postsDir)
@@ -294,7 +294,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
       await gradientBorder(80, '═', 'primary');
       
       if (frontMatter.title) {
-        console.log(gradientAscii(frontMatter.title.substring(0, 20), 'primary', 'univers'));
+        console.log(gradientAscii(frontMatter.title.substring(0, 20), 'primary', 'block'));
       }
       
       if (frontMatter.date) {
@@ -366,7 +366,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
 
   async searchPosts(query) {
     try {
-      console.log(gradientAscii('SEARCH', 'accent', 'univers'));
+      console.log(gradientAscii('SEARCH', 'accent', 'block'));
       await gradientBorder(80, '═', 'accent');
       
       const files = fs.readdirSync(this.postsDir).filter(file => file.endsWith('.md'));
