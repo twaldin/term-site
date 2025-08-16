@@ -13,34 +13,34 @@ animated_separator "+" 60
 echo ""
 
 # Project 1 - STM32 Games
-typewriter "${GREEN}1. STM32 Games${RESET}"
-typewriter "   ${WHITE}Handheld game console with STM32 microcontroller${RESET}"
-typewriter "   ${YELLOW}Tech:${RESET} C, STM32F103C8, ST7789 LCD, libopencm3"
-typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}stm32-games${RESET} to view info and navigate"
+typewriter "${GREEN}1. stm32 games${RESET}"
+typewriter "   ${WHITE}play the classic snake game in c on a microcontroller with lcd screen.${RESET}"
+typewriter "   ${YELLOW}tech stack:${RESET} C, stm32f103c8 microcontroller, st7789 lcd screen, libopencm3 library & custom display driver"
+typewriter "   ${DIM}type ${BOLD}\"stm32-games\"to view info and navigate${RESET}"
 
 echo ""
 
-# Project 2 - Terminal Site  
-typewriter "${GREEN}2. Terminal Site${RESET}"
-typewriter "   ${WHITE}Web-based terminal portfolio in Docker containers${RESET}"
-typewriter "   ${YELLOW}Tech:${RESET} Next.js, Node.js, Socket.IO, Docker, TypeScript"
-typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}term-site${RESET} to view info and navigate"
+# Project 2 - Terminal Site
+typewriter "${GREEN}2. term site${RESET}"
+typewriter "   ${WHITE}web terminal portfolio in docker containers (you are in it right now)${RESET}"
+typewriter "   ${YELLOW}tech stack:${RESET} next.js, node.js, socket.IO, docker, typescript"
+typewriter "   ${DIM}type ${BOLD}\"term-site\"to view info and navigate${RESET}"
 
 echo ""
 
 # Project 3 - Sulfur Recipes
-typewriter "${GREEN}3. Sulfur Recipes${RESET}"
-typewriter "   ${WHITE}Recipe database web app for Sulfur game${RESET}"
-typewriter "   ${YELLOW}Tech:${RESET} Next.js, React, Tailwind CSS, shadcn/ui"
-typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}sulfur-recipies${RESET} to view info and navigate"
+typewriter "${GREEN}3. sulfur recipes${RESET}"
+typewriter "   ${WHITE}cooking recipe web cookbook/optimizer for sulfur game${RESET}"
+typewriter "   ${YELLOW}tech stack:${RESET} next.js, react, tailwind css, shadcn/ui"
+typewriter "   ${DIM}rype ${BOLD}\"sulfur-recipies\"to view info and navigate${RESET}"
 
 echo ""
 
 # Project 4 - Dotfiles
-typewriter "${GREEN}4. Dotfiles${RESET}"
-typewriter "   ${WHITE}Development environment configuration files${RESET}"
-typewriter "   ${YELLOW}Tech:${RESET} Zsh, LazyVim, Neovim, Lua, Ghostty"
-typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}dotfiles${RESET} to view info and navigate"
+typewriter "${GREEN}4. dotfiles${RESET}"
+typewriter "   ${WHITE}development environment configuration files${RESET}"
+typewriter "   ${YELLOW}tools:${RESET}zsh, lazyvim, ghostty, etc"
+typewriter "   ${DIM}Type ${BOLD}\"dotfiles\"to view info and navigate${RESET}"
 
 echo ""
 animated_separator "=" 60
@@ -50,3 +50,4 @@ echo ""
 typewriter "${DIM}${WHITE}You are now in the projects directory. Commands will navigate to each project.${RESET}"
 typewriter "${YELLOW}Available:${RESET} ls, stm32-games, term-site, sulfur-recipies, dotfiles"
 typewriter "${CYAN}Type 'home' to return to main dashboard${RESET}"
+
