@@ -1,3 +1,0 @@
-#!/bin/bash
-# Help Script - redirect to enhanced help
-exec /home/portfolio/scripts/help.sh
