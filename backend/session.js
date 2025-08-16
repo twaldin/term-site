@@ -91,7 +91,7 @@ class SessionManager {
     console.log(`Creating container session for ${sessionId}`);
 
     try {
-      const imageName = 'ghcr.io/twaldin/terminal-portfolio:latest';
+      const imageName = 'ghcr.io/twaldin/term-site:latest';
       
       // Check if image exists, if not pull it
       try {
