@@ -1,91 +1,86 @@
 #!/bin/bash
 
-# Function to run node utilities
-run_node_util() {
-  cd /home/portfolio/scripts && node -e "$1"
-}
+# Colors
+CYAN='\033[38;5;117m'
+GREEN='\033[38;5;121m'
+WHITE='\033[38;5;255m'
+YELLOW='\033[38;5;227m'
+BLUE='\033[38;5;111m'
+RESET='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
 
-# Function for typewriter effect
+# Simple typewriter function
 typewriter() {
-  local text="$1"
-  local color="${2:-white}"
-  run_node_util "
-    const { typewriter } = require('./utils.js');
-    (async () => {
-      await typewriter('$text', undefined, '$color');
-    })();
-    "
+    local text="$1"
+    local delay=0.001  # Ultra fast delay
+    
+    for ((i=0; i<${#text}; i++)); do
+        printf "%s" "${text:$i:1}"
+        sleep $delay
+    done
+    echo
 }
 
-# Function for animated separator
+# Simple animated separator
 animated_separator() {
-  local width="${1:-80}"
-  local char="${2:-═}"
-  local gradient="${3:-tokyo}"
-  run_node_util "
-    const { animatedSeparator } = require('./utils.js');
-    (async () => {
-      await animatedSeparator($width, '$char', '$gradient');
-    })();
-    "
+    local char="$1"
+    local width="$2"
+    local delay=0.001
+    
+    for ((i=0; i<width; i++)); do
+        printf "${CYAN}%s${RESET}" "$char"
+        sleep $delay
+    done
+    echo
 }
 
 clear
 
-# Generate ASCII with typewriter animation
-# Generate ASCII with typewriter animation
-node -e "
-const { gradientAsciiTypewriter } = require('./utils.js');
-(async () => {
-  await gradientAsciiTypewriter('projects', 'rainbow', 'Univers');
-})();
-"
+# ASCII header with figlet and color
+echo -e "${BOLD}${CYAN}"
+figlet -f Univers "projects" 2>/dev/null || figlet "projects"
+echo -e "${RESET}"
 
 echo ""
-
-# Animated separator
 animated_separator "+" 60
-
 echo ""
 
 # Project 1 - STM32 Games
-typewriter "1. STM32 Games" "primary"
-typewriter "   Handheld game console with STM32 microcontroller" "secondary"
-typewriter "   Tech: C, STM32F103C8, ST7789 LCD, libopencm3" "info"
-typewriter "   Navigate: Type 'stm32-games' to view info and navigate" "highlight"
+typewriter "${GREEN}1. STM32 Games${RESET}"
+typewriter "   ${WHITE}Handheld game console with STM32 microcontroller${RESET}"
+typewriter "   ${YELLOW}Tech:${RESET} C, STM32F103C8, ST7789 LCD, libopencm3"
+typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}stm32-games${RESET} to view info and navigate"
 
 echo ""
 
 # Project 2 - Terminal Site  
-typewriter "2. Terminal Site" "primary"
-typewriter "   Web-based terminal portfolio in Docker containers" "secondary"
-typewriter "   Tech: Next.js, Node.js, Socket.IO, Docker, TypeScript" "info"
-typewriter "   Navigate: Type 'term-site' to view info and navigate" "highlight"
+typewriter "${GREEN}2. Terminal Site${RESET}"
+typewriter "   ${WHITE}Web-based terminal portfolio in Docker containers${RESET}"
+typewriter "   ${YELLOW}Tech:${RESET} Next.js, Node.js, Socket.IO, Docker, TypeScript"
+typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}term-site${RESET} to view info and navigate"
 
 echo ""
 
 # Project 3 - Sulfur Recipes
-typewriter "3. Sulfur Recipes" "primary"
-typewriter "   Recipe database web app for Sulfur game" "secondary"
-typewriter "   Tech: Next.js, React, Tailwind CSS, shadcn/ui" "info"
-typewriter "   Navigate: Type 'sulfur-recipies' to view info and navigate" "highlight"
+typewriter "${GREEN}3. Sulfur Recipes${RESET}"
+typewriter "   ${WHITE}Recipe database web app for Sulfur game${RESET}"
+typewriter "   ${YELLOW}Tech:${RESET} Next.js, React, Tailwind CSS, shadcn/ui"
+typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}sulfur-recipies${RESET} to view info and navigate"
 
 echo ""
 
 # Project 4 - Dotfiles
-typewriter "4. Dotfiles" "primary"
-typewriter "   Development environment configuration files" "secondary"
-typewriter "   Tech: Zsh, LazyVim, Neovim, Lua, Ghostty" "info"
-typewriter "   Navigate: Type 'dotfiles' to view info and navigate" "highlight"
+typewriter "${GREEN}4. Dotfiles${RESET}"
+typewriter "   ${WHITE}Development environment configuration files${RESET}"
+typewriter "   ${YELLOW}Tech:${RESET} Zsh, LazyVim, Neovim, Lua, Ghostty"
+typewriter "   ${BLUE}Navigate:${RESET} Type ${BOLD}dotfiles${RESET} to view info and navigate"
 
 echo ""
-
-# Animated separator
 animated_separator "=" 60
-
 echo ""
 
 # Footer information
-typewriter "You are now in the projects directory. Commands will navigate to each project." "dim"
-typewriter "Available: ls, stm32-games, term-site, sulfur-recipies, dotfiles" "info"
-typewriter "Type 'home' to return to main dashboard" "highlight"
+typewriter "${DIM}${WHITE}You are now in the projects directory. Commands will navigate to each project.${RESET}"
+typewriter "${YELLOW}Available:${RESET} ls, stm32-games, term-site, sulfur-recipies, dotfiles"
+typewriter "${CYAN}Type 'home' to return to main dashboard${RESET}"
