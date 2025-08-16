@@ -24,6 +24,7 @@ RUN apt-get install -y \
     git \
     curl \
     wget \
+    unzip \
     tree \
     htop \
     procps \
@@ -77,14 +78,15 @@ RUN chown -R portfolio:portfolio /home/portfolio/.config && \
     chown -R portfolio:portfolio /home/portfolio/tmp && \
     chown -h portfolio:portfolio /home/portfolio/.zshrc
 
-# Switch to portfolio user to install Oh My Zsh
+# Switch to portfolio user to install Oh My Posh
 USER portfolio
 WORKDIR /home/portfolio
-RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Restore your original zshrc symlink (Oh My Zsh overwrites it)
-RUN rm -f /home/portfolio/.zshrc && \
-    ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
+# Install Oh My Posh
+RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin
+
+# Create the zshrc symlink to use our updated dotfiles with oh-my-posh
+RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
 USER root
@@ -156,7 +158,7 @@ WORKDIR /home/portfolio
 ENV HOME=/home/portfolio
 ENV USER=portfolio
 ENV SHELL=/bin/zsh
-ENV PATH=/home/portfolio/scripts:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/home/portfolio/.local/bin:/home/portfolio/scripts:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Default command starts secure shell
 CMD ["/home/portfolio/secure-shell.sh"]
