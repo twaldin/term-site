@@ -74,15 +74,11 @@ RUN echo 'set number' > /home/portfolio/.config/nvim/init.vim && \
 # Create basic .vimrc with same config  
 RUN ln -sf /home/portfolio/.config/nvim/init.vim /home/portfolio/.vimrc
 
-# Create symlink to your original zshrc
-RUN ln -sf /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc
-
 # Set proper ownership for all user directories
 RUN chown -R portfolio:portfolio /home/portfolio/.config && \
     chown -R portfolio:portfolio /home/portfolio/.local && \
     chown -R portfolio:portfolio /home/portfolio/workspace && \
-    chown -R portfolio:portfolio /home/portfolio/tmp && \
-    chown -h portfolio:portfolio /home/portfolio/.zshrc
+    chown -R portfolio:portfolio /home/portfolio/tmp
 
 # Switch to portfolio user to install Oh My Posh
 USER portfolio
