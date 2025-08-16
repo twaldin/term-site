@@ -60,7 +60,7 @@ print_ascii
 echo -e "\n${CYAN}󰇮 tim@waldin.net${RESET}    ${MAGENTA} https://studyspot.us${RESEST}   ${YELLOW} https://github.com/twaldin${RESET}   ${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
 separator "═" "$CYAN"
 
-center_text "Welcome to my terminal portfolio! Feel free to explore with the familiar command line interface, or use the custom commands to get around.." "$WHITE$DIM"
-center_text "Type 'help' for available commands or just start exploring!" "$GRAY"
+center_text "Welcome to my portfolio terminal! You can explore with familiar cmd line tools like cd, ls, etc." "$WHITE$DIM"
+center_text "Type 'help' for available commands" "$GRAY"
 
 separator "═" "$CYAN"
