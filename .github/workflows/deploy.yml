@@ -26,11 +26,11 @@ jobs:
           # Build the terminal image
           docker build -f container/Dockerfile -t terminal-portfolio:latest .
           
-          # Tag for GitHub Container Registry
-          docker tag terminal-portfolio:latest ghcr.io/${{ github.repository_owner }}/terminal-portfolio:latest
+          # Tag for GitHub Container Registry (use repository path to avoid org permissions)
+          docker tag terminal-portfolio:latest ghcr.io/${{ github.repository }}:latest
           
           # Push to registry
-          docker push ghcr.io/${{ github.repository_owner }}/terminal-portfolio:latest
+          docker push ghcr.io/${{ github.repository }}:latest
 
   deploy-backend:
     needs: build-terminal-image
