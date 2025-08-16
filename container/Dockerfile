@@ -120,8 +120,9 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.zshrc && \
+    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
@@ -148,8 +149,7 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
     echo "  htop - System monitor" >> /home/portfolio/README.md
 
 # Set execute permissions for scripts
-RUN chmod +x /home/portfolio/scripts/*.sh && \
-    chmod +x /home/portfolio/scripts/blog
+RUN chmod +x /home/portfolio/scripts/*.sh
 
 
 # Create basic directory structure (empty but functional)
@@ -166,8 +166,9 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.bashrc
+    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio

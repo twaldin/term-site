@@ -1,3 +1,0 @@
-#!/bin/bash
-# Blog command - enhanced markdown blog system
-exec node /home/portfolio/scripts/blog.js "$@"
