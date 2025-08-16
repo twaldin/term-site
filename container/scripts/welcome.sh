@@ -11,29 +11,36 @@ RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
 
-# Simple typewriter function with echo -e support
+# Ultra-fast typewriter function with batch printing
 typewriter() {
   local text="$1"
-  local delay=0.001 # Ultra fast delay
+  local batch_size=5  # Print 5 characters at a time
+  local delay=0.0001  # Tiny delay between batches
 
-  # Use echo -e to process escape sequences, then extract character by character
+  # Use echo -e to process escape sequences
   local processed_text=$(echo -e "$text")
+  local length=${#processed_text}
 
-  for ((i = 0; i < ${#processed_text}; i++)); do
-    printf "%s" "${processed_text:$i:1}"
+  for ((i = 0; i < length; i += batch_size)); do
+    printf "%s" "${processed_text:$i:$batch_size}"
     sleep $delay
   done
   echo
 }
 
-# Simple animated separator
+# Ultra-fast animated separator with batch printing
 animated_separator() {
   local char="$1"
   local width="$2"
-  local delay=0.001
+  local batch_size=10  # Print 10 characters at a time
+  local delay=0.0001
 
-  for ((i = 0; i < width; i++)); do
-    printf "\033[38;5;117m%s\033[0m" "$char"
+  for ((i = 0; i < width; i += batch_size)); do
+    local batch=""
+    for ((j = 0; j < batch_size && (i + j) < width; j++)); do
+      batch+="\033[38;5;117m${char}\033[0m"
+    done
+    printf "%b" "$batch"
     sleep $delay
   done
   echo
