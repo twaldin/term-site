@@ -72,3 +72,12 @@ center_text "Welcome to my portfolio terminal! You can explore with familiar cmd
 center_text "Type 'help' for available commands" "$GRAY"
 
 separator "═" "$CYAN"
+
+echo -e "\n${GREEN}${BOLD}📁 Projects${RESET}"
+echo -e "${WHITE}Type ${YELLOW}${BOLD}projects${RESET}${WHITE} to explore my code repositories:${RESET}"
+echo -e "  ${CYAN}•${RESET} ${WHITE}STM32 Games${RESET} - Handheld console with C/ARM"
+echo -e "  ${CYAN}•${RESET} ${WHITE}Terminal Site${RESET} - This portfolio (Next.js/Docker)"  
+echo -e "  ${CYAN}•${RESET} ${WHITE}Sulfur Recipes${RESET} - Game recipe database (React)"
+echo -e "  ${CYAN}•${RESET} ${WHITE}Dotfiles${RESET} - Dev environment configs (Zsh/LazyVim)"
+
+separator "═" "$CYAN"
