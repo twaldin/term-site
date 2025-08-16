@@ -18,30 +18,66 @@ class SessionManager {
     console.log(`Preloading Docker image ${imageName} on startup...`);
     
     try {
-      // Remove any existing cached image first
-      try {
-        const image = this.docker.getImage(imageName);
-        await image.remove({ force: true });
-        console.log(`Removed old cached ${imageName} image`);
-      } catch (err) {
-        console.log(`No existing image to remove:`, err.message);
+      // Wait for Docker to be ready first
+      let dockerReady = false;
+      let retries = 30;
+      while (!dockerReady && retries > 0) {
+        try {
+          await this.docker.ping();
+          dockerReady = true;
+          console.log('Docker daemon is ready');
+        } catch (err) {
+          console.log(`Waiting for Docker daemon... (${retries} retries left)`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          retries--;
+        }
       }
       
-      // Pull fresh image
+      if (!dockerReady) {
+        console.error('Docker daemon not ready after 30 seconds, skipping preload');
+        return;
+      }
+      
+      // ALWAYS remove ALL existing versions of the image to prevent any caching
+      try {
+        console.log('Removing ALL cached versions of the image...');
+        const images = await this.docker.listImages();
+        for (const img of images) {
+          if (img.RepoTags && img.RepoTags.some(tag => tag.includes('twaldin/terminal-portfolio'))) {
+            try {
+              const image = this.docker.getImage(img.Id);
+              await image.remove({ force: true });
+              console.log(`Removed cached image: ${img.Id} (${img.RepoTags.join(', ')})`);
+            } catch (err) {
+              console.log(`Could not remove ${img.Id}:`, err.message);
+            }
+          }
+        }
+      } catch (err) {
+        console.log(`Error cleaning up old images:`, err.message);
+      }
+      
+      // Pull fresh image with explicit latest tag
+      console.log('Pulling fresh image from Docker Hub...');
       await new Promise((resolve, reject) => {
-        this.docker.pull(imageName, (err, stream) => {
+        // Force pull from registry by using registry URL
+        const pullOptions = {
+          authconfig: {} // Empty auth for public images
+        };
+        
+        this.docker.pull(`docker.io/${imageName}`, pullOptions, (err, stream) => {
           if (err) {
-            console.error(`Failed to preload image:`, err);
+            console.error(`Failed to start image pull:`, err);
             reject(err);
             return;
           }
           
           this.docker.modem.followProgress(stream, (err, res) => {
             if (err) {
-              console.error(`Failed to preload image:`, err);
+              console.error(`Failed during image pull:`, err);
               reject(err);
             } else {
-              console.log(`Successfully preloaded ${imageName}`);
+              console.log(`Successfully pulled fresh ${imageName} from registry`);
               this.imagePreloaded = true;
               resolve(res);
             }
@@ -49,7 +85,8 @@ class SessionManager {
         });
       });
     } catch (error) {
-      console.error(`Error preloading image:`, error);
+      console.error(`Error preloading image - will pull on demand:`, error);
+      this.imagePreloaded = false;
     }
   }
 
@@ -137,34 +174,50 @@ class SessionManager {
     try {
       const imageName = 'twaldin/terminal-portfolio:latest';
       
-      // Only pull if image wasn't preloaded or if forced
-      if (!this.imagePreloaded) {
-        console.log(`Image not preloaded, pulling ${imageName}...`);
+      // Check if image exists locally
+      let imageExists = false;
+      try {
+        const images = await this.docker.listImages();
+        imageExists = images.some(img => 
+          img.RepoTags && img.RepoTags.includes(imageName)
+        );
+      } catch (err) {
+        console.error('Failed to list images:', err);
+      }
+      
+      // Pull if image doesn't exist or wasn't preloaded
+      if (!imageExists || !this.imagePreloaded) {
+        console.log(`Need to pull ${imageName} (exists: ${imageExists}, preloaded: ${this.imagePreloaded})`);
         try {
           await new Promise((resolve, reject) => {
-            this.docker.pull(imageName, (err, stream) => {
-            if (err) {
-              reject(err);
-              return;
-            }
+            const pullOptions = {
+              authconfig: {} // Empty auth for public images
+            };
             
-            this.docker.modem.followProgress(stream, (err, res) => {
+            // Use full registry path to ensure we pull from Docker Hub
+            this.docker.pull(`docker.io/${imageName}`, pullOptions, (err, stream) => {
               if (err) {
                 reject(err);
-              } else {
-                console.log(`Successfully pulled ${imageName}`);
-                resolve(res);
+                return;
               }
+              
+              this.docker.modem.followProgress(stream, (err, res) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  console.log(`Successfully pulled fresh ${imageName} from Docker Hub`);
+                  resolve(res);
+                }
+              });
             });
           });
-        });
-        this.imagePreloaded = true;
-      } catch (pullError) {
-        console.error(`Failed to pull image ${imageName}:`, pullError);
-        throw new Error(`Failed to pull terminal image: ${pullError.message}`);
-      }
+          this.imagePreloaded = true;
+        } catch (pullError) {
+          console.error(`Failed to pull image ${imageName}:`, pullError);
+          throw new Error(`Failed to pull terminal image: ${pullError.message}`);
+        }
       } else {
-        console.log(`Using preloaded ${imageName} image`);
+        console.log(`Using existing ${imageName} image`);
       }
 
       // Create Docker container

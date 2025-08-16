@@ -59,37 +59,22 @@ separator "═" "$CYAN"
 
 # ASCII Art Header
 print_ascii
-echo
-
-#Socials Section
 separator "─" "$BLUE"
-
-echo -e "\n${CYAN}󰇮 tim@waldin.net ${RESET}${MAGENTA} https://studyspot.us ${RESEST}${YELLOW} https://github.com/twaldin${RESET}${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
-
-# Projects Section
+echo -e "\n${CYAN}󰇮 tim@waldin.net${RESET}    ${MAGENTA} https://studyspot.us${RESEST}   ${YELLOW} https://github.com/twaldin${RESET}   ${GREEN}󰋾 https://instagram.com/timn.w${RESET}"
 separator "─" "$GREEN"
-echo -e "\n${BOLD}${WHITE}  🚀 Featured Projects${RESET}"
+echo -e "\n${BOLD}${WHITE}  Projects${RESET}"
 
-echo -e "\n${GREEN}  TerminalSite:${RESET}   ${WHITE}Interactive web-based terminal portfolio${RESET}"
-echo -e "${DIM}                    Built with Docker, Node.js, and React${RESET}"
+echo -e "\n${GREEN}  term-site:${RESET}   ${WHITE}Interactive terminal portfolio website${RESET}"
+echo -e "${DIM}                    Built with Docker, node-pty, xterm.js, and Next.js on typescript${RESET}"
 
-echo -e "\n${GREEN}  StudySpot:${RESET}      ${WHITE}Collaborative study platform for students${RESET}"
-echo -e "${DIM}                    Real-time collaboration tools & study rooms${RESET}"
+echo -e "\n${GREEN}  StudySpot:${RESET}      ${WHITE}Collaborative AI study platform for students${RESET}"
+echo -e "${DIM}                    Student community website with student group study/course material and a RAG assistant with tools${RESET}"
+echo -e "${DIM}                    Built on Next.js with a Cloudflare Workers Node.js runtime Assistant API which serves the chat streaming${RESET}"
+echo -e "${DIM}                    Provided experience working with llm native systems, such as vector dbs, tool call writing, conversation format, and more${RESET}"
 
 echo -e "\n${GREEN}  dotfiles:${RESET}       ${WHITE}Personal development environment configuration${RESET}"
 echo -e "${DIM}                    Neovim, Zsh, Oh-my-posh setup${RESET}"
 
-# Skills Section
-separator "─" "$MAGENTA"
-echo -e "\n${BOLD}${WHITE}  💻 Technical Skills${RESET}"
-
-echo -e "\n${YELLOW}  Languages:${RESET}  ${WHITE}JavaScript/TypeScript, Python, C/C++, Go, Rust${RESET}"
-echo -e "${YELLOW}  Frontend:${RESET}   ${WHITE}React, Next.js, Vue.js, HTML/CSS, Tailwind${RESET}"
-echo -e "${YELLOW}  Backend:${RESET}    ${WHITE}Node.js, Express, FastAPI, PostgreSQL, MongoDB${RESET}"
-echo -e "${YELLOW}  DevOps:${RESET}     ${WHITE}Docker, Kubernetes, AWS, GCP, CI/CD, Terraform${RESET}"
-echo -e "${YELLOW}  Tools:${RESET}      ${WHITE}Git, Linux, Vim/Neovim, VS Code, Figma${RESET}"
-
-# Commands Section
 separator "─" "$RED"
 echo -e "\n${BOLD}${WHITE}  ⌨️  Available Commands${RESET}"
 
@@ -103,15 +88,6 @@ echo -e "${RED}  exit${RESET}        End terminal session"
 # Fun Commands
 echo -e "\n${DIM}${GRAY}  Fun commands: ${WHITE}whoami, fortune, cowsay, figlet, htop${RESET}"
 
-# Current Status
-separator "─" "$CYAN"
-echo -e "\n${BOLD}${WHITE}  📊 Current Status${RESET}"
-
-echo -e "\n${CYAN}  🎓 Education:${RESET}   ${WHITE}Pursuing Computer Engineering at Purdue${RESET}"
-echo -e "${CYAN}  💼 Work:${RESET}        ${WHITE}Building the future of collaborative studying${RESET}"
-echo -e "${CYAN}  🌱 Learning:${RESET}    ${WHITE}Advanced systems programming & cloud architecture${RESET}"
-echo -e "${CYAN}  📍 Location:${RESET}    ${WHITE}West Lafayette, IN${RESET}"
-
 # Footer
 echo
 separator "═" "$CYAN"
@@ -120,5 +96,3 @@ center_text "Welcome to my terminal portfolio! Feel free to explore." "$WHITE$DI
 center_text "Type 'help' for available commands or just start exploring!" "$GRAY"
 
 separator "═" "$CYAN"
-
-echo -e "\n${BOLD}${GREEN}portfolio@twaldin:~$ ${RESET}"
