@@ -38,55 +38,17 @@ separator() {
     printf "${RESET}\n"
 }
 
-# Function to print side-by-side content
-print_side_by_side() {
-    # ASCII Art lines
-    local ascii_lines=(
-        "    .    o8o                                                   oooo        .o8  o8o                                            .   "
-        "  .o8    \`\"'                                                   \`888       \"888  \`\"'                                          .o8   "
-        ".o888oo oooo  ooo. .oo.  .oo.       oooo oooo    ooo  .oooo.    888   .oooo888 oooo  ooo. .oo.       ooo. .oo.    .ooooo.  .o888oo "
-        "  888   \`888  \`888P\"Y88bP\"Y88b       \`88. \`88.  .8'  \`P  )88b   888  d88' \`888 \`888  \`888P\"Y88b      \`888P\"Y88b  d88' \`88b   888   "
-        "  888    888   888   888   888        \`88..]88..8'    .oP\"888   888  888   888  888   888   888       888   888  888ooo888   888   "
-        "  888 .  888   888   888   888  .o.    \`888'\`888'    d8(  888   888  888   888  888   888   888  .o.  888   888  888    .o   888 . "
-        "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \`Y8bod8P'   \"888\" "
-        ""
-        ""
-        ""
-        ""
-        ""
-    )
-    
-    # Info lines
-    local info_lines=(
-        ""
-        ""
-        "${BOLD}${WHITE}👨‍💻 Timothy Waldin${RESET}"
-        "${CYAN}Computer Engineering Major${RESET}"
-        "${CYAN}Purdue University${RESET}"
-        ""
-        "${GREEN}Chief Technology Officer${RESET}"
-        "${GREEN}StudySpot${RESET}"
-        ""
-        "${YELLOW}📧 timothy@example.com${RESET}"
-        "${YELLOW}🐙 github.com/twaldin${RESET}"
-        "${YELLOW}💼 linkedin.com/in/twaldin${RESET}"
-        "${YELLOW}📸 instagram.com/twaldin${RESET}"
-    )
-    
-    # Print side by side
-    for i in ${!ascii_lines[@]}; do
-        local ascii_line="${ascii_lines[$i]}"
-        local info_line="${info_lines[$i]:-}"
-        
-        # Print ASCII in cyan, then info
-        printf "${BOLD}${CYAN}%s${RESET}" "$ascii_line"
-        
-        # Add spacing and info
-        if [[ -n "$info_line" ]]; then
-            printf "   %s" "$info_line"
-        fi
-        printf "\n"
-    done
+# Function to print ASCII art
+print_ascii() {
+    echo -e "${BOLD}${CYAN}"
+    echo "    .    o8o                                                   oooo        .o8  o8o                                            .   "
+    echo "  .o8    \`\"'                                                   \`888       \"888  \`\"'                                          .o8   "
+    echo ".o888oo oooo  ooo. .oo.  .oo.       oooo oooo    ooo  .oooo.    888   .oooo888 oooo  ooo. .oo.       ooo. .oo.    .ooooo.  .o888oo "
+    echo "  888   \`888  \`888P\"Y88bP\"Y88b       \`88. \`88.  .8'  \`P  )88b   888  d88' \`888 \`888  \`888P\"Y88b      \`888P\"Y88b  d88' \`88b   888   "
+    echo "  888    888   888   888   888        \`88..]88..8'    .oP\"888   888  888   888  888   888   888       888   888  888ooo888   888   "
+    echo "  888 .  888   888   888   888  .o.    \`888'\`888'    d8(  888   888  888   888  888   888   888  .o.  888   888  888    .o   888 . "
+    echo "  \"888\" o888o o888o o888o o888o Y8P     \`8'  \`8'     \`Y888\"\"8o o888o \`Y8bod88P\" o888o o888o o888o Y8P o888o o888o \`Y8bod8P'   \"888\" "
+    echo -e "${RESET}"
 }
 
 # Clear screen and start
@@ -95,8 +57,8 @@ clear
 # Top border
 separator "═" "$CYAN"
 
-# ASCII Art Header with side info
-print_side_by_side
+# ASCII Art Header
+print_ascii
 echo
 
 # Main Info Section
