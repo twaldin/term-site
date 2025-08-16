@@ -49,15 +49,15 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           if (!terminalRef.current) return;
 
           // Calculate dynamic font size to ensure ASCII art fits
-          const asciiWidth = 140; // Width of your ASCII art in characters  
+          const asciiWidth = 123; // Width of your new ASCII art in characters
           const containerWidth = terminalRef.current!.clientWidth;
-          const padding = 40; // Account for scrollbars and padding
+          const padding = 20; // Reduce padding for tighter fit
           const usableWidth = containerWidth - padding;
           
           // Calculate font size that allows ASCII to fit with some margin
           const charWidthRatio = 0.6; // Typical monospace character width/height ratio
           const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-          const dynamicFontSize = Math.max(8, Math.min(terminalConfig.fontSize, maxFontSize));
+          const dynamicFontSize = Math.max(6, Math.min(16, maxFontSize)); // More aggressive sizing
           
           // Create dynamic config with calculated font size
           const dynamicConfig = {
@@ -176,13 +176,13 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           const handleResize = () => {
             if (terminalRef.current && xterm && fitAddon) {
               // Recalculate font size on resize
-              const asciiWidth = 140;
+              const asciiWidth = 123;
               const containerWidth = terminalRef.current.clientWidth;
-              const padding = 40;
+              const padding = 20;
               const usableWidth = containerWidth - padding;
               const charWidthRatio = 0.6;
               const maxFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-              const newFontSize = Math.max(8, Math.min(terminalConfig.fontSize, maxFontSize));
+              const newFontSize = Math.max(6, Math.min(16, maxFontSize));
               
               // Update font size if it changed significantly
               if (Math.abs(xterm.options.fontSize - newFontSize) > 1) {
