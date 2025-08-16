@@ -34,7 +34,7 @@ export const terminalTheme = {
 export const terminalConfig = {
   // Font settings matching your ghostty config
   fontFamily: 'JetBrains Mono, "JetBrainsMono Nerd Font Mono", "Fira Code", "Monaco", "Consolas", monospace',
-  fontSize: 18, // Matching your ghostty font-size
+  fontSize: 12, // Reduced font size for better screen utilization
   fontWeight: 'normal' as const,
   fontWeightBold: 'bold' as const,
   lineHeight: 1.2,
