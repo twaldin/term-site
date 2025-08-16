@@ -137,7 +137,7 @@ Creating a portfolio that runs entirely in the terminal was an exciting challeng
 ### Dynamic ASCII Art
 \`\`\`bash
 # Using figlet with Univers font
-figlet -f block "twald.in"
+figlet -f Univers "twald.in"
 \`\`\`
 
 ### Gradient Borders
@@ -221,7 +221,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
 
   async listPosts() {
     try {
-      console.log(gradientAscii('BLOG', 'tokyo', 'block'));
+      console.log(gradientAscii('BLOG', 'tokyo', 'Univers'));
       await gradientBorder(80, '═', 'tokyo');
       
       const files = fs.readdirSync(this.postsDir)
@@ -294,7 +294,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
       await gradientBorder(80, '═', 'primary');
       
       if (frontMatter.title) {
-        console.log(gradientAscii(frontMatter.title.substring(0, 20), 'primary', 'block'));
+        console.log(gradientAscii(frontMatter.title.substring(0, 20), 'primary', 'Univers'));
       }
       
       if (frontMatter.date) {
@@ -309,7 +309,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
       console.log('');
 
       // Render markdown with typewriter effect for dramatic reveal
-      const rendered = marked(markdown);
+      const rendered = marked.parse(markdown);
       const lines = rendered.split('\n');
       
       for (const line of lines) {
@@ -366,7 +366,7 @@ The result is a terminal environment that's both beautiful and functional! ✨
 
   async searchPosts(query) {
     try {
-      console.log(gradientAscii('SEARCH', 'accent', 'block'));
+      console.log(gradientAscii('SEARCH', 'accent', 'Univers'));
       await gradientBorder(80, '═', 'accent');
       
       const files = fs.readdirSync(this.postsDir).filter(file => file.endsWith('.md'));

@@ -23,7 +23,7 @@ typewriter() {
 gradient_ascii() {
     local text="$1"
     local gradient="${2:-tokyo}"
-    local font="${3:-block}"
+    local font="${3:-Univers}"
     run_node_util "
     const { gradientAscii } = require('./utils.js');
     console.log(gradientAscii('$text', '$gradient', '$font'));
@@ -45,7 +45,7 @@ animated_separator() {
 clear
 
 # Dynamic ASCII header with animation
-gradient_ascii "PROJECTS" "rainbow" "block"
+gradient_ascii "PROJECTS" "rainbow" "Univers"
 echo ""
 animated_separator 80 "═" "primary" 15
 
