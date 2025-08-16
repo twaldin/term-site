@@ -95,7 +95,7 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.zshrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
     echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias dotfiles='cd ~/projects/dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.zshrc && \
@@ -135,7 +135,7 @@ RUN chmod +x /home/portfolio/scripts/*.sh && \
 RUN ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
     ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
     ln -sf /home/portfolio/scripts/sulfur-recipies.sh /home/portfolio/projects/sulfur-recipies/sulfur-recipies.sh && \
-    ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/projects/dotfiles/dotfiles.sh
+    ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
@@ -147,7 +147,7 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.bashrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
     echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias dotfiles='cd ~/projects/dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.bashrc && \
