@@ -185,7 +185,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               const newFontSize = Math.max(6, Math.min(16, maxFontSize));
               
               // Update font size if it changed significantly
-              if (Math.abs(xterm.options.fontSize - newFontSize) > 1) {
+              const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
+              if (Math.abs(currentFontSize - newFontSize) > 1) {
                 xterm.options.fontSize = newFontSize;
                 console.log(`Resized - New font size: ${newFontSize}px`);
               }
