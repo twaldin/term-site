@@ -23,6 +23,7 @@ typewriter() {
     printf "%s" "${processed_text:$i:1}"
     sleep $delay
   done
+  echo
 }
 
 # Simple animated separator
@@ -35,6 +36,7 @@ animated_separator() {
     printf "\033[38;5;117m%s\033[0m" "$char"
     sleep $delay
   done
+  echo
 }
 
 # ASCII typewriter function - displays figlet output line by line
@@ -78,4 +80,3 @@ typewriter "${DIM}Type projects to see my projects - Type blog to see my blog - 
 echo ""
 
 animated_separator "═" 139
-
