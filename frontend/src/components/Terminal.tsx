@@ -66,13 +66,13 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           const padding = Math.min(10, actualWidth * 0.02); // 2% padding or 10px, whichever is smaller
           const usableWidth = actualWidth - padding;
           
-          // Calculate font size with conservative character width estimation
-          // Use a more conservative ratio and add safety margin
-          const charWidthRatio = 0.7; // More conservative estimate for character width
-          const safetyMargin = 0.85; // Use only 85% of calculated space for safety
+          // Calculate font size with more aggressive sizing to fill screen
+          // Use a more accurate ratio for monospace fonts
+          const charWidthRatio = 0.6; // More accurate estimate for character width
+          const safetyMargin = 0.95; // Use 95% of calculated space for better screen utilization
           const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
           const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
-          const dynamicFontSize = Math.max(4, Math.min(16, conservativeFontSize));
+          const dynamicFontSize = Math.max(6, Math.min(24, conservativeFontSize)); // Increased min/max
           
           // Create dynamic config with calculated font size
           const dynamicConfig = {
@@ -202,11 +202,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
               const padding = Math.min(10, actualWidth * 0.02);
               const usableWidth = actualWidth - padding;
-              const charWidthRatio = 0.7;
-              const safetyMargin = 0.85;
+              const charWidthRatio = 0.6;
+              const safetyMargin = 0.95;
               const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
               const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
-              const newFontSize = Math.max(4, Math.min(16, conservativeFontSize));
+              const newFontSize = Math.max(6, Math.min(24, conservativeFontSize));
               
               // Update font size if it changed significantly
               const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
