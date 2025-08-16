@@ -16,8 +16,11 @@ RESET='\033[0m'          # Reset color
 BOLD='\033[1m'           # Bold text
 DIM='\033[2m'            # Dim text
 
-# Terminal dimensions
-COLS=$(tput cols 2>/dev/null || echo 80)
+# Terminal dimensions - use environment variable or fallback
+COLS=${COLUMNS:-$(tput cols 2>/dev/null || echo 120)}
+
+# Get the actual ASCII art width for reference
+ASCII_WIDTH=140
 
 # Center text function
 center_text() {
@@ -29,12 +32,16 @@ center_text() {
   echo -e "${color}${text}${RESET}"
 }
 
-# Print separator line
+# Print separator line that spans the full terminal width
 separator() {
   local char="${1:-═}"
   local color="${2:-$GRAY}"
+  
+  # Get current terminal width dynamically
+  local current_cols=$(tput cols 2>/dev/null || echo $COLS)
+  
   printf "${color}"
-  printf "${char}%.0s" $(seq 1 $COLS)
+  printf "${char}%.0s" $(seq 1 $current_cols)
   printf "${RESET}\n"
 }
 

@@ -281,7 +281,9 @@ class SessionManager {
         AttachStdin: true,
         Env: [
           'TERM=xterm-256color',
-          'PS1=portfolio@twaldin:$ '
+          'PS1=portfolio@twaldin:$ ',
+          'COLUMNS=120',  // Set default columns for welcome script
+          'LINES=30'      // Set default lines
         ],
         WorkingDir: '/home/portfolio',
         User: 'portfolio',
