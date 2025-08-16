@@ -7,6 +7,50 @@ class SessionManager {
     this.docker = new Docker();
     this.maxSessions = 10;
     this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
+    this.imagePreloaded = false;
+    
+    // Preload the image on startup
+    this.preloadImage();
+  }
+  
+  async preloadImage() {
+    const imageName = 'twaldin/terminal-portfolio:latest';
+    console.log(`Preloading Docker image ${imageName} on startup...`);
+    
+    try {
+      // Remove any existing cached image first
+      try {
+        const image = this.docker.getImage(imageName);
+        await image.remove({ force: true });
+        console.log(`Removed old cached ${imageName} image`);
+      } catch (err) {
+        console.log(`No existing image to remove:`, err.message);
+      }
+      
+      // Pull fresh image
+      await new Promise((resolve, reject) => {
+        this.docker.pull(imageName, (err, stream) => {
+          if (err) {
+            console.error(`Failed to preload image:`, err);
+            reject(err);
+            return;
+          }
+          
+          this.docker.modem.followProgress(stream, (err, res) => {
+            if (err) {
+              console.error(`Failed to preload image:`, err);
+              reject(err);
+            } else {
+              console.log(`Successfully preloaded ${imageName}`);
+              this.imagePreloaded = true;
+              resolve(res);
+            }
+          });
+        });
+      });
+    } catch (error) {
+      console.error(`Error preloading image:`, error);
+    }
   }
 
   async createSession(sessionId, socket) {
@@ -93,11 +137,12 @@ class SessionManager {
     try {
       const imageName = 'twaldin/terminal-portfolio:latest';
       
-      // Always pull latest image to ensure we have the most recent version
-      console.log(`Pulling latest ${imageName} from registry...`);
-      try {
-        await new Promise((resolve, reject) => {
-          this.docker.pull(imageName, (err, stream) => {
+      // Only pull if image wasn't preloaded or if forced
+      if (!this.imagePreloaded) {
+        console.log(`Image not preloaded, pulling ${imageName}...`);
+        try {
+          await new Promise((resolve, reject) => {
+            this.docker.pull(imageName, (err, stream) => {
             if (err) {
               reject(err);
               return;
@@ -113,9 +158,13 @@ class SessionManager {
             });
           });
         });
+        this.imagePreloaded = true;
       } catch (pullError) {
         console.error(`Failed to pull image ${imageName}:`, pullError);
         throw new Error(`Failed to pull terminal image: ${pullError.message}`);
+      }
+      } else {
+        console.log(`Using preloaded ${imageName} image`);
       }
 
       // Create Docker container
