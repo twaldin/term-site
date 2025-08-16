@@ -39,6 +39,10 @@ RUN apt-get install -y \
 # Copy dotfiles from build context (submodule)
 COPY dotfiles /home/portfolio/.dotfiles
 
+# Copy welcome scripts
+COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
+COPY container/scripts/ /home/portfolio/scripts/
+
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
     mkdir -p /home/portfolio/.local/share && \
@@ -112,24 +116,11 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
     echo "  tree - Show directory structure" >> /home/portfolio/README.md && \
     echo "  htop - System monitor" >> /home/portfolio/README.md
 
-# Add a basic help command script
-RUN echo '#!/bin/bash' > /home/portfolio/scripts/help && \
-    echo 'echo "Terminal Portfolio Commands:"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  help     - Show this help message"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  ls, ll   - List files and directories"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  cat FILE - View file contents"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  nvim FILE - Edit file with neovim"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  tree     - Show directory tree"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  htop     - System monitor"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  whoami   - Show current user"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  pwd      - Show current directory"' >> /home/portfolio/scripts/help && \
-    echo 'echo ""' >> /home/portfolio/scripts/help && \
-    echo 'echo "Try destructive commands too:"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  rm -rf / - Will only affect this container!"' >> /home/portfolio/scripts/help && \
-    echo 'echo "  :(){ :|:& };: - Fork bomb (container will restart)"' >> /home/portfolio/scripts/help && \
-    echo 'echo ""' >> /home/portfolio/scripts/help && \
-    echo 'echo "This is a secure environment - experiment freely!"' >> /home/portfolio/scripts/help && \
-    chmod +x /home/portfolio/scripts/help
+# Set execute permissions for scripts
+RUN chmod +x /home/portfolio/scripts/*.sh && \
+    chmod +x /home/portfolio/scripts/welcome && \
+    chmod +x /home/portfolio/scripts/projects && \
+    chmod +x /home/portfolio/scripts/contact
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
@@ -140,12 +131,14 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
 
-# Create a restricted shell environment
+# Create a restricted shell environment with welcome screen
 RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'export HOME=/home/portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export USER=portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export SHELL=/bin/zsh' >> /home/portfolio/secure-shell.sh && \
     echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
+    echo '# Show welcome dashboard on login' >> /home/portfolio/secure-shell.sh && \
+    echo '/home/portfolio/scripts/welcome.sh' >> /home/portfolio/secure-shell.sh && \
     echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
     chmod +x /home/portfolio/secure-shell.sh && \
     chown portfolio:portfolio /home/portfolio/secure-shell.sh
