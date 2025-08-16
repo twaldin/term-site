@@ -38,6 +38,7 @@ RUN apt-get install -y \
     ncurses-base \
     zsh \
     nodejs \
+    figlet \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
     && rm -rf /var/lib/apt/lists/*
