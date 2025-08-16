@@ -24,7 +24,7 @@ jobs:
           echo "Files in container directory:"
           ls -la container/
           echo "Content of welcome.sh (first 10 lines):"
-          head -n 10 container/welcome.sh
+          head -n 10 container/scripts/welcome.sh
           
           # Build the terminal image with no cache to ensure latest changes
           docker build --no-cache -f container/Dockerfile -t terminal-portfolio:latest .
