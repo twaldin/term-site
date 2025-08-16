@@ -10,6 +10,9 @@ RUN apt-get update --fix-missing && \
 # Add universe repository and update again
 RUN add-apt-repository universe && apt-get update
 
+# Install curl first for Node.js setup
+RUN apt-get install -y curl
+
 # Install Node.js repository
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 
@@ -25,7 +28,6 @@ RUN apt-get install -y \
     less \
     bat \
     git \
-    curl \
     wget \
     unzip \
     tree \
