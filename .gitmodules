@@ -1,3 +1,12 @@
 [submodule "dotfiles"]
 	path = dotfiles
 	url = https://github.com/twaldin/dotfiles.git
+[submodule "container/projects/stm32-games"]
+	path = container/projects/stm32-games
+	url = https://github.com/twaldin/stm32-games.git
+[submodule "container/projects/term-site"]
+	path = container/projects/term-site
+	url = https://github.com/twaldin/term-site.git
+[submodule "container/projects/sulfur-recipies"]
+	path = container/projects/sulfur-recipies
+	url = https://github.com/twaldin/sulfur-recipies.git

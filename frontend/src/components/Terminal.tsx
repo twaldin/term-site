@@ -49,7 +49,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           if (!terminalRef.current) return;
 
           // Calculate dynamic font size to ensure ASCII art fits
-          const asciiWidth = 123; // Width of your new ASCII art in characters
+          const asciiWidth = 139; // Width of ASCII art in characters (tim@waldin.net)
           
           // Get more accurate available space measurement
           const viewportWidth = window.innerWidth;
@@ -194,7 +194,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             resizeTimeout = setTimeout(() => {
               if (terminalRef.current && xterm && fitAddon) {
               // Recalculate font size on resize
-              const asciiWidth = 123;
+              const asciiWidth = 139;
               const viewportWidth = window.innerWidth;
               const documentWidth = document.documentElement.clientWidth;
               const containerWidth = terminalRef.current.clientWidth;
