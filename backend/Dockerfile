@@ -35,5 +35,32 @@ RUN echo '#!/bin/sh' > /app/build-terminal-image.sh && \
 # Expose port
 EXPOSE 3001
 
-# Start Docker daemon, build terminal image, and start the server
-CMD dockerd-entrypoint.sh & sleep 10 && /app/build-terminal-image.sh && npm start
+# Create startup script that handles failures gracefully
+RUN echo '#!/bin/sh' > /app/startup.sh && \
+    echo 'set -e' >> /app/startup.sh && \
+    echo 'echo "Starting Docker daemon..."' >> /app/startup.sh && \
+    echo 'dockerd-entrypoint.sh &' >> /app/startup.sh && \
+    echo 'echo "Waiting for Docker daemon to be ready..."' >> /app/startup.sh && \
+    echo 'timeout=30' >> /app/startup.sh && \
+    echo 'while [ $timeout -gt 0 ] && ! docker version > /dev/null 2>&1; do' >> /app/startup.sh && \
+    echo '  sleep 1' >> /app/startup.sh && \
+    echo '  timeout=$((timeout - 1))' >> /app/startup.sh && \
+    echo 'done' >> /app/startup.sh && \
+    echo 'if [ $timeout -eq 0 ]; then' >> /app/startup.sh && \
+    echo '  echo "ERROR: Docker daemon failed to start within 30 seconds"' >> /app/startup.sh && \
+    echo '  echo "Starting server without terminal image build..."' >> /app/startup.sh && \
+    echo '  exec npm start' >> /app/startup.sh && \
+    echo 'fi' >> /app/startup.sh && \
+    echo 'echo "Docker daemon is ready"' >> /app/startup.sh && \
+    echo 'echo "Building terminal image..."' >> /app/startup.sh && \
+    echo 'if /app/build-terminal-image.sh; then' >> /app/startup.sh && \
+    echo '  echo "Terminal image built successfully"' >> /app/startup.sh && \
+    echo 'else' >> /app/startup.sh && \
+    echo '  echo "WARNING: Terminal image build failed, continuing anyway"' >> /app/startup.sh && \
+    echo 'fi' >> /app/startup.sh && \
+    echo 'echo "Starting Node.js server..."' >> /app/startup.sh && \
+    echo 'exec npm start' >> /app/startup.sh && \
+    chmod +x /app/startup.sh
+
+# Start with the startup script
+CMD ["/app/startup.sh"]

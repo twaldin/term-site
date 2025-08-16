@@ -10,7 +10,11 @@ const server = http.createServer(app);
 // Configure CORS for Express
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://your-domain.vercel.app'] 
+    ? [
+        process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
+        'https://term-site-eed0kfe1k-twaldin.vercel.app',
+        'https://term-site.vercel.app'
+      ]
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
@@ -19,7 +23,11 @@ app.use(cors({
 const io = socketIo(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.FRONTEND_URL || 'https://your-domain.vercel.app'] 
+      ? [
+          process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
+          'https://term-site-eed0kfe1k-twaldin.vercel.app',
+          'https://term-site.vercel.app'
+        ]
       : ['http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST'],
     credentials: true

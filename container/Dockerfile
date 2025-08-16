@@ -3,10 +3,6 @@ FROM ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Configure DNS to use Google's servers explicitly  
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
-
 # Update package lists and install basic packages first
 RUN apt-get update --fix-missing && \
     apt-get install -y ca-certificates apt-transport-https software-properties-common
