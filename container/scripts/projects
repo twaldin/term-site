@@ -48,5 +48,6 @@ echo -e "   ${YELLOW}Tech:${RESET} Zsh, LazyVim, Neovim, Lua, Ghostty"
 echo -e "   ${BLUE}Navigate:${RESET} Type ${BOLD}dotfiles${RESET} to view info and navigate"
 echo
 
-echo -e "\n${DIM}${WHITE}Commands will show project info and automatically navigate to the directory.${RESET}"
+echo -e "\n${DIM}${WHITE}You are now in the projects directory. Commands will navigate to each project.${RESET}"
+echo -e "${YELLOW}Available:${RESET} ls, stm32-games, term-site, sulfur-recipies, dotfiles"
 echo -e "${CYAN}Type 'home' to return to main dashboard${RESET}"
