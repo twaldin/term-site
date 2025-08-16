@@ -342,6 +342,11 @@ class SessionManager {
       // Set session timeout
       this.setSessionTimeout(sessionId);
 
+      // Auto-type "welcome" command after container starts
+      setTimeout(() => {
+        this.autoTypeWelcome(sessionId);
+      }, 500); // Wait for shell prompt to appear
+
       console.log(`Container session created for ${sessionId}`);
       return Promise.resolve();
 
@@ -349,6 +354,36 @@ class SessionManager {
       console.error(`Failed to create container for session ${sessionId}:`, error);
       throw error;
     }
+  }
+
+  autoTypeWelcome(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      console.log(`Session ${sessionId} not found for auto-typing welcome`);
+      return;
+    }
+
+    console.log(`Auto-typing 'welcome' for session ${sessionId}`);
+    
+    // Type "welcome" letter by letter with delays
+    const letters = ['w', 'e', 'l', 'c', 'o', 'm', 'e'];
+    let index = 0;
+    
+    const typeNextLetter = () => {
+      if (index < letters.length) {
+        this.sendInput(sessionId, letters[index]);
+        index++;
+        setTimeout(typeNextLetter, 50); // 50ms between letters
+      } else {
+        // After typing all letters, press Enter
+        setTimeout(() => {
+          this.sendInput(sessionId, '\r');
+          console.log(`Completed auto-typing 'welcome' for session ${sessionId}`);
+        }, 100);
+      }
+    };
+    
+    typeNextLetter();
   }
 
   sendInput(sessionId, data) {
