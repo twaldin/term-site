@@ -118,9 +118,11 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
 
 # Set execute permissions for scripts
 RUN chmod +x /home/portfolio/scripts/*.sh && \
+    chmod +x /home/portfolio/scripts/welcome.sh && \
     chmod +x /home/portfolio/scripts/welcome && \
     chmod +x /home/portfolio/scripts/projects && \
-    chmod +x /home/portfolio/scripts/contact
+    chmod +x /home/portfolio/scripts/contact && \
+    chmod +x /home/portfolio/scripts/help
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
