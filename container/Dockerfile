@@ -44,9 +44,7 @@ RUN apt-get install -y \
 
 # Clone dotfiles repository will be done later after user creation
 
-# Copy welcome scripts and enhanced versions
-COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
-COPY container/welcome-enhanced.sh /home/portfolio/scripts/welcome-enhanced.sh
+# Copy all scripts
 COPY container/scripts/ /home/portfolio/scripts/
 COPY container/blog/ /home/portfolio/blog/
 COPY container/Univers.flf /usr/share/figlet/Univers.flf
@@ -118,10 +116,10 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
     echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.zshrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias home='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.zshrc && \
-    echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.zshrc && \
+    echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 
@@ -167,10 +165,10 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
     echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.bashrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias home='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome-enhanced.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias contact='/home/portfolio/scripts/contact'" >> /home/portfolio/.bashrc && \
-    echo "alias help='/home/portfolio/scripts/help'" >> /home/portfolio/.bashrc && \
+    echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
     echo "alias blog='/home/portfolio/scripts/blog'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
@@ -184,7 +182,7 @@ RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'cd /home/portfolio' >> /home/portfolio/secure-shell.sh && \
     echo '# Navigation aliases are loaded in .zshrc' >> /home/portfolio/secure-shell.sh && \
     echo '# Show welcome dashboard on login' >> /home/portfolio/secure-shell.sh && \
-    echo '/home/portfolio/scripts/welcome-enhanced.sh' >> /home/portfolio/secure-shell.sh && \
+    echo '/home/portfolio/scripts/welcome.sh' >> /home/portfolio/secure-shell.sh && \
     echo 'exec /bin/zsh' >> /home/portfolio/secure-shell.sh && \
     chmod +x /home/portfolio/secure-shell.sh && \
     chown portfolio:portfolio /home/portfolio/secure-shell.sh
