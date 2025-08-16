@@ -23,35 +23,23 @@ echo "aa    ]8I    88,    88      88      88  Y8,     a88  d8\"                \
 echo "\`\"YbbdP\"'    \"Y888  88      88      88   \"Y888888P'  88888888888         \`\"YbbdP\"Y8  \`\"8bbdP\"Y8  88      88      88   \`\"Ybbd8\"'  \`\"YbbdP\"' "
 echo "                                                                         aa,    ,88                                                        "
 echo "                                                                          \"Y8bbdP\"                                                         "
-echo -e "${RESET}\n"
 
-echo -e "${GREEN}Description:${RESET}"
+echo -e "${GREEN}Info:${RESET}"
 echo -e "   ${WHITE}A handheld game console project built with STM32F103C8T6 microcontroller${RESET}"
 echo -e "   ${WHITE}featuring classic games like Snake with an ST7789 LCD display.${RESET}"
 echo
-
-echo -e "${GREEN}Key Technologies:${RESET}"
+echo -e "${GREEN}Tech Stack:${RESET}"
 echo -e "   ${YELLOW}•${RESET} C programming with ARM Cortex-M3"
 echo -e "   ${YELLOW}•${RESET} STM32F103C8 (Blue Pill) microcontroller"
 echo -e "   ${YELLOW}•${RESET} ST7789 SPI LCD display driver"
 echo -e "   ${YELLOW}•${RESET} libopencm3 firmware library"
 echo -e "   ${YELLOW}•${RESET} ARM GCC toolchain"
 echo
-
-echo -e "${GREEN}Main Features:${RESET}"
-echo -e "   ${YELLOW}•${RESET} Snake game implementation"
-echo -e "   ${YELLOW}•${RESET} ST7789 2-inch IPS LCD display support"
-echo -e "   ${YELLOW}•${RESET} Tactile button input controls (UP/DOWN/LEFT/RIGHT)"
-echo -e "   ${YELLOW}•${RESET} 80MHz overclocked operation"
-echo -e "   ${YELLOW}•${RESET} Font rendering system"
-echo
-
-echo -e "${GREEN}Navigation:${RESET}"
 echo -e "   ${YELLOW}You are now in the projects/stm32-games directory${RESET}"
 echo -e "   ${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 echo
 
-echo -e "${GREEN}Quick Commands (available in project directory):${RESET}"
+echo -e "${GREEN}Commands:${RESET}"
 echo -e "   ${YELLOW}ls${RESET}                    - List project files"
 echo -e "   ${YELLOW}cat README.md${RESET}         - View project documentation"
 echo -e "   ${YELLOW}cat main.c${RESET}            - View main application code"
@@ -63,24 +51,25 @@ echo -e "   ${YELLOW}home${RESET}                  - Return to main dashboard"
 echo
 
 # Git repository information
-echo -e "${GREEN}Git Repository:${RESET}"
+echo -e "${GREEN}Git:${RESET}"
 if [ -d ".git" ]; then
-    # Show current branch
-    branch=$(git branch --show-current 2>/dev/null || echo "main")
-    echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
-    
-    # Show recent commits with nice formatting
-    echo -e "   ${BLUE}Recent commits:${RESET}"
-    git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-        echo -e "     ${DIM}•${RESET} $line"
-    done
-    
-    # Show repository status
-    if git status --porcelain | grep -q .; then
-        echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
-    else
-        echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
-    fi
+  # Show current branch
+  branch=$(git branch --show-current 2>/dev/null || echo "main")
+  echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+
+  # Show recent commits with nice formatting
+  echo -e "   ${BLUE}Recent commits:${RESET}"
+  git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
+    echo -e "     ${DIM}•${RESET} $line"
+  done
+
+  # Show repository status
+  if git status --porcelain | grep -q .; then
+    echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+  else
+    echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+  fi
 else
-    echo -e "   ${DIM}Not a git repository${RESET}"
+  echo -e "   ${DIM}Not a git repository${RESET}"
 fi
+

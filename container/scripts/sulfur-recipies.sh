@@ -29,14 +29,12 @@ echo "                                   88          \"8b,   ,aa  \"8a,   ,aa  8
 echo "                                   88           \`\"Ybbd8\"'   \`\"Ybbd8\"'  88  88\`YbbdP\"'    \`\"Ybbd8\"'  \`\"YbbdP\"' "
 echo "                                                                            88                                 "
 echo "                                                                            88                                 "
-echo -e "${RESET}\n"
-
-echo -e "${GREEN}Description:${RESET}"
+echo -e "${GREEN}Info:${RESET}"
 echo -e "   ${WHITE}A comprehensive recipe database web application for the Sulfur game,${RESET}"
 echo -e "   ${WHITE}featuring automated data scraping with advanced filtering and search.${RESET}"
-echo
+echo -e "   ${WHITE}Allows for filtering by HP, HP/s, and sorting by ingredient and variation.${RESET}"
 
-echo -e "${GREEN}Key Technologies:${RESET}"
+echo -e "${GREEN}Tech Stack:${RESET}"
 echo -e "   ${YELLOW}•${RESET} Next.js 15, React 19, TypeScript"
 echo -e "   ${YELLOW}•${RESET} Tailwind CSS 3 with animations"
 echo -e "   ${YELLOW}•${RESET} Radix UI component library"
@@ -45,21 +43,11 @@ echo -e "   ${YELLOW}•${RESET} Next-themes for dark/light mode"
 echo -e "   ${YELLOW}•${RESET} Lucide React icons"
 echo
 
-echo -e "${GREEN}Main Features:${RESET}"
-echo -e "   ${YELLOW}•${RESET} Complete database of 97 Sulfur game recipes"
-echo -e "   ${YELLOW}•${RESET} Advanced filtering by type, health, duration, difficulty"
-echo -e "   ${YELLOW}•${RESET} Search functionality across recipes and ingredients"
-echo -e "   ${YELLOW}•${RESET} Tabbed interface (recipes, ingredients, grouped view)"
-echo -e "   ${YELLOW}•${RESET} Dark/light theme support"
-echo -e "   ${YELLOW}•${RESET} Automated web scraping from sulfur.wiki.gg"
-echo
-
-echo -e "${GREEN}Navigation:${RESET}"
 echo -e "   ${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
 echo -e "   ${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
 echo
 
-echo -e "${GREEN}Quick Commands (available in project directory):${RESET}"
+echo -e "${GREEN}Commands:${RESET}"
 echo -e "   ${YELLOW}ls${RESET}                              - List project files"
 echo -e "   ${YELLOW}cat README.md${RESET}                   - View project documentation"
 echo -e "   ${YELLOW}cd app && ls${RESET}                    - Explore Next.js app structure"
@@ -72,24 +60,25 @@ echo -e "   ${YELLOW}home${RESET}                            - Return to main da
 echo
 
 # Git repository information
-echo -e "${GREEN}Git Repository:${RESET}"
+echo -e "${GREEN}Git:${RESET}"
 if [ -d ".git" ]; then
-    # Show current branch
-    branch=$(git branch --show-current 2>/dev/null || echo "main")
-    echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
-    
-    # Show recent commits with nice formatting
-    echo -e "   ${BLUE}Recent commits:${RESET}"
-    git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-        echo -e "     ${DIM}•${RESET} $line"
-    done
-    
-    # Show repository status
-    if git status --porcelain | grep -q .; then
-        echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
-    else
-        echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
-    fi
+  # Show current branch
+  branch=$(git branch --show-current 2>/dev/null || echo "main")
+  echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+
+  # Show recent commits with nice formatting
+  echo -e "   ${BLUE}Recent commits:${RESET}"
+  git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
+    echo -e "     ${DIM}•${RESET} $line"
+  done
+
+  # Show repository status
+  if git status --porcelain | grep -q .; then
+    echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+  else
+    echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+  fi
 else
-    echo -e "   ${DIM}Not a git repository${RESET}"
+  echo -e "   ${DIM}Not a git repository${RESET}"
 fi
+
