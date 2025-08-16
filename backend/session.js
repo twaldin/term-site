@@ -121,6 +121,7 @@ class SessionManager {
       // Create Docker container
       const container = await this.docker.createContainer({
         Image: imageName,
+        Hostname: 'twaldin',
         Tty: true,
         OpenStdin: true,
         StdinOnce: false,
@@ -129,7 +130,7 @@ class SessionManager {
         AttachStdin: true,
         Env: [
           'TERM=xterm-256color',
-          'PS1=portfolio@container:$ '
+          'PS1=portfolio@twaldin:$ '
         ],
         WorkingDir: '/home/portfolio',
         User: 'portfolio',
