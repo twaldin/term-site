@@ -3,12 +3,19 @@ FROM ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Enable universe repository and install essential tools
-RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository universe && \
-    apt-get update && \
-    apt-get install -y \
+# Configure DNS to use Google's servers explicitly  
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+
+# Update package lists and install basic packages first
+RUN apt-get update --fix-missing && \
+    apt-get install -y ca-certificates apt-transport-https software-properties-common
+
+# Add universe repository and update again
+RUN add-apt-repository universe && apt-get update
+
+# Install all required packages in one layer
+RUN apt-get install -y \
     bash \
     vim \
     neovim \
