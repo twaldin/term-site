@@ -54,6 +54,7 @@ print_side_by_side() {
         ""
         ""
         ""
+    )
     
     # Info lines
     local info_lines=(
