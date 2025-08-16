@@ -1,84 +1,86 @@
 #!/bin/bash
 
-# Colors
-CYAN='\033[38;5;117m'
-GREEN='\033[38;5;121m'
-WHITE='\033[38;5;255m'
-YELLOW='\033[38;5;227m'
-BLUE='\033[38;5;111m'
-RED='\033[38;5;210m'
-RESET='\033[0m'
-BOLD='\033[1m'
-DIM='\033[2m'
+# Source utilities
+source "$(dirname "$0")/utils.js"
 
 clear
-echo -e "${BOLD}${CYAN}"
-echo "                        88     ad88                                                                         "
-echo "                        88    d8\"                                                                           "
-echo "                        88    88                                                                           "
-echo ",adPPYba,  88       88  88  MM88MMM  88       88  8b,dPPYba,            8b,dPPYba,   ,adPPYba,   ,adPPYba, "
-echo "I8[    \"\"  88       88  88    88     88       88  88P'   \"Y8  aaaaaaaa  88P'   \"Y8  a8P_____88  a8\"     \"\" "
-echo " \`\"Y8ba,   88       88  88    88     88       88  88          \"\"\"\"\"\"\"\"  88          8PP\"\"\"\"\"\"\"  8b         "
-echo "aa    ]8I  \"8a,   ,a88  88    88     \"8a,   ,a88  88                    88          \"8b,   ,aa  \"8a,   ,aa "
-echo "\`\"YbbdP\"'   \`\"YbbdP'Y8  88    88      \`\"YbbdP'Y8  88                    88           \`\"Ybbd8\"'   \`\"Ybbd8\"' "
-echo "                                                                                                           "
-echo "                                   8b,dPPYba,   ,adPPYba,   ,adPPYba,  88  8b,dPPYba,    ,adPPYba,  ,adPPYba, "
-echo "                                   88P'   \"Y8  a8P_____88  a8\"     \"\"  88  88P'    \"8a  a8P_____88  I8[    \"\" "
-echo "                                   88          8PP\"\"\"\"\"\"\"  8b          88  88       d8  8PP\"\"\"\"\"\"\"   \`\"Y8ba,  "
-echo "                                   88          \"8b,   ,aa  \"8a,   ,aa  88  88b,   ,a8\"  \"8b,   ,aa  aa    ]8I "
-echo "                                   88           \`\"Ybbd8\"'   \`\"Ybbd8\"'  88  88\`YbbdP\"'    \`\"Ybbd8\"'  \`\"YbbdP\"' "
-echo "                                                                            88                                 "
-echo "                                                                            88                                 "
-echo -e "${GREEN}Info:${RESET}"
-echo -e "   ${WHITE}A comprehensive recipe database web application for the Sulfur game,${RESET}"
-echo -e "   ${WHITE}featuring automated data scraping with advanced filtering and search.${RESET}"
-echo -e "   ${WHITE}Allows for filtering by HP, HP/s, and sorting by ingredient and variation.${RESET}"
 
-echo -e "${GREEN}Tech Stack:${RESET}"
-echo -e "   ${YELLOW}•${RESET} Next.js 15, React 19, TypeScript"
-echo -e "   ${YELLOW}•${RESET} Tailwind CSS 3 with animations"
-echo -e "   ${YELLOW}•${RESET} Radix UI component library"
-echo -e "   ${YELLOW}•${RESET} shadcn/ui design system"
-echo -e "   ${YELLOW}•${RESET} Next-themes for dark/light mode"
-echo -e "   ${YELLOW}•${RESET} Lucide React icons"
-echo
+# Generate ASCII with typewriter animation
+gradient_ascii_typewriter "sulfur recipies" "fire" "Univers"
 
-echo -e "   ${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
-echo -e "   ${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
-echo
+echo ""
 
-echo -e "${GREEN}Commands:${RESET}"
-echo -e "   ${YELLOW}ls${RESET}                              - List project files"
-echo -e "   ${YELLOW}cat README.md${RESET}                   - View project documentation"
-echo -e "   ${YELLOW}cd app && ls${RESET}                    - Explore Next.js app structure"
-echo -e "   ${YELLOW}cd components && ls${RESET}             - View React components"
-echo -e "   ${YELLOW}cat data/recipes.json | head -20${RESET} - Preview recipe data"
-echo -e "   ${YELLOW}tree -L 2${RESET}                       - Show project structure"
-echo -e "   ${YELLOW}cd ..${RESET}                           - Go back to portfolio directory"
-echo -e "   ${YELLOW}projects${RESET}                        - Return to projects overview"
-echo -e "   ${YELLOW}home${RESET}                            - Return to main dashboard"
-echo
+# Create boxed content for main info
+echo "$(create_box "Info" "A comprehensive recipe database web application for the Sulfur game,
+featuring automated data scraping with advanced filtering and search.
+Allows for filtering by HP, HP/s, and sorting by ingredient and variation." "primary")"
+
+echo ""
+
+# Tech Stack section
+typewriter "Tech Stack:" "primary"
+typewriter "   • Next.js 15, React 19, TypeScript" "info"
+typewriter "   • Tailwind CSS 3 with animations" "info"
+typewriter "   • Radix UI component library" "info"
+typewriter "   • shadcn/ui design system" "info"
+typewriter "   • Next-themes for dark/light mode" "info"
+typewriter "   • Lucide React icons" "info"
+
+echo ""
+
+# Animated separator
+animated_separator "*" 60
+
+echo ""
+
+typewriter "You are now in the projects/sulfur-recipies directory" "highlight"
+typewriter "Use ls, cat, nvim, or other commands to explore" "dim"
+
+echo ""
+
+# Commands section
+typewriter "Commands:" "primary"
+typewriter "   ls                              - List project files" "info"
+typewriter "   cat README.md                   - View project documentation" "info"
+typewriter "   cd app && ls                    - Explore Next.js app structure" "info"
+typewriter "   cd components && ls             - View React components" "info"
+typewriter "   cat data/recipes.json | head -20 - Preview recipe data" "info"
+typewriter "   tree -L 2                       - Show project structure" "info"
+typewriter "   cd ..                           - Go back to portfolio directory" "info"
+typewriter "   projects                        - Return to projects overview" "info"
+typewriter "   home                            - Return to main dashboard" "info"
+
+echo ""
+
+# Animated separator
+animated_separator "~" 50
+
+echo ""
 
 # Git repository information
-echo -e "${GREEN}Git:${RESET}"
+typewriter "Git:" "primary"
 if [ -d ".git" ]; then
   # Show current branch
   branch=$(git branch --show-current 2>/dev/null || echo "main")
-  echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+  typewriter "   Branch: ${branch}" "highlight"
 
   # Show recent commits with nice formatting
-  echo -e "   ${BLUE}Recent commits:${RESET}"
+  typewriter "   Recent commits:" "secondary"
   git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    echo -e "     ${DIM}•${RESET} $line"
+    typewriter "     • $line" "dim"
   done
 
   # Show repository status
   if git status --porcelain | grep -q .; then
-    echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+    typewriter "   Status: Modified files present" "warning"
   else
-    echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+    typewriter "   Status: Clean working directory" "success"
   fi
 else
-  echo -e "   ${DIM}Not a git repository${RESET}"
+  typewriter "   Not a git repository" "dim"
 fi
 
+echo ""
+
+# Animated separator
+animated_separator "=" 60
