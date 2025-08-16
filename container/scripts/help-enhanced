@@ -11,11 +11,10 @@ run_node_util() {
 # Function for typewriter effect
 typewriter() {
     local text="$1"
-    local delay="${2:-50}"
-    local color="${3:-white}"
+    local color="${2:-white}"
     run_node_util "
     const { typewriter } = require('./utils.js');
-    typewriter('$text', $delay, '$color');
+    typewriter('$text', undefined, '$color');
     "
 }
 
@@ -35,10 +34,9 @@ animated_separator() {
     local width="${1:-80}"
     local char="${2:-═}"
     local gradient="${3:-tokyo}"
-    local delay="${4:-10}"
     run_node_util "
     const { animatedSeparator } = require('./utils.js');
-    animatedSeparator($width, '$char', '$gradient', $delay);
+    animatedSeparator($width, '$char', '$gradient');
     "
 }
 
@@ -47,14 +45,14 @@ clear
 # Dynamic ASCII header
 gradient_ascii "HELP" "accent" "Univers"
 echo ""
-animated_separator 80 "═" "accent" 15
+animated_separator 80 "═" "accent"
 
 echo ""
-typewriter "⌨️  Terminal Portfolio Commands" 30 "primary"
+typewriter "⌨️  Terminal Portfolio Commands" "primary"
 echo ""
 
 # Portfolio Commands
-typewriter "📁 Portfolio Commands:" 25 "secondary"
+typewriter "📁 Portfolio Commands:" "secondary"
 echo ""
 
 run_node_util "
@@ -68,7 +66,7 @@ console.log(chalk.hex(theme.yellow)('  help        ') + chalk.hex(theme.white)('
 echo ""
 
 # Blog Commands
-typewriter "📝 Blog Commands:" 25 "secondary"
+typewriter "📝 Blog Commands:" "secondary"
 echo ""
 
 run_node_util "
@@ -80,7 +78,7 @@ console.log(chalk.hex(theme.yellow)('  blog search ') + chalk.hex(theme.white)('
 echo ""
 
 # System Commands
-typewriter "🖥️  System Commands:" 25 "secondary"
+typewriter "🖥️  System Commands:" "secondary"
 echo ""
 
 run_node_util "
@@ -96,7 +94,7 @@ console.log(chalk.hex(theme.yellow)('  clear       ') + chalk.hex(theme.white)('
 echo ""
 
 # Enhanced Features
-typewriter "✨ Enhanced Features:" 25 "secondary"
+typewriter "✨ Enhanced Features:" "secondary"
 echo ""
 
 run_node_util "
@@ -110,7 +108,7 @@ console.log(chalk.hex(theme.yellow)('  🎯 ') + chalk.hex(theme.white)('Tokyo N
 echo ""
 
 # Fun Commands
-typewriter "🎪 Fun Commands:" 25 "secondary"
+typewriter "🎪 Fun Commands:" "secondary"
 echo ""
 
 run_node_util "
@@ -121,7 +119,7 @@ console.log(chalk.hex(theme.yellow)('  fortune     ') + chalk.hex(theme.white)('
 "
 echo ""
 
-animated_separator 80 "═" "accent" 12
+animated_separator 80 "═" "accent"
 
 echo ""
 run_node_util "

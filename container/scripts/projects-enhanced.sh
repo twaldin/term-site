@@ -11,11 +11,10 @@ run_node_util() {
 # Function for typewriter effect
 typewriter() {
     local text="$1"
-    local delay="${2:-50}"
-    local color="${3:-white}"
+    local color="${2:-white}"
     run_node_util "
     const { typewriter } = require('./utils.js');
-    typewriter('$text', $delay, '$color');
+    typewriter('$text', undefined, '$color');
     "
 }
 
@@ -35,10 +34,9 @@ animated_separator() {
     local width="${1:-80}"
     local char="${2:-═}"
     local gradient="${3:-tokyo}"
-    local delay="${4:-10}"
     run_node_util "
     const { animatedSeparator } = require('./utils.js');
-    animatedSeparator($width, '$char', '$gradient', $delay);
+    animatedSeparator($width, '$char', '$gradient');
     "
 }
 
@@ -47,13 +45,13 @@ clear
 # Dynamic ASCII header with animation
 gradient_ascii "PROJECTS" "rainbow" "Univers"
 echo ""
-animated_separator 80 "═" "primary" 15
+animated_separator 80 "═" "primary"
 
 echo ""
 
 # Project 1 - STM32 Games
-typewriter "🎮 1. STM32 Games" 30 "secondary"
-typewriter "   Handheld game console with STM32 microcontroller" 25 "white"
+typewriter "🎮 1. STM32 Games" "secondary"
+typewriter "   Handheld game console with STM32 microcontroller" "white"
 
 run_node_util "
 const { chalk, theme } = require('./utils.js');
@@ -63,8 +61,8 @@ console.log(chalk.hex(theme.blue)('   Navigate: ') + chalk.hex(theme.white).bold
 echo ""
 
 # Project 2 - Terminal Site  
-typewriter "🖥️  2. Terminal Site" 30 "secondary"
-typewriter "   Web-based terminal portfolio in Docker containers" 25 "white"
+typewriter "🖥️  2. Terminal Site" "secondary"
+typewriter "   Web-based terminal portfolio in Docker containers" "white"
 
 run_node_util "
 const { chalk, theme } = require('./utils.js');
@@ -74,8 +72,8 @@ console.log(chalk.hex(theme.blue)('   Navigate: ') + chalk.hex(theme.white).bold
 echo ""
 
 # Project 3 - Sulfur Recipes
-typewriter "🍳 3. Sulfur Recipes" 30 "secondary" 
-typewriter "   Recipe database web app for Sulfur game" 25 "white"
+typewriter "🍳 3. Sulfur Recipes" "secondary" 
+typewriter "   Recipe database web app for Sulfur game" "white"
 
 run_node_util "
 const { chalk, theme } = require('./utils.js');
@@ -85,8 +83,8 @@ console.log(chalk.hex(theme.blue)('   Navigate: ') + chalk.hex(theme.white).bold
 echo ""
 
 # Project 4 - Dotfiles
-typewriter "⚙️  4. Dotfiles" 30 "secondary"
-typewriter "   Development environment configuration files" 25 "white"
+typewriter "⚙️  4. Dotfiles" "secondary"
+typewriter "   Development environment configuration files" "white"
 
 run_node_util "
 const { chalk, theme } = require('./utils.js');
@@ -95,7 +93,7 @@ console.log(chalk.hex(theme.blue)('   Navigate: ') + chalk.hex(theme.white).bold
 "
 echo ""
 
-animated_separator 80 "═" "accent" 12
+animated_separator 80 "═" "accent"
 
 echo ""
 run_node_util "

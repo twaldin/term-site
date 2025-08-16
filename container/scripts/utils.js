@@ -4,6 +4,7 @@ const chalk = require('chalk');
 const figlet = require('figlet');
 const gradient = require('gradient-string');
 const boxen = require('boxen');
+const { DELAYS, ASCII_SETTINGS } = require('./constants.js');
 
 // Tokyo Night color theme matching your terminal-theme.ts
 const theme = {
@@ -55,7 +56,7 @@ const gradients = {
 };
 
 // Typewriter effect function
-async function typewriter(text, delay = 15, color = 'white') {
+async function typewriter(text, delay = DELAYS.TYPEWRITER, color = 'white') {
   const colorFunc = chalk.hex(theme[color] || color);
   for (let i = 0; i <= text.length; i++) {
     process.stdout.write('\r' + colorFunc(text.slice(0, i)));
@@ -67,7 +68,7 @@ async function typewriter(text, delay = 15, color = 'white') {
 }
 
 // Enhanced typewriter with gradient support
-async function gradientTypewriter(text, gradientName = 'rainbow', delay = 50) {
+async function gradientTypewriter(text, gradientName = 'rainbow', delay = DELAYS.TYPEWRITER) {
   const grad = gradients[gradientName] || gradients.rainbow;
   for (let i = 0; i <= text.length; i++) {
     process.stdout.write('\r' + grad(text.slice(0, i)));
@@ -93,6 +94,45 @@ function gradientAscii(text, gradientName = 'rainbow', font = 'Big') {
   const ascii = generateAscii(text, font);
   const grad = gradients[gradientName] || gradients.rainbow;
   return grad(ascii);
+}
+
+// Generate gradient ASCII with horizontal typewriter effect
+async function gradientAsciiTypewriter(text, gradientName = 'rainbow', font = 'Big') {
+  if (!ASCII_SETTINGS.HORIZONTAL_REVEAL) {
+    // If horizontal reveal is disabled, just return normal ASCII
+    return gradientAscii(text, gradientName, font);
+  }
+
+  const ascii = generateAscii(text, font);
+  const grad = gradients[gradientName] || gradients.rainbow;
+  const lines = ascii.split('\n');
+  
+  // Find the maximum line length for proper formatting
+  const maxLength = Math.max(...lines.map(line => line.length));
+  
+  // Reveal each line horizontally
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex];
+    const paddedLine = line.padEnd(maxLength);
+    
+    // Clear the line first
+    process.stdout.write('\r' + ' '.repeat(maxLength));
+    
+    // Reveal characters horizontally
+    for (let charIndex = 0; charIndex <= paddedLine.length; charIndex++) {
+      const partialLine = paddedLine.slice(0, charIndex);
+      process.stdout.write('\r' + grad(partialLine));
+      
+      if (charIndex < paddedLine.length) {
+        await new Promise(resolve => setTimeout(resolve, ASCII_SETTINGS.REVEAL_SPEED));
+      }
+    }
+    
+    // Move to next line
+    process.stdout.write('\n');
+  }
+  
+  return ''; // Return empty since we've already printed
 }
 
 // Create gradient border
@@ -132,7 +172,7 @@ function centerText(text, width = 80, color = 'white') {
 }
 
 // Animated separator
-async function animatedSeparator(width = 80, char = '═', gradientName = 'neon', delay = 10) {
+async function animatedSeparator(width = 80, char = '═', gradientName = 'neon', delay = DELAYS.ANIMATED_SEPARATOR) {
   const grad = gradients[gradientName] || gradients.neon;
   for (let i = 0; i <= width; i++) {
     process.stdout.write('\r' + grad(char.repeat(i)));
@@ -155,11 +195,14 @@ module.exports = {
   gradientTypewriter,
   generateAscii,
   gradientAscii,
+  gradientAsciiTypewriter,
   gradientBorder,
   gradientBox,
   centerText,
   animatedSeparator,
-  getAvailableFonts
+  getAvailableFonts,
+  DELAYS,
+  ASCII_SETTINGS
 };
 
 // CLI usage when run directly
