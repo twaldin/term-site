@@ -59,3 +59,27 @@ echo -e "   ${YELLOW}tree -L 3${RESET}                        - Show detailed st
 echo -e "   ${YELLOW}cd ..${RESET}                            - Go back to portfolio directory"
 echo -e "   ${YELLOW}projects${RESET}                         - Return to projects overview"
 echo -e "   ${YELLOW}home${RESET}                             - Return to main dashboard"
+echo
+
+# Git repository information
+echo -e "${GREEN}Git Repository:${RESET}"
+if [ -d ".git" ]; then
+    # Show current branch
+    branch=$(git branch --show-current 2>/dev/null || echo "main")
+    echo -e "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+    
+    # Show recent commits with nice formatting
+    echo -e "   ${BLUE}Recent commits:${RESET}"
+    git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
+        echo -e "     ${DIM}•${RESET} $line"
+    done
+    
+    # Show repository status
+    if git status --porcelain | grep -q .; then
+        echo -e "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+    else
+        echo -e "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+    fi
+else
+    echo -e "   ${DIM}Not a git repository${RESET}"
+fi
