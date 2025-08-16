@@ -10,13 +10,16 @@ RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
 
-# Simple typewriter function
+# Simple typewriter function with echo -e support
 typewriter() {
     local text="$1"
     local delay=0.001  # Ultra fast delay
     
-    for ((i=0; i<${#text}; i++)); do
-        printf "%s" "${text:$i:1}"
+    # Use echo -e to process escape sequences, then extract character by character
+    local processed_text=$(echo -e "$text")
+    
+    for ((i=0; i<${#processed_text}; i++)); do
+        printf "%s" "${processed_text:$i:1}"
         sleep $delay
     done
     echo
