@@ -39,9 +39,10 @@ RUN apt-get install -y \
 # Copy dotfiles from build context (submodule)
 COPY dotfiles /home/portfolio/.dotfiles
 
-# Copy welcome scripts
+# Copy welcome scripts and projects
 COPY container/welcome.sh /home/portfolio/scripts/welcome.sh
 COPY container/scripts/ /home/portfolio/scripts/
+COPY container/projects/ /home/portfolio/projects/
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
@@ -97,7 +98,6 @@ USER root
 
 # Create directory structure for portfolio content
 RUN mkdir -p /home/portfolio/portfolio && \
-    mkdir -p /home/portfolio/projects && \
     mkdir -p /home/portfolio/scripts && \
     chown -R portfolio:portfolio /home/portfolio
 
@@ -122,7 +122,11 @@ RUN chmod +x /home/portfolio/scripts/*.sh && \
     chmod +x /home/portfolio/scripts/welcome && \
     chmod +x /home/portfolio/scripts/projects && \
     chmod +x /home/portfolio/scripts/contact && \
-    chmod +x /home/portfolio/scripts/help
+    chmod +x /home/portfolio/scripts/help && \
+    chmod +x /home/portfolio/scripts/stm32-games && \
+    chmod +x /home/portfolio/scripts/term-site && \
+    chmod +x /home/portfolio/scripts/sulfur-recipies && \
+    chmod +x /home/portfolio/scripts/dotfiles
 
 # Create basic directory structure (empty but functional)
 RUN mkdir -p /home/portfolio
