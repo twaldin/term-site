@@ -3,15 +3,15 @@
 
 export const terminalTheme = {
   // Background and foreground to complement oh-my-posh prompt
-  background: '#100e23',  // Dark background matching prompt foreground
+  background: '#1a1b26',  // Tokyo Night background color
   foreground: '#ffffff',  // White text for good contrast
   cursor: '#91ddff',      // Light blue cursor matching path segment
-  cursorAccent: '#100e23',
+  cursorAccent: '#1a1b26',
   selection: '#757575',   // Gray for selection matching secondary text
   selectionForeground: '#ffffff',
   
   // ANSI colors harmonized with oh-my-posh stelbent theme
-  black: '#100e23',       // Dark background color
+  black: '#1a1b26',       // Dark background color
   red: '#ff8080',         // Error color from status segment
   green: '#95ffa4',       // Git clean state color
   yellow: '#ffee58',      // Terraform segment color
