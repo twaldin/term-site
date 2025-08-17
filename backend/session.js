@@ -378,7 +378,7 @@ class SessionManager {
       if (index < letters.length) {
         this.sendInput(sessionId, letters[index]);
         index++;
-        setTimeout(typeNextLetter, 50); // 50ms between letters
+        setTimeout(typeNextLetter, 100); // 100ms between letters (slower typing)
       } else {
         // After typing all letters, press Enter
         setTimeout(() => {

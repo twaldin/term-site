@@ -1,6 +1,8 @@
 #!/bin/bash
 source "$(dirname "$0")/shared-functions.sh"
 
+clear -x
+
 echo ""
 
 # ASCII header with progressive typewriter display

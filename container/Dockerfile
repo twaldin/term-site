@@ -10,13 +10,10 @@ RUN apt-get update --fix-missing && \
 # Add universe repository and update again
 RUN add-apt-repository universe && apt-get update
 
-# Install curl first for Node.js setup
-RUN apt-get install -y curl
+# Install curl and wget for downloading packages
+RUN apt-get install -y curl wget
 
-# Install Node.js repository
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-
-# Install all required packages in one layer
+# Install all required packages in one layer (no Node.js needed!)
 RUN apt-get install -y \
     bash \
     vim \
@@ -28,7 +25,6 @@ RUN apt-get install -y \
     less \
     bat \
     git \
-    wget \
     unzip \
     tree \
     htop \
@@ -37,11 +33,16 @@ RUN apt-get install -y \
     findutils \
     ncurses-base \
     zsh \
-    nodejs \
     figlet \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
     && rm -rf /var/lib/apt/lists/*
+
+# Install glow for markdown rendering
+RUN wget -q https://github.com/charmbracelet/glow/releases/download/v1.5.1/glow_1.5.1_linux_amd64.tar.gz && \
+    tar -xzf glow_1.5.1_linux_amd64.tar.gz -C /usr/local/bin glow && \
+    rm glow_1.5.1_linux_amd64.tar.gz && \
+    chmod +x /usr/local/bin/glow
 
 # Clone dotfiles repository will be done later after user creation
 
@@ -50,9 +51,11 @@ COPY container/scripts/ /home/portfolio/scripts/
 COPY container/blog/ /home/portfolio/blog/
 COPY container/Univers.flf /usr/share/figlet/Univers.flf
 
-# Install npm packages for enhanced terminal scripts
-RUN cd /home/portfolio/scripts && \
-    npm install chalk@4.1.2 figlet@1.8.2 gradient-string@2.0.2 marked@4.3.0 marked-terminal@5.2.0 cli-highlight@2.1.11 boxen@5.1.2
+# Setup glow config
+RUN mkdir -p /home/portfolio/.config/glow
+COPY container/glow-config.yml /home/portfolio/.config/glow/glow.yml
+
+# No longer need npm packages since we're using glow for markdown
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
