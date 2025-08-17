@@ -4,3 +4,11 @@ width: 100
 local: false
 mouse: true
 pager: true
+
+# Ensure proper rendering
+show_all_files: false
+glamour:
+  document:
+    margin: 0
+  heading:
+    bold: true
