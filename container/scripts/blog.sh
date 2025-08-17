@@ -119,11 +119,18 @@ read_post() {
     
     clear -x
     
+    # Strip front matter before rendering with glow (front matter can interfere with header rendering)
+    local temp_markdown=$(mktemp)
+    sed '/^---$/,/^---$/d' "$POSTS_DIR/$filename" > "$temp_markdown"
+    
     # Use glow to render the markdown with built-in Tokyo Night theme
     # The -p flag enables pager mode (like less)
     # The -s flag specifies the Tokyo Night style (built-in since v2.0.0)
     # The -w flag sets width
-    glow -p -s tokyo-night -w 100 "$POSTS_DIR/$filename"
+    glow -p -s tokyo-night -w 100 "$temp_markdown"
+    
+    # Clean up temp file
+    rm -f "$temp_markdown"
 }
 
 # Search blog posts
