@@ -38,12 +38,11 @@ RUN apt-get install -y \
     && mkdir -p /home/portfolio/.bashrc.d \
     && rm -rf /var/lib/apt/lists/*
 
-# Install glow for markdown rendering
-RUN wget -q https://github.com/charmbracelet/glow/releases/download/v1.5.1/glow_1.5.1_linux_amd64.tar.gz && \
-    tar -xzf glow_1.5.1_linux_amd64.tar.gz && \
-    mv glow /usr/local/bin/ && \
-    rm glow_1.5.1_linux_amd64.tar.gz && \
-    chmod +x /usr/local/bin/glow
+# Install glow v2.1.0 for markdown rendering (includes Tokyo Night theme support!)
+# Cache bust: 2024-08-16-v2
+RUN wget -q https://github.com/charmbracelet/glow/releases/download/v2.1.0/glow_2.1.0_amd64.deb && \
+    dpkg -i glow_2.1.0_amd64.deb && \
+    rm glow_2.1.0_amd64.deb
 
 # Clone dotfiles repository will be done later after user creation
 
