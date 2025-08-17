@@ -40,7 +40,8 @@ RUN apt-get install -y \
 
 # Install glow for markdown rendering
 RUN wget -q https://github.com/charmbracelet/glow/releases/download/v1.5.1/glow_1.5.1_linux_amd64.tar.gz && \
-    tar -xzf glow_1.5.1_linux_amd64.tar.gz -C /usr/local/bin glow && \
+    tar -xzf glow_1.5.1_linux_amd64.tar.gz && \
+    mv glow /usr/local/bin/ && \
     rm glow_1.5.1_linux_amd64.tar.gz && \
     chmod +x /usr/local/bin/glow
 
