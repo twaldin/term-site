@@ -119,11 +119,11 @@ read_post() {
     
     clear -x
     
-    # Use glow to render the markdown with our theme
+    # Use glow to render the markdown with built-in Tokyo Night theme
     # The -p flag enables pager mode (like less)
-    # The -s flag would specify style, but we use the config file instead
+    # The -s flag specifies the Tokyo Night style (built-in since v2.0.0)
     # The -w flag sets width
-    glow -p -w 100 "$POSTS_DIR/$filename"
+    glow -p -s tokyo-night -w 100 "$POSTS_DIR/$filename"
 }
 
 # Search blog posts
