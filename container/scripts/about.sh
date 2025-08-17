@@ -3,7 +3,7 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-clear
+clear -x
 
 # Top separator
 animated_separator "═" 139

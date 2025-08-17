@@ -51,7 +51,7 @@ animated_separator() {
   echo
 }
 
-# ASCII typewriter function - displays figlet output line by line
+# ASCII typewriter function - displays figlet output line by line with no extra spacing
 ascii_typewriter() {
   local text="$1"
   local font="${2:-Univers}"
@@ -61,9 +61,17 @@ ascii_typewriter() {
   local ascii_output
   ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
   
-  # Split into lines and display each with typewriter effect
+  # Split into lines and display each with typewriter effect, no echo after
   while IFS= read -r line; do
-    typewriter "${color}${line}${RESET}"
+    # Use printf instead of typewriter to avoid extra newline
+    local processed_text=$(echo -e "${color}${line}${RESET}")
+    local length=${#processed_text}
+    
+    for ((i = 0; i < length; i += 5)); do
+      printf "%s" "${processed_text:$i:5}"
+      sleep 0.0001
+    done
+    printf "\n"
   done <<< "$ascii_output"
 }
 

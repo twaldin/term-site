@@ -3,7 +3,7 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-clear
+clear -x
 
 # ASCII header with progressive typewriter display
 ascii_typewriter "sulfur recipies" "Univers" "${BOLD}${YELLOW}"

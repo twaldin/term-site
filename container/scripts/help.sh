@@ -3,6 +3,8 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
+clear -x
+
 echo ""
 typewriter "${GREEN}commands${RESET}"
 

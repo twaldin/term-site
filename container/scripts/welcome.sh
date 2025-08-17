@@ -3,7 +3,9 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-# Top separator
+# Clear with scroll history preserved
+clear -x
+
 # ASCII header with progressive typewriter display
 ascii_typewriter "timothy waldin" "Univers" "${BOLD}${CYAN}"
 animated_separator "═" 20

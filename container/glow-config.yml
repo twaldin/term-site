@@ -1,0 +1,77 @@
+# Glow config with Tokyo Night color scheme
+style: |
+  document:
+    margin: 0
+    
+  block_quote:
+    foreground: "#757575"
+    italic: true
+    
+  list:
+    foreground: "#ffffff"
+    
+  heading:
+    foreground: "#91ddff"
+    bold: true
+    
+  h1:
+    foreground: "#91ddff"
+    bold: true
+    
+  h2:
+    foreground: "#95ffa4"
+    bold: true
+    
+  h3:
+    foreground: "#89d1dc"
+    bold: true
+    
+  code:
+    foreground: "#ffee58"
+    background: "#2a2b3d"
+    
+  code_block:
+    foreground: "#ffee58"
+    background: "#2a2b3d"
+    chroma:
+      theme: "monokai"
+    
+  link:
+    foreground: "#7dcfff"
+    underline: true
+    
+  link_text:
+    foreground: "#91ddff"
+    
+  image:
+    foreground: "#89d1dc"
+    
+  image_text:
+    foreground: "#89d1dc"
+    
+  text:
+    foreground: "#ffffff"
+    
+  emph:
+    foreground: "#89d1dc"
+    italic: true
+    
+  strong:
+    foreground: "#95ffa4"
+    bold: true
+    
+  hr:
+    foreground: "#757575"
+    
+  table:
+    foreground: "#ffffff"
+    
+  strikethrough:
+    foreground: "#757575"
+    crossed_out: true
+
+# Settings
+width: 100
+local: false
+mouse: true
+pager: true

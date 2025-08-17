@@ -14,7 +14,7 @@ ensure_blog_dirs() {
 
 # Show blog help with ASCII animation
 show_help() {
-    clear
+    clear -x
     animated_separator "═" 139
     ascii_typewriter "blog help" "Univers" "${BOLD}${CYAN}"
     echo ""
@@ -39,7 +39,7 @@ show_help() {
 
 # List all blog posts with animations
 list_posts() {
-    clear
+    clear -x
     animated_separator "═" 139
     ascii_typewriter "blog" "Univers" "${BOLD}${CYAN}"
     echo ""
@@ -117,44 +117,13 @@ read_post() {
         return 1
     fi
     
-    # Create a temporary file for the rendered post
-    local temp_file=$(mktemp)
+    clear -x
     
-    # Use the Node.js blog system to render the post to the temp file
-    node /home/portfolio/scripts/blog.js read "$identifier" > "$temp_file" 2>/dev/null
-    
-    # If Node.js rendering failed, fall back to simple display
-    if [ $? -ne 0 ] || [ ! -s "$temp_file" ]; then
-        # Simple fallback rendering
-        clear
-        animated_separator "═" 139
-        
-        # Extract and display front matter
-        local title=$(grep -m1 "^title:" "$POSTS_DIR/$filename" 2>/dev/null | sed 's/title: *//' | sed 's/^"//' | sed 's/"$//')
-        if [ -n "$title" ]; then
-            ascii_typewriter "$title" "Univers" "${BOLD}${CYAN}"
-        fi
-        
-        local date=$(grep -m1 "^date:" "$POSTS_DIR/$filename" 2>/dev/null | sed 's/date: *//')
-        if [ -n "$date" ]; then
-            echo -e "${DIM}📅 $date${RESET}"
-        fi
-        
-        animated_separator "═" 139
-        echo ""
-        
-        # Remove front matter and display content
-        sed '/^---$/,/^---$/d' "$POSTS_DIR/$filename" > "$temp_file"
-    fi
-    
-    # Use less for pager-like interface
-    echo -e "\n${DIM}Press 'q' to quit, Space/Enter to scroll, 'h' for help${RESET}\n" >> "$temp_file"
-    
-    # Use less with custom options for better terminal experience
-    LESSCHARSET=utf-8 less -R -S -F -X "$temp_file"
-    
-    # Clean up
-    rm -f "$temp_file"
+    # Use glow to render the markdown with our theme
+    # The -p flag enables pager mode (like less)
+    # The -s flag would specify style, but we use the config file instead
+    # The -w flag sets width
+    glow -p -w 100 "$POSTS_DIR/$filename"
 }
 
 # Search blog posts
@@ -166,7 +135,7 @@ search_posts() {
         return 1
     fi
     
-    clear
+    clear -x
     animated_separator "═" 139
     ascii_typewriter "search" "Univers" "${BOLD}${CYAN}"
     echo ""
