@@ -3,18 +3,19 @@
 # Shared Terminal Animation Functions
 # Source this file in other scripts with: source "$(dirname "$0")/shared-functions.sh"
 
-# Gruvbox Dark Colors (256 color codes)
-# Using Gruvbox's actual terminal colors
-CYAN='\033[38;5;108m'      # Gruvbox aqua (#8ec07c)
-GREEN='\033[38;5;142m'     # Gruvbox green (#b8bb26)
-WHITE='\033[38;5;223m'     # Gruvbox fg (#ebdbb2)
-YELLOW='\033[38;5;214m'    # Gruvbox yellow (#fabd2f)
-BLUE='\033[38;5;109m'      # Gruvbox blue (#83a598)
-RED='\033[38;5;167m'       # Gruvbox red (#fb4934)
-MAGENTA='\033[38;5;175m'   # Gruvbox purple (#d3869b)
-ORANGE='\033[38;5;208m'    # Gruvbox orange (#fe8019)
-GRAY='\033[38;5;245m'      # Gruvbox gray (#928374)
-BG='\033[38;5;235m'        # Gruvbox bg (#282828)
+# Gruvbox Dark Colors (exact hex from ghostty/iTerm2-Color-Schemes)
+# Using true color escape sequences for exact color matching
+CYAN='\033[38;2;142;192;124m'      # Bright Cyan #8ec07c
+GREEN='\033[38;2;184;187;38m'      # Bright Green #b8bb26  
+WHITE='\033[38;2;235;219;178m'     # Foreground #ebdbb2
+YELLOW='\033[38;2;250;189;47m'     # Bright Yellow #fabd2f
+BLUE='\033[38;2;131;165;152m'      # Bright Blue #83a598
+RED='\033[38;2;251;73;52m'         # Bright Red #fb4934
+MAGENTA='\033[38;2;211;134;155m'   # Bright Magenta #d3869b
+ORANGE='\033[38;2;254;128;25m'     # Orange (custom)
+GRAY='\033[38;2;146;131;116m'      # Bright Black/Gray #928374
+BG='\033[48;2;40;40;40m'           # Background #282828
+FG='\033[38;2;235;219;178m'        # Foreground #ebdbb2 
 RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
