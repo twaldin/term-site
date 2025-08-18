@@ -1,34 +1,34 @@
-// Terminal theme configuration matching oh-my-posh stelbent-compact.minimal
-// Updated to match the prompt colors from oh-my-posh theme
+// Gruvbox Dark terminal theme - exact colors from ghostty/iTerm2-Color-Schemes
+// Matches your ghostty GruvboxDark theme exactly
 
 export const terminalTheme = {
-  // Background and foreground to complement oh-my-posh prompt
-  background: '#1a1b26',  // Tokyo Night background color
-  foreground: '#ffffff',  // White text for good contrast
-  cursor: '#91ddff',      // Light blue cursor matching path segment
-  cursorAccent: '#1a1b26',
-  selection: '#757575',   // Gray for selection matching secondary text
-  selectionForeground: '#ffffff',
+  // Background and foreground - exact GruvboxDark colors
+  background: '#282828',  // GruvboxDark background
+  foreground: '#ebdbb2',  // GruvboxDark foreground
+  cursor: '#ebdbb2',      // Foreground color for cursor
+  cursorAccent: '#282828', // Background for cursor accent
+  selection: '#504945',   // GruvboxDark color 0 for selection
+  selectionForeground: '#ebdbb2',
   
-  // ANSI colors harmonized with oh-my-posh stelbent theme
-  black: '#1a1b26',       // Dark background color
-  red: '#ff8080',         // Error color from status segment
-  green: '#95ffa4',       // Git clean state color
-  yellow: '#ffee58',      // Terraform segment color
-  blue: '#91ddff',        // Path segment color
-  magenta: '#89d1dc',     // Git ahead color
-  cyan: '#7dcfff',        // Keeping complementary cyan
-  white: '#ffffff',       // Clean white
+  // ANSI colors 0-7 (normal colors) - exact GruvboxDark palette
+  black: '#282828',       // Color 0 - Background
+  red: '#cc241d',         // Color 1 - Red
+  green: '#98971a',       // Color 2 - Green
+  yellow: '#d79921',      // Color 3 - Yellow
+  blue: '#458588',        // Color 4 - Blue
+  magenta: '#b16286',     // Color 5 - Magenta
+  cyan: '#689d6a',        // Color 6 - Cyan
+  white: '#a89984',       // Color 7 - Light Gray
   
-  // Bright colors with enhanced versions
-  brightBlack: '#757575', // Secondary text color
-  brightRed: '#ff9248',   // Git modified color
-  brightGreen: '#9fe044', // Bright green
-  brightYellow: '#faba4a',
-  brightBlue: '#8db0ff',
-  brightMagenta: '#c7a9ff',
-  brightCyan: '#a4daff',
-  brightWhite: '#ffffff',
+  // ANSI colors 8-15 (bright colors) - exact GruvboxDark palette
+  brightBlack: '#928374', // Color 8 - Dark Gray
+  brightRed: '#fb4934',   // Color 9 - Bright Red
+  brightGreen: '#b8bb26', // Color 10 - Bright Green
+  brightYellow: '#fabd2f', // Color 11 - Bright Yellow
+  brightBlue: '#83a598',  // Color 12 - Bright Blue
+  brightMagenta: '#d3869b', // Color 13 - Bright Magenta
+  brightCyan: '#8ec07c',  // Color 14 - Bright Cyan
+  brightWhite: '#ebdbb2', // Color 15 - Bright White (same as foreground)
 };
 
 export const terminalConfig = {

@@ -3,6 +3,10 @@ FROM ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Set proper terminal environment for Gruvbox Dark colors
+ENV TERM=xterm-256color
+ENV COLORTERM=truecolor
+
 # Update package lists and install basic packages first
 RUN apt-get update --fix-missing && \
     apt-get install -y ca-certificates apt-transport-https software-properties-common
