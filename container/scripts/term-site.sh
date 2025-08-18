@@ -5,49 +5,28 @@ source "$(dirname "$0")/shared-functions.sh"
 
 clear
 # ASCII header with progressive typewriter display
-ascii_typewriter "term-site" "Univers" "${BOLD}${CYAN}"
+ascii_typewriter "term site" "Univers" "${BOLD}${CYAN}"
 
 echo ""
 
 # Create boxed content for main info
-create_box "Info" "A web-based terminal portfolio that provides visitors with a real Linux
-terminal experience running in isolated Docker containers."
+create_box "Description" "My portfolio/personal website, written in bash (not really). Consists of 
+a web terminal interface using xterm.js connected to a node-pty instance to execute commands inside a docker container filesystem"
 
 echo ""
 
 # Tech Stack section
 typewriter "${GREEN}Tech Stack:${RESET}"
-typewriter "   ${YELLOW}Frontend:${RESET} Next.js 15, React 19, TypeScript, Docker"
+typewriter "   ${YELLOW}Frontend:${RESET} Basically just xterm.js terminal component served with nextjs router"
 typewriter "   ${YELLOW}Backend:${RESET} Node.js to spawn docker containers, Express, Socket.IO WebSockets"
 typewriter "   ${YELLOW}Terminal:${RESET} xterm.js for frontend, node-pty for execution, Ubuntu Linux docker containers for filesystem"
 
 echo ""
 animated_separator "~" 70
-echo ""
 
-typewriter "${YELLOW}You are now in the projects/term-site directory${RESET}"
-typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
-
-echo ""
-
-# Commands section
-typewriter "${GREEN}Commands:${RESET}"
-typewriter "   ${YELLOW}ls${RESET}                         - List project files"
-typewriter "   ${YELLOW}cat README.md${RESET}              - View project documentation"
-typewriter "   ${YELLOW}cd frontend && ls${RESET}          - Explore Next.js frontend"
-typewriter "   ${YELLOW}cd backend && cat server.js${RESET} - View WebSocket server"
-typewriter "   ${YELLOW}cd container && ls${RESET}         - View Docker container setup"
-typewriter "   ${YELLOW}tree -L 2${RESET}                  - Show project structure"
-typewriter "   ${YELLOW}cd ..${RESET}                      - Go back to portfolio directory"
-typewriter "   ${YELLOW}projects${RESET}                   - Return to projects overview"
-typewriter "   ${YELLOW}home${RESET}                       - Return to main dashboard"
-
-echo ""
-animated_separator "-" 50
-echo ""
 
 # Git repository information
-typewriter "${GREEN}Git:${RESET}"
+typewriter "${GREEN}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   # Show current branch
   branch=$(git branch --show-current 2>/dev/null || echo "main")
@@ -70,4 +49,9 @@ else
 fi
 
 echo ""
-animated_separator "=" 70
+
+typewriter "${YELLOW}You are now in the projects/term-site directory${RESET}"
+typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore, ${RESET}"
+typewriter "${DIM}or type home to go back to the home page. ${RESET}"
+
+echo ""

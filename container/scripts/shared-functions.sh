@@ -104,7 +104,7 @@ create_box() {
   
   # Build the top border
   local top_border="${color}┌─ ${BOLD}${title}${RESET}${color} "
-  for ((i=0; i<dash_count; i++)); do
+  for ((i=0; i<=dash_count; i++)); do
     top_border+="─"
   done
   top_border+="┐${RESET}"
@@ -175,7 +175,7 @@ hyperlink() {
   
   # Terminal hyperlink format: ESC]8;;URL\ESC\TEXT\ESC]8;;\ESC\
   # Use echo -e with properly escaped sequences
-  echo -en "${color}\033]8;;${url}\033\\${text}\033]8;;\033\\${RESET}"
+  echo -en "${color}\033]8;;${url}\033\\ ${text}\033]8;;\033\\${RESET}"
 }
 
 # Create an email link
@@ -186,5 +186,5 @@ email_link() {
   local color="${3:-$CYAN}"
   
   # Use same format as hyperlink but with mailto:
-  echo -en "${color}\033]8;;mailto:${email}\033\\${text}\033]8;;\033\\${RESET}"
+  echo -en "${color}\033]8;;mailto:${email}\033\\ ${text}\033]8;;\033\\${RESET}"
 }

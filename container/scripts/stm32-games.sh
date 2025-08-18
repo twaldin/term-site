@@ -8,47 +8,22 @@ clear
 ascii_typewriter "stm32 games" "Univers" "${BOLD}${BLUE}"
 
 echo ""
-
 # Create boxed content for main info
-create_box "Info" "A handheld game console project built with STM32F103C8T6 microcontroller
-featuring classic games like Snake with an ST7789 LCD display." "${BLUE}"
+create_box "Description" "Game console using the stm32 blue pill and an lcd display, written in C. 
+Currently only plays snake game but tetris and more coming soon" "${BLUE}" 
 
 echo ""
-
 # Tech Stack section
-typewriter "${GREEN}Tech Stack:${RESET}"
-typewriter "   ${YELLOW}•${RESET} C programming with ARM Cortex-M3"
-typewriter "   ${YELLOW}•${RESET} STM32F103C8 (Blue Pill) microcontroller"
-typewriter "   ${YELLOW}•${RESET} ST7789 SPI LCD display driver"
-typewriter "   ${YELLOW}•${RESET} libopencm3 firmware library"
-typewriter "   ${YELLOW}•${RESET} ARM GCC toolchain"
+typewriter "${BLUE}Tech Stack:${RESET}"
+animated_separator "~" 10 "${BLUE}"
+typewriter "   ${BLUE}•${RESET} C with Makefile and ARM GCC"
+typewriter "   ${BLUE}•${RESET} STM32F103C8 (Blue Pill) microcontroller"
+typewriter "   ${BLUE}•${RESET} Custom C ST7789 SPI LCD display driver"
+typewriter "   ${BLUE}•${RESET} libopencm3 library"
 
 echo ""
-animated_separator "~" 60 "${BLUE}"
-echo ""
-
-typewriter "${YELLOW}You are now in the projects/stm32-games directory${RESET}"
-typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
-
-echo ""
-
-# Commands section
-typewriter "${GREEN}Commands:${RESET}"
-typewriter "   ${YELLOW}ls${RESET}                    - List project files"
-typewriter "   ${YELLOW}cat README.md${RESET}         - View project documentation"
-typewriter "   ${YELLOW}cat main.c${RESET}            - View main application code"
-typewriter "   ${YELLOW}cat snake.c${RESET}           - View Snake game implementation"
-typewriter "   ${YELLOW}tree${RESET}                  - Show complete file structure"
-typewriter "   ${YELLOW}cd ..${RESET}                 - Go back to portfolio directory"
-typewriter "   ${YELLOW}projects${RESET}              - Return to projects overview"
-typewriter "   ${YELLOW}home${RESET}                  - Return to main dashboard"
-
-echo ""
-animated_separator "-" 50 "${BLUE}"
-echo ""
-
 # Git repository information
-typewriter "${GREEN}Git:${RESET}"
+typewriter "${BLUE}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   branch=$(git branch --show-current 2>/dev/null || echo "main")
   typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
@@ -66,4 +41,8 @@ else
 fi
 
 echo ""
-animated_separator "=" 60 "${BLUE}"
+
+typewriter "${YELLOW}You are now in the projects/stm32-games directory${RESET}"
+typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore, ${RESET}"
+typewriter "${DIM}or type home to go back to the home page.  ${RESET}"
+echo ""
