@@ -14,7 +14,8 @@ ensure_blog_dirs() {
 
 # Show blog help with ASCII animation
 show_help() {
-    clear -x
+    # Use ANSI escape to preserve scrollback in web terminal
+printf '\033[H\033[J'
     animated_separator "═" 139
     ascii_typewriter "blog help" "Univers" "${BOLD}${CYAN}"
     echo ""
@@ -39,7 +40,8 @@ show_help() {
 
 # List all blog posts with animations
 list_posts() {
-    clear -x
+    # Use ANSI escape to preserve scrollback in web terminal
+printf '\033[H\033[J'
     animated_separator "═" 139
     ascii_typewriter "blog" "Univers" "${BOLD}${CYAN}"
     echo ""
@@ -117,7 +119,8 @@ read_post() {
         return 1
     fi
     
-    clear -x
+    # Use ANSI escape to preserve scrollback in web terminal
+printf '\033[H\033[J'
     
     # Use batcat (Ubuntu's name for bat) to render markdown with Gruvbox Dark theme
     # bat has excellent markdown support and proper syntax highlighting
@@ -143,7 +146,8 @@ search_posts() {
         return 1
     fi
     
-    clear -x
+    # Use ANSI escape to preserve scrollback in web terminal
+printf '\033[H\033[J'
     animated_separator "═" 139
     ascii_typewriter "search" "Univers" "${BOLD}${CYAN}"
     echo ""

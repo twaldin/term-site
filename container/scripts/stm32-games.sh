@@ -3,7 +3,8 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-clear -x
+# Use ANSI escape to preserve scrollback in web terminal
+printf '\033[H\033[J'
 
 # ASCII header with progressive typewriter display
 ascii_typewriter "stm32 games" "Univers" "${BOLD}${BLUE}"
