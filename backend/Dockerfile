@@ -6,14 +6,14 @@ RUN apk add --no-cache nodejs npm python3 make g++
 
 WORKDIR /app
 
-# Copy package files from backend directory
-COPY backend/package*.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy source code from backend directory  
-COPY backend/ .
+# Copy source code  
+COPY . .
 
 # Expose port
 EXPOSE 3001
