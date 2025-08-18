@@ -4,9 +4,7 @@
 source "$(dirname "$0")/shared-functions.sh"
 
 # Clear with scroll history preserved
-# Use ANSI escape to preserve scrollback in web terminal
-printf '\033[H\033[J'
-
+clear
 # ASCII header with progressive typewriter display
 ascii_typewriter "timothy waldin" "Univers" "${BOLD}${CYAN}"
 animated_separator "═" 20

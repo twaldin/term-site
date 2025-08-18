@@ -3,9 +3,7 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-# Use ANSI escape to move cursor home and erase screen (preserves scrollback in most terminals)
-printf '\033[H\033[J'
-
+clear
 # ASCII header with progressive typewriter display
 ascii_typewriter "projects" "Univers" "${BOLD}${CYAN}"
 

@@ -3,9 +3,7 @@
 # Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-# Use ANSI escape to preserve scrollback in web terminal
-printf '\033[H\033[J'
-
+clear
 echo ""
 typewriter "${GREEN}commands${RESET}"
 
