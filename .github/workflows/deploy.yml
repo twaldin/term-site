@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -51,6 +53,8 @@ jobs:
       backend-url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - uses: superfly/flyctl-actions/setup-flyctl@master
       
@@ -84,6 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Deploy to Vercel
         working-directory: ./frontend
