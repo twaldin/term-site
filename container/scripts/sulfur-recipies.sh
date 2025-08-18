@@ -46,7 +46,7 @@ fi
 
 echo ""
 
-typewriter "${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
-typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${RESET}"
+typewriter "${YELLOW}you are now in the projects/sulfur-recipies directory${RESET}"
+typewriter "${DIM}use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${RESET}"
 typewriter "${DIM}or type home to go back to the home page ${RESET}"
 echo ""
