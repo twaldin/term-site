@@ -1,7 +1,8 @@
 #!/bin/bash
 source "$(dirname "$0")/shared-functions.sh"
 
-clear -x
+# Use ANSI escape to preserve scrollback in web terminal
+printf '\033[H\033[J'
 
 echo ""
 
