@@ -5,11 +5,11 @@ source "$(dirname "$0")/shared-functions.sh"
 
 clear
 # ASCII header with progressive typewriter display
-ascii_typewriter "projects" "Univers" "${BOLD}${CYAN}"
+ascii_typewriter "projects" "Univers" "${BOLD}${GREEN}"
 
 echo ""
 animated_separator "+" 60
-
+echo""
 # Project 1 - STM32 Games
 typewriter "${GREEN}1. stm32 games${RESET}"
 typewriter "   ${WHITE}play the classic snake game in c on a microcontroller with lcd screen.${RESET}"
@@ -33,3 +33,10 @@ typewriter "${GREEN}4. dotfiles${RESET}"
 typewriter "   ${WHITE}development environment configuration files${RESET}"
 typewriter "   ${YELLOW}tools:${RESET}zsh, lazyvim, tmux, ghostty, etc"
 typewriter "   ${DIM}Type ${BOLD}\"dotfiles\"to view info and navigate${RESET}"
+
+echo ""
+typewriter "${YELLOW}You are now in the projects/ directory${RESET}"
+typewriter "${DIM}Use ls, cd, nvim, or your other favorite commands to explore my projects, ${RESET}"
+typewriter "${DIM}or type the project name to see info and navigate to the project repo. ${RESET}" 
+typewriter "${DIM}or type home to go back to the home page. ${RESET}"
+echo""

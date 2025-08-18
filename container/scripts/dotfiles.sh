@@ -35,6 +35,6 @@ fi
 echo ""
 
 typewriter "${YELLOW}You are now in the projects/dotfiles directory${RESET}"
-typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore,${RESET}"
+typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${RESET}"
 typewriter "${DIM}or type home to go back to the home page ${RESET}"
 echo ""
