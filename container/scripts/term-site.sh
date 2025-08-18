@@ -50,8 +50,8 @@ fi
 
 echo ""
 
-typewriter "${yellow}you are now in the projects/term-site directory${reset}"
-typewriter "${dim}use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${reset}"
-typewriter "${dim}or type home to go back to the home page ${reset}"
+typewriter "${YELLOW}you are now in the projects/term-site directory${RESET}"
+typewriter "${DIM}use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${RESET}"
+typewriter "${DIM}or type home to go back to the home page ${RESET}"
 
 echo ""
