@@ -3,15 +3,15 @@
 
 export const terminalTheme = {
   // Background and foreground - exact GruvboxDark colors
-  background: '#282828',  // GruvboxDark background
+  background: '#1d2021',  // GruvboxDark Hard background
   foreground: '#ebdbb2',  // GruvboxDark foreground
   cursor: '#ebdbb2',      // Foreground color for cursor
-  cursorAccent: '#282828', // Background for cursor accent
+  cursorAccent: '#1d2021', // Background for cursor accent (Hard)
   selection: '#504945',   // GruvboxDark color 0 for selection
   selectionForeground: '#ebdbb2',
   
   // ANSI colors 0-7 (normal colors) - exact GruvboxDark palette
-  black: '#282828',       // Color 0 - Background
+  black: '#1d2021',       // Color 0 - Background (Hard)
   red: '#cc241d',         // Color 1 - Red
   green: '#98971a',       // Color 2 - Green
   yellow: '#d79921',      // Color 3 - Yellow
