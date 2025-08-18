@@ -16,7 +16,7 @@ a web terminal interface using xterm.js connected to a node-pty instance to exec
 echo ""
 
 # Tech Stack section
-typewriter "${GREEN}Tech Stack:${RESET}"
+typewriter "${CYAN}Tech Stack:${RESET}"
 typewriter "   ${YELLOW}Frontend:${RESET} Basically just xterm.js terminal component served with nextjs router"
 typewriter "   ${YELLOW}Backend:${RESET} Node.js to spawn docker containers, Express, Socket.IO WebSockets"
 typewriter "   ${YELLOW}Terminal:${RESET} xterm.js for frontend, node-pty for execution, Ubuntu Linux docker containers for filesystem"
@@ -26,7 +26,7 @@ animated_separator "~" 70
 
 
 # Git repository information
-typewriter "${GREEN}Recent Git Activity:${RESET}"
+typewriter "${CYAN}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   # Show current branch
   branch=$(git branch --show-current 2>/dev/null || echo "main")
@@ -50,8 +50,8 @@ fi
 
 echo ""
 
-typewriter "${YELLOW}You are now in the projects/term-site directory${RESET}"
-typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore, ${RESET}"
-typewriter "${DIM}or type home to go back to the home page. ${RESET}"
+typewriter "${yellow}you are now in the projects/term-site directory${reset}"
+typewriter "${dim}use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${reset}"
+typewriter "${dim}or type home to go back to the home page ${reset}"
 
 echo ""
