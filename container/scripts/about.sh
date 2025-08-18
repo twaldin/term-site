@@ -1,31 +1,13 @@
 #!/bin/bash
-
-# Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
-clear
-# Top separator
-animated_separator "═" 139
-
-# ASCII header with progressive typewriter display
-ascii_typewriter "about me" "Univers" "${BOLD}${CYAN}"
-
 echo ""
+create_box "About Me" "Hi, I'm Timothy Waldin (tim or twaldin), I'm 19 and from San Francisco, CA. 
+Currently, I'm a Computer Engineering Student at Purdue University as well 
+as CTO and cofounder of a gpt wrapper edtech ai startup
+
+In my spare time I configure nvim (try typing vi) and write side projects,
+like the one youre reading right now.
+
+type contact to talk/stalk me" "$GREEN" 80
 echo ""
-
-# About me paragraph - placeholder for now
-typewriter "${WHITE}[Your about me paragraph goes here. This is a placeholder for your personal introduction,${RESET}"
-typewriter "${WHITE}background, interests, and whatever else you'd like to share with visitors. You can update${RESET}"
-typewriter "${WHITE}this section with your actual content later. Consider including your professional background,${RESET}"
-typewriter "${WHITE}technical interests, hobbies, or anything that helps visitors get to know you better.]${RESET}"
-
-echo ""
-echo ""
-
-# Bottom separator
-animated_separator "═" 139
-
-echo ""
-
-# Add navigation hint
-create_box "Navigation" "Type 'welcome' to return to the main dashboard" "$GREEN" 80

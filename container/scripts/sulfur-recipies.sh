@@ -10,48 +10,24 @@ ascii_typewriter "sulfur recipies" "Univers" "${BOLD}${YELLOW}"
 echo ""
 
 # Create boxed content for main info
-create_box "Info" "A comprehensive recipe database web application for the Sulfur game,
-featuring automated data scraping with advanced filtering and search.
-Allows for filtering by HP, HP/s, and sorting by ingredient and variation." "${YELLOW}"
+create_box "Info" "Using data scraped from wiki.sulfur.gg, a full database of cooking recipies 
+from the game sulfur. Most important features are sorting and filtering by 
+multiple ingredients or stats." "${YELLOW}"
 
 echo ""
 
 # Tech Stack section
-typewriter "${GREEN}Tech Stack:${RESET}"
+typewriter "${YELLOW}Tech Stack:${RESET}"
 typewriter "   ${YELLOW}•${RESET} Next.js 15, React 19, TypeScript"
 typewriter "   ${YELLOW}•${RESET} Tailwind CSS 3 with animations"
-typewriter "   ${YELLOW}•${RESET} Radix UI component library"
 typewriter "   ${YELLOW}•${RESET} shadcn/ui design system"
-typewriter "   ${YELLOW}•${RESET} Next-themes for dark/light mode"
-typewriter "   ${YELLOW}•${RESET} Lucide React icons"
 
 echo ""
 animated_separator "*" 60 "${YELLOW}"
-echo ""
 
-typewriter "${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
-typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
-
-echo ""
-
-# Commands section
-typewriter "${GREEN}Commands:${RESET}"
-typewriter "   ${YELLOW}ls${RESET}                              - List project files"
-typewriter "   ${YELLOW}cat README.md${RESET}                   - View project documentation"
-typewriter "   ${YELLOW}cd app && ls${RESET}                    - Explore Next.js app structure"
-typewriter "   ${YELLOW}cd components && ls${RESET}             - View React components"
-typewriter "   ${YELLOW}cat data/recipes.json | head -20${RESET} - Preview recipe data"
-typewriter "   ${YELLOW}tree -L 2${RESET}                       - Show project structure"
-typewriter "   ${YELLOW}cd ..${RESET}                           - Go back to portfolio directory"
-typewriter "   ${YELLOW}projects${RESET}                        - Return to projects overview"
-typewriter "   ${YELLOW}home${RESET}                            - Return to main dashboard"
-
-echo ""
-animated_separator "~" 50 "${YELLOW}"
-echo ""
 
 # Git repository information (same as other scripts)
-typewriter "${GREEN}Git:${RESET}"
+typewriter "${YELLOW}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   branch=$(git branch --show-current 2>/dev/null || echo "main")
   typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
@@ -69,4 +45,8 @@ else
 fi
 
 echo ""
-animated_separator "=" 60 "${YELLOW}"
+
+typewriter "${YELLOW}You are now in the projects/sulfur-recipies directory${RESET}"
+typewriter "${DIM}Use ls, cat, nvim, or other commands to explore, ${RESET}"
+typewriter "${DIM}or type home to go back to the home page ${RESET}"
+echo ""

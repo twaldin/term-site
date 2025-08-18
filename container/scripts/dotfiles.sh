@@ -10,36 +10,12 @@ ascii_typewriter "dotfiles" "Univers" "${BOLD}${GREEN}"
 echo ""
 
 # Create boxed content for main info
-create_box "Info" "Personal development environment configuration files for Zsh shell
-and Neovim editor using the LazyVim distribution." "${GREEN}"
+create_box "Description" "My dotfiles. Currently i have nvim, zsh, ghostty, and tmux in here. contact me if you are dying to know more of my configs." "${GREEN}"
 
-echo ""
-animated_separator "~" 60 "${GREEN}"
-echo ""
-
-typewriter "${YELLOW}You are now in the projects/dotfiles directory${RESET}"
-typewriter "${DIM}Use ls, cat, nvim, or other commands to explore${RESET}"
-
-echo ""
-
-# Commands section
-typewriter "${GREEN}Commands:${RESET}"
-typewriter "   ${YELLOW}ls${RESET}                               - List dotfile directories"
-typewriter "   ${YELLOW}cat README.md${RESET}                    - View setup documentation"
-typewriter "   ${YELLOW}cat zsh/zshrc${RESET}                    - View Zsh configuration"
-typewriter "   ${YELLOW}cd nvim && ls${RESET}                    - Explore Neovim setup"
-typewriter "   ${YELLOW}cat nvim/lua/config/options.lua${RESET}  - View Neovim options"
-typewriter "   ${YELLOW}tree -L 3${RESET}                        - Show detailed structure"
-typewriter "   ${YELLOW}cd ..${RESET}                            - Go back to portfolio directory"
-typewriter "   ${YELLOW}projects${RESET}                         - Return to projects overview"
-typewriter "   ${YELLOW}home${RESET}                             - Return to main dashboard"
-
-echo ""
-animated_separator "-" 50 "${GREEN}"
 echo ""
 
 # Git repository information
-typewriter "${GREEN}Git:${RESET}"
+typewriter "${GREEN}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   branch=$(git branch --show-current 2>/dev/null || echo "main")
   typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
@@ -57,4 +33,8 @@ else
 fi
 
 echo ""
-animated_separator "=" 60 "${GREEN}"
+
+typewriter "${YELLOW}You are now in the projects/dotfiles directory${RESET}"
+typewriter "${DIM}Use ls, tree, cat, nvim, or other commands to explore,${RESET}"
+typewriter "${DIM}or type home to go back to the home page ${RESET}"
+echo ""
