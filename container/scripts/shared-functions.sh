@@ -3,14 +3,18 @@
 # Shared Terminal Animation Functions
 # Source this file in other scripts with: source "$(dirname "$0")/shared-functions.sh"
 
-# Colors
-CYAN='\033[38;5;117m'
-GREEN='\033[38;5;121m'
-WHITE='\033[38;5;255m'
-YELLOW='\033[38;5;227m'
-BLUE='\033[38;5;111m'
-RED='\033[38;5;210m'
-MAGENTA='\033[38;5;219m'
+# Gruvbox Dark Colors (256 color codes)
+# Using Gruvbox's actual terminal colors
+CYAN='\033[38;5;108m'      # Gruvbox aqua (#8ec07c)
+GREEN='\033[38;5;142m'     # Gruvbox green (#b8bb26)
+WHITE='\033[38;5;223m'     # Gruvbox fg (#ebdbb2)
+YELLOW='\033[38;5;214m'    # Gruvbox yellow (#fabd2f)
+BLUE='\033[38;5;109m'      # Gruvbox blue (#83a598)
+RED='\033[38;5;167m'       # Gruvbox red (#fb4934)
+MAGENTA='\033[38;5;175m'   # Gruvbox purple (#d3869b)
+ORANGE='\033[38;5;208m'    # Gruvbox orange (#fe8019)
+GRAY='\033[38;5;245m'      # Gruvbox gray (#928374)
+BG='\033[38;5;235m'        # Gruvbox bg (#282828)
 RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'

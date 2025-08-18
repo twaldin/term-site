@@ -36,13 +36,11 @@ RUN apt-get install -y \
     figlet \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
+    && ln -s /usr/bin/batcat /usr/bin/bat \
     && rm -rf /var/lib/apt/lists/*
 
-# Install glow v2.1.0 for markdown rendering (includes Tokyo Night theme support!)
-# Cache bust: 2024-08-16-v2
-RUN wget -q https://github.com/charmbracelet/glow/releases/download/v2.1.0/glow_2.1.0_amd64.deb && \
-    dpkg -i glow_2.1.0_amd64.deb && \
-    rm glow_2.1.0_amd64.deb
+# bat is already installed above for markdown rendering with Gruvbox theme
+# No need for glow anymore since bat handles markdown beautifully
 
 # Clone dotfiles repository will be done later after user creation
 
@@ -51,11 +49,8 @@ COPY container/scripts/ /home/portfolio/scripts/
 COPY container/blog/ /home/portfolio/blog/
 COPY container/Univers.flf /usr/share/figlet/Univers.flf
 
-# Setup glow config
-RUN mkdir -p /home/portfolio/.config/glow
-COPY container/glow-config.yml /home/portfolio/.config/glow/glow.yml
-
-# No longer need npm packages since we're using glow for markdown
+# No longer need glow config since we're using bat for markdown
+# bat uses themes directly without config files
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
