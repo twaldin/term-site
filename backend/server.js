@@ -1,3 +1,4 @@
+console.log('Starting terminal backend server...');
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -83,18 +84,22 @@ const io = socketIo(server, {
   allowEIO3: true, // Allow older Engine.IO versions for compatibility
 });
 
+console.log('Creating session manager...');
 // Initialize secure session manager (no Docker needed)
 const sessionManager = new SecureSessionManager();
+console.log('Session manager created');
 
 // Wait for session manager to initialize (with timeout)
 const waitForInitialization = async () => {
   const startTime = Date.now();
-  while (!sessionManager.initialized && (Date.now() - startTime) < 10000) {
+  while (!sessionManager.initialized && (Date.now() - startTime) < 5000) { // Reduced to 5 seconds
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!sessionManager.initialized) {
-    console.warn('Session manager initialization timed out, proceeding anyway');
+    console.warn('Session manager initialization timed out after 5 seconds, proceeding anyway');
+    sessionManager.initialized = true; // Force initialization complete
   }
+  console.log('Session manager ready, starting server...');
 };
 
 // Start periodic cleanup
