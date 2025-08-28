@@ -14,8 +14,9 @@
   "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.5",
-    "dockerode": "^4.0.7",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
     "node-pty": "^1.0.0",
     "socket.io": "^4.8.1"
   }
