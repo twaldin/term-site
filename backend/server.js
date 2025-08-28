@@ -86,6 +86,17 @@ const io = socketIo(server, {
 // Initialize secure session manager (no Docker needed)
 const sessionManager = new SecureSessionManager();
 
+// Wait for session manager to initialize (with timeout)
+const waitForInitialization = async () => {
+  const startTime = Date.now();
+  while (!sessionManager.initialized && (Date.now() - startTime) < 10000) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (!sessionManager.initialized) {
+    console.warn('Session manager initialization timed out, proceeding anyway');
+  }
+};
+
 // Start periodic cleanup
 sessionManager.startPeriodicCleanup();
 
@@ -200,14 +211,24 @@ app.get('/security', (req, res) => {
   });
 });
 
-// Start server  
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Secure terminal backend server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log('Security: gVisor isolation enabled');
-  console.log('Docker access: DISABLED');
-  console.log('Mode: SECURE');
+// Start server after initialization
+const startServer = async () => {
+  await waitForInitialization();
+  
+  const PORT = process.env.PORT || 3001;
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Secure terminal backend server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('Security: gVisor isolation enabled');
+    console.log('Docker access: DISABLED');
+    console.log('Mode: SECURE');
+  });
+};
+
+// Start the server
+startServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });
 
 // Track shutdown state to prevent multiple shutdown attempts
