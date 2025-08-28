@@ -65,6 +65,8 @@ const io = socketIo(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
       ? [
+          'https://www.twald.in',
+          'https://twald.in',
           process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
           'https://term-site-eed0kfe1k-twaldin.vercel.app',
           'https://term-site.vercel.app'
@@ -73,7 +75,12 @@ const io = socketIo(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['websocket', 'polling']
+  transports: ['polling', 'websocket'], // Prioritize polling for Cloud Run
+  pingTimeout: 60000, // 60 seconds ping timeout
+  pingInterval: 25000, // 25 seconds between pings
+  upgradeTimeout: 30000, // 30 seconds to upgrade transport
+  maxHttpBufferSize: 1e6, // 1MB max buffer
+  allowEIO3: true, // Allow older Engine.IO versions for compatibility
 });
 
 // Initialize secure session manager (no Docker needed)
