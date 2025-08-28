@@ -6,7 +6,7 @@ class SecureSessionManager {
   constructor() {
     this.sessions = new Map();
     this.maxSessions = 10;
-    this.sessionTimeout = 15 * 60 * 1000; // 15 minutes for better UX
+    this.sessionTimeout = 60 * 60 * 1000; // 1 hour timeout for active terminal usage
     
     // Initialize portfolio environment
     this.initializePortfolioEnvironment();

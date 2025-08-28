@@ -151,13 +151,8 @@ io.on('connection', (socket) => {
     sessionManager.destroySession(socket.id);
   });
 
-  // Set socket timeout for additional security
-  socket.setTimeout(10 * 60 * 1000); // 10 minutes
-  socket.on('timeout', () => {
-    console.log(`Socket timeout for ${socket.id}`);
-    sessionManager.destroySession(socket.id);
-    socket.disconnect();
-  });
+  // Note: Socket.IO handles timeouts differently than raw sockets
+  // Session timeout is handled by SecureSessionManager instead
 });
 
 // Health check endpoint
