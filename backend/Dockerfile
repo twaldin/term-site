@@ -1,43 +1,46 @@
-# Backend with embedded terminal container
-FROM docker:24-dind
+# Secure Cloud Run Dockerfile - No Docker-in-Docker
+FROM node:18-alpine
 
-# Install Node.js and dependencies
-RUN apk add --no-cache nodejs npm python3 make g++
+# Install bash and essential tools for terminal functionality + build tools for node-pty
+RUN apk add --no-cache bash vim nano git curl wget tree htop procps \
+    coreutils findutils ncurses figlet python3 make g++ linux-headers
 
 WORKDIR /app
 
-# Copy package files from backend directory
-COPY backend/package*.json ./
+# Create non-root user for security
+RUN addgroup -g 1001 -S portfolio && \
+    adduser -S portfolio -u 1001 -G portfolio && \
+    mkdir -p /home/portfolio && \
+    chown -R portfolio:portfolio /home/portfolio
+
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --production && npm cache clean --force
 
-# Copy source code from backend directory  
-COPY backend/ .
+# Copy source code
+COPY . .
+
+# Create terminal environment directory
+RUN mkdir -p /tmp/portfolio-base && \
+    chown -R portfolio:portfolio /tmp/portfolio-base
 
 # Expose port
 EXPOSE 3001
 
-# Create startup script that starts Docker daemon and Node.js server
-RUN echo '#!/bin/sh' > /app/startup.sh && \
-    echo 'set -e' >> /app/startup.sh && \
-    echo 'echo "Starting Docker daemon..."' >> /app/startup.sh && \
-    echo 'dockerd-entrypoint.sh &' >> /app/startup.sh && \
-    echo 'echo "Waiting for Docker daemon to be ready..."' >> /app/startup.sh && \
-    echo 'timeout=30' >> /app/startup.sh && \
-    echo 'while [ $timeout -gt 0 ] && ! docker version > /dev/null 2>&1; do' >> /app/startup.sh && \
-    echo '  sleep 1' >> /app/startup.sh && \
-    echo '  timeout=$((timeout - 1))' >> /app/startup.sh && \
-    echo 'done' >> /app/startup.sh && \
-    echo 'if [ $timeout -eq 0 ]; then' >> /app/startup.sh && \
-    echo '  echo "ERROR: Docker daemon failed to start within 30 seconds"' >> /app/startup.sh && \
-    echo '  echo "Starting server without Docker support..."' >> /app/startup.sh && \
-    echo '  exec npm start' >> /app/startup.sh && \
-    echo 'fi' >> /app/startup.sh && \
-    echo 'echo "Docker daemon is ready"' >> /app/startup.sh && \
-    echo 'echo "Starting Node.js server..."' >> /app/startup.sh && \
-    echo 'exec npm start' >> /app/startup.sh && \
-    chmod +x /app/startup.sh
+# Set security environment variables
+ENV NODE_ENV=production
+ENV HOME=/home/portfolio
+ENV USER=portfolio
+ENV SHELL=/bin/bash
 
-# Start with the startup script
-CMD ["/app/startup.sh"]
+# Run as non-root user
+USER portfolio
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Start server
+CMD ["npm", "start"]

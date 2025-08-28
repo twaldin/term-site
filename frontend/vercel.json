@@ -5,6 +5,6 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://term-site-backend.fly.dev"
+    "NEXT_PUBLIC_API_URL": "https://terminal-portfolio-614734471800.us-central1.run.app"
   }
 }
