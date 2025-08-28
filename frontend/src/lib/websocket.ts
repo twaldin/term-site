@@ -31,11 +31,16 @@ export function createWebSocketManager(): WebSocketManager {
 
     console.log('Creating WebSocket connection to:', getWebSocketUrl());
     socket = io(getWebSocketUrl(), {
-      transports: ['websocket', 'polling'], // Allow fallback to polling for Cloud Run
-      timeout: 0, // No connection timeout - let users work uninterrupted
+      transports: ['polling', 'websocket'], // Prioritize polling for Cloud Run stability
+      timeout: 10000, // 10 second connection timeout - prevents indefinite hanging
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 10, // More attempts for better reliability
+      reconnectionDelay: 2000, // Longer delay between attempts
+      reconnectionDelayMax: 10000, // Cap exponential backoff
+      maxReconnectionAttempts: 10,
+      forceNew: true, // Force new connection on reconnect
+      upgrade: true, // Allow transport upgrade
+      rememberUpgrade: false, // Don't remember upgraded transport
     });
 
     // Set up event handlers with stored callbacks
@@ -52,6 +57,23 @@ export function createWebSocketManager(): WebSocketManager {
     socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
       if (errorCallback) errorCallback(error);
+      
+      // Auto-retry with exponential backoff on connection errors
+      setTimeout(() => {
+        if (socket && !socket.connected) {
+          console.log('Retrying connection after error...');
+          socket.connect();
+        }
+      }, Math.min(1000 * Math.pow(2, (socket?.io.backoff || 0)), 10000));
+    });
+
+    socket.on('reconnect_error', (error) => {
+      console.error('WebSocket reconnection error:', error);
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.error('WebSocket reconnection failed after all attempts');
+      if (errorCallback) errorCallback(new Error('Reconnection failed'));
     });
 
     socket.on('output', (data) => {
