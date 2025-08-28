@@ -6,7 +6,7 @@ class SecureSessionManager {
   constructor() {
     this.sessions = new Map();
     this.maxSessions = 10;
-    this.sessionTimeout = 5 * 60 * 1000; // 5 minutes for security
+    this.sessionTimeout = 15 * 60 * 1000; // 15 minutes for better UX
     
     // Initialize portfolio environment
     this.initializePortfolioEnvironment();
@@ -19,22 +19,53 @@ class SecureSessionManager {
       await fs.mkdir('/tmp/portfolio-template/projects', { recursive: true });
       await fs.mkdir('/tmp/portfolio-template/workspace', { recursive: true });
       
-      // Copy portfolio scripts if they exist
+      // Copy portfolio scripts and configs from embedded container directory
       try {
-        const containerScripts = path.join(__dirname, '..', 'container', 'scripts');
-        const stats = await fs.stat(containerScripts);
+        const containerPath = path.join(__dirname, 'container');
+        const stats = await fs.stat(containerPath);
         if (stats.isDirectory()) {
-          await fs.cp(containerScripts, '/tmp/portfolio-template/scripts', { recursive: true });
-          console.log('Portfolio scripts copied to template');
+          // Copy scripts
+          const scriptsPath = path.join(containerPath, 'scripts');
+          await this.copyDirectory(scriptsPath, '/tmp/portfolio-template/scripts');
+          
+          // Copy blog posts
+          const blogPath = path.join(containerPath, 'blog');
+          await this.copyDirectory(blogPath, '/tmp/portfolio-template/blog');
+          
+          // Copy figlet font
+          const fontPath = path.join(containerPath, 'Univers.flf');
+          try {
+            await fs.copyFile(fontPath, '/tmp/portfolio-template/Univers.flf');
+          } catch (fontErr) {
+            console.log('Figlet font not copied:', fontErr.message);
+          }
+          
+          console.log('Complete portfolio environment copied to template');
         }
       } catch (err) {
-        console.log('No container scripts found, creating basic environment');
+        console.log('Container directory not found, creating basic environment:', err.message);
         await this.createBasicScripts();
       }
       
       console.log('Portfolio environment template initialized');
     } catch (error) {
       console.error('Error initializing portfolio environment:', error);
+    }
+  }
+
+  async copyDirectory(src, dest) {
+    await fs.mkdir(dest, { recursive: true });
+    const entries = await fs.readdir(src, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      
+      if (entry.isDirectory()) {
+        await this.copyDirectory(srcPath, destPath);
+      } else {
+        await fs.copyFile(srcPath, destPath);
+      }
     }
   }
 
@@ -90,17 +121,18 @@ echo ""
       
       // Copy portfolio template to session
       try {
-        await fs.cp('/tmp/portfolio-template', sessionDir, { recursive: true });
+        await this.copyDirectory('/tmp/portfolio-template', sessionDir);
       } catch (err) {
-        console.log('Template copy failed, creating minimal environment');
+        console.log('Template copy failed, creating minimal environment:', err.message);
         await fs.mkdir(path.join(sessionDir, 'workspace'), { recursive: true });
+        await fs.mkdir(path.join(sessionDir, 'scripts'), { recursive: true });
       }
       
       // Create basic environment files
       await this.setupSessionEnvironment(sessionDir);
       
-      // Spawn secure shell in session directory
-      const shell = pty.spawn('/bin/bash', [], {
+      // Spawn zsh shell in session directory with full environment
+      const shell = pty.spawn('/bin/zsh', [], {
         name: 'xterm-256color',
         cols: 120,
         rows: 30,
@@ -108,12 +140,16 @@ echo ""
         env: {
           TERM: 'xterm-256color',
           COLORTERM: 'truecolor',
-          PATH: `${sessionDir}/scripts:/usr/local/bin:/usr/bin:/bin`,
+          PATH: `${sessionDir}/scripts:/usr/local/bin:/usr/bin:/bin:/sbin`,
           HOME: sessionDir,
           USER: 'portfolio',
-          PS1: 'portfolio@secure:$ ',
-          // Limit environment for security
-          SHELL: '/bin/bash'
+          SHELL: '/bin/zsh',
+          ZDOTDIR: sessionDir,
+          // Enable colors for ls and other tools
+          CLICOLOR: '1',
+          LSCOLORS: 'ExFxBxDxCxegedabagacad',
+          // Set figlet font directory
+          FIGLET_FONTDIR: sessionDir
         }
       });
 
@@ -147,12 +183,7 @@ echo ""
       // Set session timeout
       this.setSessionTimeout(sessionId);
 
-      // Auto-run welcome command
-      setTimeout(() => {
-        this.autoRunWelcome(sessionId);
-      }, 500);
-
-      console.log(`Secure session created for ${sessionId}`);
+      console.log(`Secure session created for ${sessionId} with full portfolio environment`);
       return Promise.resolve();
 
     } catch (error) {
@@ -162,54 +193,138 @@ echo ""
   }
 
   async setupSessionEnvironment(sessionDir) {
-    // Create .bashrc with portfolio aliases
-    const bashrc = `# Portfolio Terminal Environment
+    // Create .zshrc with full portfolio configuration
+    const zshrc = `# Timothy Waldin's Portfolio Terminal Environment
+# Secure isolated session with full dotfiles experience
+
 export TERM=xterm-256color
 export COLORTERM=truecolor
-export PS1='portfolio@secure:$ '
+export SHELL=/bin/zsh
 
-# Portfolio navigation aliases
-alias welcome='${sessionDir}/scripts/welcome.sh 2>/dev/null || echo "Welcome to Terminal Portfolio!"'
-alias help='${sessionDir}/scripts/help.sh 2>/dev/null || echo "Help not available"'
-alias home='cd ${sessionDir} && pwd'
-alias workspace='cd ${sessionDir}/workspace && pwd'
+# Gruvbox Dark Theme Colors (exact matches from your original)
+export CYAN='\\033[38;2;142;192;124m'      # Bright Cyan #8ec07c
+export GREEN='\\033[38;2;184;187;38m'      # Bright Green #b8bb26
+export WHITE='\\033[38;2;235;219;178m'     # Foreground #ebdbb2
+export YELLOW='\\033[38;2;250;189;47m'     # Bright Yellow #fabd2f
+export BLUE='\\033[38;2;131;165;152m'      # Bright Blue #83a598
+export RED='\\033[38;2;251;73;52m'         # Bright Red #fb4934
+export MAGENTA='\\033[38;2;211;134;155m'   # Bright Magenta #d3869b
+export ORANGE='\\033[38;2;254;128;25m'     # Orange
+export GRAY='\\033[38;2;146;131;116m'      # Gray #928374
+export BG='\\033[48;2;29;32;33m'           # Background #1d2021
+export FG='\\033[38;2;235;219;178m'        # Foreground #ebdbb2
+export RESET='\\033[0m'
+export BOLD='\\033[1m'
+export DIM='\\033[2m'
 
-# Enhanced ls with colors
+# Portfolio navigation aliases (all your original commands)
+alias welcome='cd ${sessionDir} && ${sessionDir}/scripts/welcome.sh'
+alias help='${sessionDir}/scripts/help.sh'
+alias about='${sessionDir}/scripts/about.sh'
+alias contact='${sessionDir}/scripts/contact.sh'
+alias blog='${sessionDir}/scripts/blog.sh'
+alias projects='${sessionDir}/scripts/projects.sh'
+alias dotfiles='${sessionDir}/scripts/dotfiles.sh'
+alias stm32-games='${sessionDir}/scripts/stm32-games.sh'
+alias sulfur-recipies='${sessionDir}/scripts/sulfur-recipies.sh'
+alias term-site='${sessionDir}/scripts/term-site.sh'
+
+# Enhanced ls with colors (Gruvbox themed)
 alias ls='ls --color=auto'
 alias ll='ls -la --color=auto'
 alias la='ls -A --color=auto'
+alias l='ls -CF --color=auto'
 
 # Safety aliases
 alias rm='rm -i'
-alias mv='mv -i'
+alias mv='mv -i'  
 alias cp='cp -i'
 
-echo "Secure terminal initialized"
+# Git aliases
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline'
+
+# Directory navigation
+alias home='cd ${sessionDir}'
+alias workspace='cd ${sessionDir}/workspace'
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# Oh My Posh Pure theme configuration
+eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/pure.omp.json)"
+
+# Custom figlet font path if available
+if [ -f "${sessionDir}/Univers.flf" ]; then
+    export FIGLET_FONTDIR="${sessionDir}"
+fi
+
+# Auto-run welcome on shell start (but only once per session)
+if [ ! -f "${sessionDir}/.welcomed" ]; then
+    touch "${sessionDir}/.welcomed"
+    echo -e "\${GRAY}Initializing Timothy Waldin's portfolio terminal...\${RESET}"
+    sleep 0.5
+    welcome
+fi
 `;
 
+    await fs.writeFile(path.join(sessionDir, '.zshrc'), zshrc);
+    
+    // Also create .bashrc for compatibility
+    const bashrc = `# Fallback bash configuration
+source ${sessionDir}/.zshrc
+`;
     await fs.writeFile(path.join(sessionDir, '.bashrc'), bashrc);
     
-    // Create simple README
-    const readme = `# Terminal Portfolio
+    // Create enhanced README with your style
+    const readme = `# Timothy Waldin's Terminal Portfolio
 
-Welcome to this secure terminal environment!
+Welcome to my secure, isolated terminal environment! This is a recreation of my 
+full development setup with all dotfiles, themes, and scripts.
 
-## Available Commands
-- ls, ll, la - List files and directories
-- cd - Navigate directories  
-- cat - View file contents
-- vim, nano - Edit files
-- help - Show help information
-- welcome - Show welcome message
+## Navigation Commands
+- \`welcome\`     - Show animated welcome screen
+- \`about\`       - About me and my background  
+- \`contact\`     - Get my contact information
+- \`projects\`    - Browse my project portfolio
+- \`blog\`        - Read my technical blog posts
+- \`help\`        - Show detailed help information
 
-## Directories
-- workspace/ - Your working space
-- scripts/ - Available scripts
+## Project Shortcuts
+- \`stm32-games\` - STM32 embedded game development
+- \`sulfur-recipies\` - Chemistry simulation recipes
+- \`term-site\`   - This terminal portfolio site
+- \`dotfiles\`    - My development environment configs
 
-This environment is completely isolated and secure.
+## Enhanced Commands  
+- \`ll\`, \`la\`   - Colorized file listings
+- \`workspace\`   - Your personal workspace directory
+- \`gs\`, \`ga\`, \`gc\` - Git shortcuts
+
+## Features
+- 🎨 **Gruvbox Dark Theme** - Easy on the eyes
+- ⚡ **Typewriter Animations** - Smooth ASCII art
+- 🔒 **Completely Secure** - Isolated container environment
+- 🚀 **Full Terminal Experience** - All my development tools
+
+Type \`welcome\` to get started, or explore any command!
+
+---
+*This environment is completely isolated. Feel free to experiment - you can't break anything!*
 `;
 
     await fs.writeFile(path.join(sessionDir, 'README.md'), readme);
+    
+    // Copy figlet font to user session if available
+    const fontSource = '/tmp/portfolio-template/Univers.flf';
+    const fontDest = path.join(sessionDir, 'Univers.flf');
+    try {
+      await fs.copyFile(fontSource, fontDest);
+    } catch (err) {
+      console.log('Figlet font not available for session');
+    }
   }
 
   autoRunWelcome(sessionId) {
