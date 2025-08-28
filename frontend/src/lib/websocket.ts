@@ -37,7 +37,6 @@ export function createWebSocketManager(): WebSocketManager {
       reconnectionAttempts: 10, // More attempts for better reliability
       reconnectionDelay: 2000, // Longer delay between attempts
       reconnectionDelayMax: 10000, // Cap exponential backoff
-      maxReconnectionAttempts: 10,
       forceNew: true, // Force new connection on reconnect
       upgrade: true, // Allow transport upgrade
       rememberUpgrade: false, // Don't remember upgraded transport
