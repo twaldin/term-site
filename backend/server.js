@@ -9,6 +9,9 @@ const SecureSessionManager = require('./session');
 const app = express();
 const server = http.createServer(app);
 
+// Enable trust proxy for Cloud Run (required for rate limiting)
+app.set('trust proxy', true);
+
 // Security middleware - helmet for security headers
 app.use(helmet({
   contentSecurityPolicy: {
