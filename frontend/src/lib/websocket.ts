@@ -57,13 +57,13 @@ export function createWebSocketManager(): WebSocketManager {
       console.error('WebSocket connection error:', error);
       if (errorCallback) errorCallback(error);
       
-      // Auto-retry with exponential backoff on connection errors
+      // Auto-retry with simple backoff on connection errors
       setTimeout(() => {
         if (socket && !socket.connected) {
           console.log('Retrying connection after error...');
           socket.connect();
         }
-      }, Math.min(1000 * Math.pow(2, (socket?.io.backoff || 0)), 10000));
+      }, 3000); // Simple 3-second delay for retry
     });
 
     socket.on('reconnect_error', (error) => {
