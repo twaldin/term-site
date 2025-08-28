@@ -16,29 +16,47 @@ class SecureSessionManager {
   }
 
   async initializePortfolioEnvironment() {
+    console.log('Starting portfolio environment initialization...');
+    
     try {
       // Create user directory structure
+      console.log('Creating base directories...');
       await fs.mkdir('/tmp/portfolio-template', { recursive: true });
       await fs.mkdir('/tmp/portfolio-template/projects', { recursive: true });
       await fs.mkdir('/tmp/portfolio-template/workspace', { recursive: true });
       
       // Copy portfolio scripts and configs from embedded container directory
+      const containerPath = path.join(__dirname, 'container');
+      console.log('Checking for container directory at:', containerPath);
+      
       try {
-        const containerPath = path.join(__dirname, 'container');
         const stats = await fs.stat(containerPath);
         if (stats.isDirectory()) {
+          console.log('Container directory found, copying contents...');
+          
           // Copy scripts
           const scriptsPath = path.join(containerPath, 'scripts');
-          await this.copyDirectory(scriptsPath, '/tmp/portfolio-template/scripts');
+          try {
+            await this.copyDirectory(scriptsPath, '/tmp/portfolio-template/scripts');
+            console.log('Scripts copied successfully');
+          } catch (scriptsErr) {
+            console.log('Failed to copy scripts:', scriptsErr.message);
+          }
           
           // Copy blog posts
           const blogPath = path.join(containerPath, 'blog');
-          await this.copyDirectory(blogPath, '/tmp/portfolio-template/blog');
+          try {
+            await this.copyDirectory(blogPath, '/tmp/portfolio-template/blog');
+            console.log('Blog posts copied successfully');
+          } catch (blogErr) {
+            console.log('Failed to copy blog posts:', blogErr.message);
+          }
           
           // Copy figlet font
           const fontPath = path.join(containerPath, 'Univers.flf');
           try {
             await fs.copyFile(fontPath, '/tmp/portfolio-template/Univers.flf');
+            console.log('Figlet font copied successfully');
           } catch (fontErr) {
             console.log('Figlet font not copied:', fontErr.message);
           }
@@ -50,11 +68,21 @@ class SecureSessionManager {
         await this.createBasicScripts();
       }
       
-      console.log('Portfolio environment template initialized');
+      console.log('Portfolio environment template initialized successfully');
       this.initialized = true;
     } catch (error) {
       console.error('Error initializing portfolio environment:', error);
-      // Even if initialization fails, mark as initialized so server can start
+      console.log('Continuing with basic environment...');
+      
+      // Even if initialization fails, try to create basic environment
+      try {
+        await this.createBasicScripts();
+        console.log('Basic environment created successfully');
+      } catch (basicErr) {
+        console.error('Failed to create basic environment:', basicErr);
+      }
+      
+      // Always mark as initialized so server can start
       this.initialized = true;
     }
   }
