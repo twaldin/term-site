@@ -31,7 +31,7 @@ export function createWebSocketManager(): WebSocketManager {
 
     console.log('Creating WebSocket connection to:', getWebSocketUrl());
     socket = io(getWebSocketUrl(), {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'], // Allow fallback to polling for Cloud Run
       timeout: 0, // No connection timeout - let users work uninterrupted
       reconnection: true,
       reconnectionAttempts: 5,
