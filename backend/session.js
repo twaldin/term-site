@@ -7,9 +7,12 @@ class SecureSessionManager {
     this.sessions = new Map();
     this.maxSessions = 10;
     this.sessionTimeout = 60 * 60 * 1000; // 1 hour timeout for active terminal usage
+    this.initialized = false;
     
-    // Initialize portfolio environment
-    this.initializePortfolioEnvironment();
+    // Initialize portfolio environment asynchronously
+    this.initializePortfolioEnvironment().catch(error => {
+      console.error('Failed to initialize portfolio environment:', error);
+    });
   }
 
   async initializePortfolioEnvironment() {
@@ -48,8 +51,11 @@ class SecureSessionManager {
       }
       
       console.log('Portfolio environment template initialized');
+      this.initialized = true;
     } catch (error) {
       console.error('Error initializing portfolio environment:', error);
+      // Even if initialization fails, mark as initialized so server can start
+      this.initialized = true;
     }
   }
 
