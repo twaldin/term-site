@@ -305,23 +305,18 @@ source ${sessionDir}/.zshrc
 
 		console.log(`Running auto-welcome with typewriter effect for session ${sessionId}`);
 
-		// Create a flag file to prevent re-running
+		// Create flag file
 		const sessionDir = session.sessionDir;
 		const flagFile = `${sessionDir}/.welcomed`;
-		
-		// Check if already welcomed
+
+		// if already welcomed
 		const fs = require('fs');
 		if (fs.existsSync(flagFile)) {
 			return;
 		}
 
-		// Create the flag file
 		fs.writeFileSync(flagFile, '');
 
-		// Show initialization message
-		session.terminal.write('\x1b[38;2;146;131;116mInitializing Timothy Waldin\'s portfolio terminal...\x1b[0m\r\n');
-
-		// Wait a moment then start typing "welcome"
 		setTimeout(() => {
 			this.typeCommand(sessionId, 'welcome');
 		}, 800);
@@ -338,12 +333,12 @@ source ${sessionDir}/.zshrc
 			if (index < command.length) {
 				session.terminal.write(command[index]);
 				index++;
-				setTimeout(typeNextChar, 80); // 80ms delay between characters for typewriter effect
+				setTimeout(typeNextChar, 5); // 80ms delay between characters for typewriter effect
 			} else {
 				// Send enter to execute the command
 				setTimeout(() => {
 					session.terminal.write('\r');
-				}, 200);
+				}, 10);
 			}
 		};
 
