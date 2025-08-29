@@ -14,13 +14,13 @@ RUN mkdir -p /usr/share/oh-my-posh/themes && \
     wget -O /usr/share/oh-my-posh/themes/pure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json
 
 # Install pre-compiled nvim nightly (0.12+) for Ubuntu/glibc
-RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz && \
+RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && \
     tar xzf nvim.tar.gz && \
-    mv nvim-linux64/bin/nvim /usr/local/bin/nvim && \
-    mv nvim-linux64/lib/nvim /usr/local/lib/nvim && \
-    mv nvim-linux64/share/nvim /usr/local/share/nvim && \
+    mv nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim && \
+    mv nvim-linux-x86_64/lib/nvim /usr/local/lib/nvim && \
+    mv nvim-linux-x86_64/share/nvim /usr/local/share/nvim && \
     chmod +x /usr/local/bin/nvim && \
-    rm -rf nvim.tar.gz nvim-linux64 && \
+    rm -rf nvim.tar.gz nvim-linux-x86_64 && \
     ln -sf /usr/local/bin/nvim /usr/local/bin/vi
 
 WORKDIR /app
