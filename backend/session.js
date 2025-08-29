@@ -68,6 +68,14 @@ class SecureSessionManager {
 				await this.createBasicScripts();
 			}
 
+			// Clone projects to template directory for faster session creation
+			console.log('Cloning projects to template directory...');
+			await this.cloneProjects('/tmp/portfolio-template');
+			
+			// Clone and setup nvim config in template
+			console.log('Setting up nvim config in template...');
+			await this.setupNvimConfigFromDotfiles('/tmp/portfolio-template');
+
 			console.log('Portfolio environment template initialized successfully');
 			this.initialized = true;
 		} catch (error) {
@@ -332,12 +340,38 @@ source ${sessionDir}/.zshrc
 				await this.copyDirectory(templateNvimDir, sessionNvimDir);
 				console.log('Nvim config copied from template successfully');
 			} else {
-				console.log('No template nvim config found, setting up fresh');
-				await this.setupNvimConfig(sessionDir);
+				console.log('No template nvim config found, setting up from dotfiles');
+				await this.setupNvimConfigFromDotfiles(sessionDir);
 			}
 		} catch (error) {
-			console.log('Template nvim config not available, setting up fresh:', error.message);
-			await this.setupNvimConfig(sessionDir);
+			console.log('Template nvim config not available, setting up from dotfiles:', error.message);
+			await this.setupNvimConfigFromDotfiles(sessionDir);
+		}
+	}
+
+	async setupNvimConfigFromDotfiles(baseDir) {
+		const dotfilesPath = path.join(baseDir, 'projects/dotfiles');
+		const nvimSourcePath = path.join(dotfilesPath, 'nvim');
+		const nvimDestPath = path.join(baseDir, '.config/nvim');
+
+		try {
+			// Check if dotfiles have been cloned
+			await fs.access(nvimSourcePath);
+			
+			// Create .config directory
+			await fs.mkdir(path.join(baseDir, '.config'), { recursive: true });
+			
+			// Copy nvim config from dotfiles
+			console.log('Copying nvim config from dotfiles...');
+			await this.copyDirectory(nvimSourcePath, nvimDestPath);
+			console.log('Nvim config copied from dotfiles successfully');
+			
+			// Note: vim.pack plugins will be auto-installed on first nvim launch
+			// with 0.12+ which supports vim.pack
+		} catch (error) {
+			console.log('Could not copy nvim config from dotfiles:', error.message);
+			// Fall back to basic config
+			await this.setupNvimConfig(baseDir);
 		}
 	}
 
