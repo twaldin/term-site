@@ -278,7 +278,7 @@ fi
 source ${sessionDir}/.zshrc
 `;
 		await fs.writeFile(path.join(sessionDir, '.bashrc'), bashrc);
-		
+
 		// Copy figlet font to user session if available
 		const fontSource = '/tmp/portfolio-template/Univers.flf';
 		const fontDest = path.join(sessionDir, 'Univers.flf');
@@ -290,11 +290,14 @@ source ${sessionDir}/.zshrc
 
 		// Clone projects into projects directory
 		await this.cloneProjects(sessionDir);
+
+		// Setup nvim configuration after dotfiles are cloned
+		await this.setupNvimConfig(sessionDir);
 	}
 
 	async cloneProjects(sessionDir) {
 		const projectsDir = path.join(sessionDir, 'projects');
-		
+
 		// Ensure projects directory exists
 		await fs.mkdir(projectsDir, { recursive: true });
 
@@ -306,10 +309,10 @@ source ${sessionDir}/.zshrc
 		];
 
 		const { spawn } = require('child_process');
-		
+
 		for (const project of projects) {
 			const projectPath = path.join(projectsDir, project.name);
-			
+
 			try {
 				// Check if project already exists
 				try {
@@ -321,7 +324,7 @@ source ${sessionDir}/.zshrc
 				}
 
 				console.log(`Cloning ${project.name} from ${project.url}...`);
-				
+
 				await new Promise((resolve, reject) => {
 					const gitClone = spawn('git', ['clone', project.url, projectPath], {
 						stdio: ['pipe', 'pipe', 'pipe'],
@@ -351,6 +354,99 @@ source ${sessionDir}/.zshrc
 		}
 
 		console.log('Project cloning completed');
+	}
+
+	async setupNvimConfig(sessionDir) {
+		try {
+			const dotfilesNvimPath = path.join(sessionDir, 'projects', 'dotfiles', 'nvim');
+			const sessionNvimPath = path.join(sessionDir, '.config', 'nvim');
+
+			// Check if dotfiles nvim config exists
+			try {
+				await fs.access(dotfilesNvimPath);
+			} catch {
+				console.log('Dotfiles nvim config not found, keeping basic config');
+				return;
+			}
+
+			// Ensure .config directory exists
+			await fs.mkdir(path.join(sessionDir, '.config'), { recursive: true });
+
+			// Copy nvim config from dotfiles
+			console.log('Copying nvim configuration from dotfiles...');
+			await this.copyDirectory(dotfilesNvimPath, sessionNvimPath);
+			
+			// Install vim plugins using vim-pack
+			console.log('Installing nvim plugins...');
+			await this.installNvimPlugins(sessionDir);
+
+			console.log('Nvim configuration setup completed');
+
+		} catch (error) {
+			console.error('Failed to setup nvim config:', error.message);
+			console.log('Continuing with basic nvim config');
+		}
+	}
+
+	async installNvimPlugins(sessionDir) {
+		const { spawn } = require('child_process');
+
+		try {
+			// Run nvim with native vim.pack plugin installation
+			console.log('Installing nvim plugins with vim.pack (this may take a moment)...');
+
+			await new Promise((resolve, reject) => {
+				// Use vim.pack native package manager commands
+				const pluginInstall = spawn('nvim', [
+					'--headless',
+					'-c', 'vim.pack.install()',
+					'-c', 'quitall'
+				], {
+					cwd: sessionDir,
+					stdio: ['pipe', 'pipe', 'pipe'],
+					timeout: 120000, // 2 minute timeout for plugin installation
+					env: {
+						...process.env,
+						HOME: sessionDir,
+						XDG_CONFIG_HOME: path.join(sessionDir, '.config')
+					}
+				});
+
+				let output = '';
+				let errorOutput = '';
+
+				pluginInstall.stdout.on('data', (data) => {
+					output += data.toString();
+				});
+
+				pluginInstall.stderr.on('data', (data) => {
+					errorOutput += data.toString();
+				});
+
+				pluginInstall.on('close', (code) => {
+					if (code === 0) {
+						console.log('Nvim plugins installed successfully with vim.pack');
+						resolve();
+					} else {
+						console.log('Plugin installation completed with code:', code);
+						console.log('Output:', output);
+						console.log('Error output:', errorOutput);
+						// Don't reject - plugins might still work
+						resolve();
+					}
+				});
+
+				pluginInstall.on('error', (error) => {
+					console.error('Error installing nvim plugins:', error.message);
+					// Don't reject - continue without plugins
+					resolve();
+				});
+			});
+
+		} catch (error) {
+			console.error('Failed to install nvim plugins:', error.message);
+			// Continue without plugins
+		}
 	}
 
 	runAutoWelcome(sessionId) {
@@ -389,12 +485,12 @@ source ${sessionDir}/.zshrc
 			if (index < command.length) {
 				session.terminal.write(command[index]);
 				index++;
-				setTimeout(typeNextChar, 50);
+				setTimeout(typeNextChar, 100);
 			} else {
 				// Send enter to execute the command
 				setTimeout(() => {
 					session.terminal.write('\r');
-				}, 20);
+				}, 100);
 			}
 		};
 
