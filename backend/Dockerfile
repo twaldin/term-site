@@ -26,10 +26,8 @@ RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/night
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S portfolio && \
-    adduser -S portfolio -u 1001 -G portfolio && \
-    mkdir -p /home/portfolio && \
-    chown -R portfolio:portfolio /home/portfolio
+RUN groupadd -g 1001 portfolio && \
+    useradd -u 1001 -g portfolio -m -d /home/portfolio -s /bin/bash portfolio
 
 # Copy package files
 COPY package*.json ./
