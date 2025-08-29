@@ -278,6 +278,7 @@ fi
 source ${sessionDir}/.zshrc
 `;
 		await fs.writeFile(path.join(sessionDir, '.bashrc'), bashrc);
+		
 		// Copy figlet font to user session if available
 		const fontSource = '/tmp/portfolio-template/Univers.flf';
 		const fontDest = path.join(sessionDir, 'Univers.flf');
@@ -286,6 +287,70 @@ source ${sessionDir}/.zshrc
 		} catch (err) {
 			console.log('Figlet font not available for session');
 		}
+
+		// Clone projects into projects directory
+		await this.cloneProjects(sessionDir);
+	}
+
+	async cloneProjects(sessionDir) {
+		const projectsDir = path.join(sessionDir, 'projects');
+		
+		// Ensure projects directory exists
+		await fs.mkdir(projectsDir, { recursive: true });
+
+		const projects = [
+			{ name: 'term-site', url: 'https://github.com/twaldin/term-site.git' },
+			{ name: 'stm32-games', url: 'https://github.com/twaldin/stm32-games.git' },
+			{ name: 'dotfiles', url: 'https://github.com/twaldin/dotfiles.git' },
+			{ name: 'sulfur-recipies', url: 'https://github.com/twaldin/sulfur-recipies.git' }
+		];
+
+		const { spawn } = require('child_process');
+		
+		for (const project of projects) {
+			const projectPath = path.join(projectsDir, project.name);
+			
+			try {
+				// Check if project already exists
+				try {
+					await fs.access(projectPath);
+					console.log(`Project ${project.name} already exists, skipping clone`);
+					continue;
+				} catch {
+					// Project doesn't exist, proceed with clone
+				}
+
+				console.log(`Cloning ${project.name} from ${project.url}...`);
+				
+				await new Promise((resolve, reject) => {
+					const gitClone = spawn('git', ['clone', project.url, projectPath], {
+						stdio: ['pipe', 'pipe', 'pipe'],
+						timeout: 30000 // 30 second timeout
+					});
+
+					gitClone.on('close', (code) => {
+						if (code === 0) {
+							console.log(`Successfully cloned ${project.name}`);
+							resolve();
+						} else {
+							console.error(`Failed to clone ${project.name}, exit code: ${code}`);
+							reject(new Error(`Git clone failed for ${project.name}`));
+						}
+					});
+
+					gitClone.on('error', (error) => {
+						console.error(`Error cloning ${project.name}:`, error.message);
+						reject(error);
+					});
+				});
+
+			} catch (error) {
+				console.error(`Failed to clone ${project.name}:`, error.message);
+				// Continue with other projects even if one fails
+			}
+		}
+
+		console.log('Project cloning completed');
 	}
 
 	runAutoWelcome(sessionId) {
@@ -324,7 +389,7 @@ source ${sessionDir}/.zshrc
 			if (index < command.length) {
 				session.terminal.write(command[index]);
 				index++;
-				setTimeout(typeNextChar, 20); // 80ms delay between characters for typewriter effect
+				setTimeout(typeNextChar, 50);
 			} else {
 				// Send enter to execute the command
 				setTimeout(() => {
