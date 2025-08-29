@@ -49,30 +49,16 @@ const connectionLimiter = rateLimit({
   message: 'Too many connection attempts, please try again later',
 });
 
-// Configure CORS for Express
+// Configure CORS for Express - temporarily permissive for debugging
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
-        'https://term-site-eed0kfe1k-twaldin.vercel.app',
-        'https://term-site.vercel.app'
-      ]
-    : ['http://localhost:3000', 'http://localhost:3001'],
+  origin: true, // Allow all origins temporarily for debugging
   credentials: true
 }));
 
 // Configure Socket.IO with CORS and rate limiting
 const io = socketIo(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? [
-          'https://www.twald.in',
-          'https://twald.in',
-          process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
-          'https://term-site-eed0kfe1k-twaldin.vercel.app',
-          'https://term-site.vercel.app'
-        ]
-      : ['http://localhost:3000', 'http://localhost:3001'],
+    origin: true, // Allow all origins temporarily for debugging
     methods: ['GET', 'POST'],
     credentials: true
   },
