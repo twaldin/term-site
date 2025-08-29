@@ -63,25 +63,26 @@ jobs:
             SERVICE_NAME="${{ env.SERVICE_NAME }}-${BRANCH_NAME}"
           fi
 
-          # Deploy to Cloud Run with security settings
+          # Deploy to Cloud Run with security settings and extended startup timeout
           gcloud run deploy $SERVICE_NAME \
             --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
             --port 3001 \
-            --memory 512Mi \
-            --cpu 1 \
+            --memory 1Gi \
+            --cpu 2 \
             --max-instances 10 \
             --min-instances 1 \
             --concurrency 80 \
-            --timeout 600 \
+            --timeout 900 \
             --execution-environment gen2 \
             --set-env-vars NODE_ENV=production \
             --set-env-vars MAX_SESSIONS=5 \
             --ingress all \
             --cpu-throttling \
-            --session-affinity
+            --session-affinity \
+            --task-timeout 900
 
           # Get the service URL
           URL=$(gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --format='value(status.url)')
