@@ -12,9 +12,12 @@ RUN mkdir -p /usr/share/oh-my-posh/themes && \
     wget -O /usr/share/oh-my-posh/themes/pure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json
 
 # Install bob (nvim version manager) and latest nightly nvim
+ENV BOB_CONFIG_DIR=/root/.config/bob
+ENV PATH="/root/.cargo/bin:/root/.local/share/bob/nvim-bin:$PATH"
 RUN cargo install bob-nvim && \
+    mkdir -p /root/.config/bob && \
     /root/.cargo/bin/bob install nightly && \
-    /root/.cargo/bin/bob use nightly && \
+    echo "nightly" > /root/.config/bob/used_version && \
     ln -sf /root/.local/share/bob/nvim-bin/nvim /usr/local/bin/nvim && \
     ln -sf /root/.local/share/bob/nvim-bin/nvim /usr/local/bin/vi
 
