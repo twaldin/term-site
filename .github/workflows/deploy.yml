@@ -81,8 +81,7 @@ jobs:
             --set-env-vars MAX_SESSIONS=5 \
             --ingress all \
             --cpu-throttling \
-            --session-affinity \
-            --task-timeout 900
+            --session-affinity
 
           # Get the service URL
           URL=$(gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --format='value(status.url)')
