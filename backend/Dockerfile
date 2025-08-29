@@ -3,13 +3,20 @@ FROM node:18-alpine
 
 # Install bash, zsh and essential tools for terminal functionality + build tools for node-pty
 RUN apk add --no-cache bash zsh vim nano git curl wget tree htop procps \
-    coreutils findutils ncurses figlet python3 make g++ linux-headers
+    coreutils findutils ncurses figlet python3 make g++ linux-headers rust cargo
 
 # Install oh-my-posh for pure theme
 RUN mkdir -p /usr/share/oh-my-posh/themes && \
     wget -O /usr/local/bin/oh-my-posh https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 && \
     chmod +x /usr/local/bin/oh-my-posh && \
     wget -O /usr/share/oh-my-posh/themes/pure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json
+
+# Install bob (nvim version manager) and latest nightly nvim
+RUN cargo install bob-nvim && \
+    /root/.cargo/bin/bob install nightly && \
+    /root/.cargo/bin/bob use nightly && \
+    ln -sf /root/.local/share/bob/nvim-bin/nvim /usr/local/bin/nvim && \
+    ln -sf /root/.local/share/bob/nvim-bin/nvim /usr/local/bin/vi
 
 WORKDIR /app
 

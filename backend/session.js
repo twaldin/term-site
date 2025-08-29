@@ -264,6 +264,9 @@ alias stm32-games='cd projects/stm32-games && ${sessionDir}/scripts/stm32-games.
 alias sulfur-recipies='cd projects/sulfur-recipies && ${sessionDir}/scripts/sulfur-recipies.sh'
 alias term-site='cd projects/term-site && ${sessionDir}/scripts/term-site.sh'
 
+# Neovim alias 
+alias vi='nvim'
+
 eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/pure.omp.json)"
 
 if [ -f "${sessionDir}/Univers.flf" ]; then
