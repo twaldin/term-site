@@ -1,9 +1,11 @@
 # Secure Cloud Run Dockerfile - No Docker-in-Docker
-FROM node:18-alpine
+FROM node:18-bullseye
 
 # Install essential tools for terminal functionality + build tools for node-pty
-RUN apk add --no-cache bash zsh vim nano git curl wget tree htop procps \
-    coreutils findutils ncurses figlet python3 make g++ linux-headers
+RUN apt-get update && apt-get install -y \
+    bash zsh vim nano git curl wget tree htop procps \
+    coreutils findutils ncurses-bin figlet python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install oh-my-posh for pure theme
 RUN mkdir -p /usr/share/oh-my-posh/themes && \
@@ -11,14 +13,14 @@ RUN mkdir -p /usr/share/oh-my-posh/themes && \
     chmod +x /usr/local/bin/oh-my-posh && \
     wget -O /usr/share/oh-my-posh/themes/pure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json
 
-# Install pre-compiled nvim binary directly instead of compiling bob
-RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && \
+# Install pre-compiled nvim nightly (0.12+) for Ubuntu/glibc
+RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz && \
     tar xzf nvim.tar.gz && \
-    mv nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim && \
-    mv nvim-linux-x86_64/lib/nvim /usr/local/lib/nvim && \
-    mv nvim-linux-x86_64/share/nvim /usr/local/share/nvim && \
+    mv nvim-linux64/bin/nvim /usr/local/bin/nvim && \
+    mv nvim-linux64/lib/nvim /usr/local/lib/nvim && \
+    mv nvim-linux64/share/nvim /usr/local/share/nvim && \
     chmod +x /usr/local/bin/nvim && \
-    rm -rf nvim.tar.gz nvim-linux-x86_64 && \
+    rm -rf nvim.tar.gz nvim-linux64 && \
     ln -sf /usr/local/bin/nvim /usr/local/bin/vi
 
 WORKDIR /app
