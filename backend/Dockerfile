@@ -1,5 +1,5 @@
 # Secure Cloud Run Dockerfile - No Docker-in-Docker
-FROM node:18-bullseye
+FROM node:18-bookworm
 
 # Install essential tools for terminal functionality + build tools for node-pty
 RUN apt-get update && apt-get install -y \
