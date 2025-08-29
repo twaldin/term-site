@@ -17,6 +17,7 @@ RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/night
     mv nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim && \
     mv nvim-linux-x86_64/lib/nvim /usr/local/lib/nvim && \
     mv nvim-linux-x86_64/share/nvim /usr/local/share/nvim && \
+    chmod +x /usr/local/bin/nvim && \
     rm -rf nvim.tar.gz nvim-linux-x86_64 && \
     ln -sf /usr/local/bin/nvim /usr/local/bin/vi
 
