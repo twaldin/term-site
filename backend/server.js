@@ -96,26 +96,12 @@ const connectionAttempts = new Map();
 
 // Socket.IO connection handling with security
 io.on('connection', (socket) => {
-  const clientIP = socket.handshake.address;
+  const clientIP = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
   console.log(`Secure client connected: ${socket.id} from IP: ${clientIP}`);
 
-  // Track connection attempts for additional security
-  const attempts = connectionAttempts.get(clientIP) || 0;
-  if (attempts > 5) {
-    console.warn(`Too many connections from IP: ${clientIP}`);
-    socket.emit('error', 'Too many connection attempts');
-    socket.disconnect();
-    return;
-  }
-  connectionAttempts.set(clientIP, attempts + 1);
-
-  // Clear connection attempt after 5 minutes
-  setTimeout(() => {
-    const currentAttempts = connectionAttempts.get(clientIP) || 0;
-    if (currentAttempts > 0) {
-      connectionAttempts.set(clientIP, currentAttempts - 1);
-    }
-  }, 5 * 60 * 1000);
+  // Track connection attempts for additional security (disabled for Cloud Run)
+  // Note: Behind Cloud Run load balancer, all connections appear from same internal IP
+  // This rate limiting is handled by Cloud Run and express rate limiting middleware instead
 
   // Create secure session (no Docker containers)
   sessionManager.createSession(socket.id, socket)
