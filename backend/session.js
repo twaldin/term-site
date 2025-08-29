@@ -258,13 +258,13 @@ alias help='${sessionDir}/scripts/help.sh'
 alias about='${sessionDir}/scripts/about.sh'
 alias contact='${sessionDir}/scripts/contact.sh'
 alias blog='${sessionDir}/scripts/blog.sh'
-alias projects='cd projects && ${sessionDir}/scripts/projects.sh'
-alias dotfiles='cd projects/dotfiles && ${sessionDir}/scripts/dotfiles.sh'
-alias stm32-games='cd projects/stm32-games && ${sessionDir}/scripts/stm32-games.sh'
-alias sulfur-recipies='cd projects/sulfur-recipies && ${sessionDir}/scripts/sulfur-recipies.sh'
-alias term-site='cd projects/term-site && ${sessionDir}/scripts/term-site.sh'
+alias projects='cd ${sessionDir}/projects && ${sessionDir}/scripts/projects.sh'
+alias dotfiles='cd ${sessionDir}/projects/dotfiles && ${sessionDir}/scripts/dotfiles.sh'
+alias stm32-games='cd ${sessionDir}/projects/stm32-games && ${sessionDir}/scripts/stm32-games.sh'
+alias sulfur-recipies='cd ${sessionDir}/projects/sulfur-recipies && ${sessionDir}/scripts/sulfur-recipies.sh'
+alias term-site='cd ${sessionDir}/projects/term-site && ${sessionDir}/scripts/term-site.sh'
 
-# Neovim alias 
+# Neovim alias
 alias vi='nvim'
 
 eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/pure.omp.json)"
@@ -378,7 +378,7 @@ source ${sessionDir}/.zshrc
 			// Copy nvim config from dotfiles
 			console.log('Copying nvim configuration from dotfiles...');
 			await this.copyDirectory(dotfilesNvimPath, sessionNvimPath);
-			
+
 			// Install vim plugins using vim-pack
 			console.log('Installing nvim plugins...');
 			await this.installNvimPlugins(sessionDir);
