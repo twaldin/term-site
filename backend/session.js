@@ -298,6 +298,49 @@ source ${sessionDir}/.zshrc
 		await this.copyNvimFromTemplate(sessionDir);
 	}
 
+	async copyProjectsFromTemplate(sessionDir) {
+		const templateProjectsDir = '/tmp/portfolio-template/projects';
+		const sessionProjectsDir = path.join(sessionDir, 'projects');
+
+		try {
+			// Check if template projects directory exists
+			const stats = await fs.stat(templateProjectsDir);
+			if (stats.isDirectory()) {
+				console.log('Copying projects from template...');
+				await this.copyDirectory(templateProjectsDir, sessionProjectsDir);
+				console.log('Projects copied from template successfully');
+			} else {
+				console.log('No template projects found, will clone fresh');
+				await this.cloneProjects(sessionDir);
+			}
+		} catch (error) {
+			console.log('Template projects not available, cloning fresh:', error.message);
+			await this.cloneProjects(sessionDir);
+		}
+	}
+
+	async copyNvimFromTemplate(sessionDir) {
+		const templateNvimDir = '/tmp/portfolio-template/.config/nvim';
+		const sessionNvimDir = path.join(sessionDir, '.config/nvim');
+
+		try {
+			// Check if template nvim config exists
+			const stats = await fs.stat(templateNvimDir);
+			if (stats.isDirectory()) {
+				console.log('Copying nvim config from template...');
+				await fs.mkdir(path.join(sessionDir, '.config'), { recursive: true });
+				await this.copyDirectory(templateNvimDir, sessionNvimDir);
+				console.log('Nvim config copied from template successfully');
+			} else {
+				console.log('No template nvim config found, setting up fresh');
+				await this.setupNvimConfig(sessionDir);
+			}
+		} catch (error) {
+			console.log('Template nvim config not available, setting up fresh:', error.message);
+			await this.setupNvimConfig(sessionDir);
+		}
+	}
+
 	async cloneProjects(sessionDir) {
 		const projectsDir = path.join(sessionDir, 'projects');
 
