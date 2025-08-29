@@ -50,6 +50,7 @@ ENV NODE_ENV=production
 ENV HOME=/home/portfolio
 ENV USER=portfolio
 ENV SHELL=/bin/bash
+ENV PATH="/usr/local/bin:${PATH}"
 
 # Run as non-root user
 USER portfolio
