@@ -233,14 +233,11 @@ echo ""
 
 	async setupSessionEnvironment(sessionDir) {
 		// Create .zshrc with full portfolio configuration
-		const zshrc = `# Timothy Waldin's Portfolio Terminal Environment
-# Secure isolated session with full dotfiles experience
-
+		const zshrc = `
 export TERM=xterm-256color
 export COLORTERM=truecolor
 export SHELL=/bin/zsh
 
-# Gruvbox Dark Theme Colors (exact matches from your original)
 export CYAN='\\033[38;2;142;192;124m'      # Bright Cyan #8ec07c
 export GREEN='\\033[38;2;184;187;38m'      # Bright Green #b8bb26
 export WHITE='\\033[38;2;235;219;178m'     # Foreground #ebdbb2
@@ -256,7 +253,6 @@ export RESET='\\033[0m'
 export BOLD='\\033[1m'
 export DIM='\\033[2m'
 
-# Portfolio navigation aliases (all your original commands)
 alias welcome='cd ${sessionDir} && ${sessionDir}/scripts/welcome.sh'
 alias help='${sessionDir}/scripts/help.sh'
 alias about='${sessionDir}/scripts/about.sh'
@@ -268,16 +264,11 @@ alias stm32-games='cd projects/stm32-games && ${sessionDir}/scripts/stm32-games.
 alias sulfur-recipies='cd projects/sulfur-recipies && ${sessionDir}/scripts/sulfur-recipies.sh'
 alias term-site='cd projects/term-site && ${sessionDir}/scripts/term-site.sh'
 
-# Oh My Posh Pure theme configuration
 eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/pure.omp.json)"
 
-# Custom figlet font path if available
 if [ -f "${sessionDir}/Univers.flf" ]; then
     export FIGLET_FONTDIR="${sessionDir}"
 fi
-
-# Welcome flag to prevent auto-run on subsequent shell starts
-# The auto-welcome is now handled by the session manager
 `;
 
 		await fs.writeFile(path.join(sessionDir, '.zshrc'), zshrc);
@@ -319,7 +310,7 @@ source ${sessionDir}/.zshrc
 
 		setTimeout(() => {
 			this.typeCommand(sessionId, 'welcome');
-		}, 800);
+		}, 10);
 	}
 
 	typeCommand(sessionId, command) {
@@ -333,12 +324,12 @@ source ${sessionDir}/.zshrc
 			if (index < command.length) {
 				session.terminal.write(command[index]);
 				index++;
-				setTimeout(typeNextChar, 5); // 80ms delay between characters for typewriter effect
+				setTimeout(typeNextChar, 20); // 80ms delay between characters for typewriter effect
 			} else {
 				// Send enter to execute the command
 				setTimeout(() => {
 					session.terminal.write('\r');
-				}, 10);
+				}, 20);
 			}
 		};
 
@@ -353,32 +344,7 @@ source ${sessionDir}/.zshrc
 		}
 
 		session.lastActivity = Date.now();
-
-		// Basic command monitoring for security
-		if (typeof data === 'string') {
-			this.monitorCommand(sessionId, data);
-		}
-
 		session.terminal.write(data);
-	}
-
-	monitorCommand(sessionId, command) {
-		const suspicious = [
-			/docker/i,
-			/\/proc\/self/,
-			/\/sys\/fs/,
-			/metadata\./,
-			/curl.*169\.254/,  // AWS/GCP metadata
-			/wget.*169\.254/,
-			/nc.*-l/,  // Netcat listen
-			/python.*socket/,
-			/perl.*socket/,
-		];
-
-		if (suspicious.some(pattern => pattern.test(command))) {
-			console.warn(`SECURITY: Suspicious command in ${sessionId}: ${command.substring(0, 100)}`);
-			// Could implement automatic session termination here
-		}
 	}
 
 	resizeTerminal(sessionId, cols, rows) {
