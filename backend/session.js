@@ -291,11 +291,11 @@ source ${sessionDir}/.zshrc
 			console.log('Figlet font not available for session');
 		}
 
-		// Clone projects into projects directory
-		await this.cloneProjects(sessionDir);
+		// Copy pre-cloned projects from template to session directory
+		await this.copyProjectsFromTemplate(sessionDir);
 
-		// Setup nvim configuration after dotfiles are cloned
-		await this.setupNvimConfig(sessionDir);
+		// Copy pre-configured nvim from template
+		await this.copyNvimFromTemplate(sessionDir);
 	}
 
 	async cloneProjects(sessionDir) {
