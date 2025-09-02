@@ -1,63 +1,43 @@
-# Secure Cloud Run Dockerfile - No Docker-in-Docker
-FROM node:18-bookworm
+# Backend with embedded terminal container
+FROM docker:24-dind
 
-# Install essential tools for terminal functionality + build tools for node-pty
-RUN apt-get update && apt-get install -y \
-    bash zsh vim nano git curl wget tree htop procps \
-    coreutils findutils ncurses-bin figlet python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install oh-my-posh for pure theme
-RUN mkdir -p /usr/share/oh-my-posh/themes && \
-    wget -O /usr/local/bin/oh-my-posh https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 && \
-    chmod +x /usr/local/bin/oh-my-posh && \
-    wget -O /usr/share/oh-my-posh/themes/pure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json
-
-# Install pre-compiled nvim nightly (0.12+) for Ubuntu/glibc
-RUN wget -O nvim.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && \
-    tar xzf nvim.tar.gz && \
-    mv nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim && \
-    mv nvim-linux-x86_64/lib/nvim /usr/local/lib/nvim && \
-    mv nvim-linux-x86_64/share/nvim /usr/local/share/nvim && \
-    chmod +x /usr/local/bin/nvim && \
-    rm -rf nvim.tar.gz nvim-linux-x86_64 && \
-    ln -sf /usr/local/bin/nvim /usr/local/bin/vi
+# Install Node.js and dependencies
+RUN apk add --no-cache nodejs npm python3 make g++
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN groupadd -g 1001 portfolio && \
-    useradd -u 1001 -g portfolio -m -d /home/portfolio -s /bin/bash portfolio
-
-# Copy package files
-COPY package*.json ./
+# Copy package files from backend directory
+COPY backend/package*.json ./
 
 # Install dependencies
-RUN npm install --production && npm cache clean --force
+RUN npm install
 
-# Copy source code
-COPY . .
-
-# Create terminal environment directory
-RUN mkdir -p /tmp/portfolio-base && \
-    chown -R portfolio:portfolio /tmp/portfolio-base
+# Copy source code from backend directory  
+COPY backend/ .
 
 # Expose port
 EXPOSE 3001
 
-# Set security environment variables
-ENV NODE_ENV=production
-ENV HOME=/home/portfolio
-ENV USER=portfolio
-ENV SHELL=/bin/bash
-ENV PATH="/usr/local/bin:${PATH}"
+# Create startup script that starts Docker daemon and Node.js server
+RUN echo '#!/bin/sh' > /app/startup.sh && \
+    echo 'set -e' >> /app/startup.sh && \
+    echo 'echo "Starting Docker daemon..."' >> /app/startup.sh && \
+    echo 'dockerd-entrypoint.sh &' >> /app/startup.sh && \
+    echo 'echo "Waiting for Docker daemon to be ready..."' >> /app/startup.sh && \
+    echo 'timeout=30' >> /app/startup.sh && \
+    echo 'while [ $timeout -gt 0 ] && ! docker version > /dev/null 2>&1; do' >> /app/startup.sh && \
+    echo '  sleep 1' >> /app/startup.sh && \
+    echo '  timeout=$((timeout - 1))' >> /app/startup.sh && \
+    echo 'done' >> /app/startup.sh && \
+    echo 'if [ $timeout -eq 0 ]; then' >> /app/startup.sh && \
+    echo '  echo "ERROR: Docker daemon failed to start within 30 seconds"' >> /app/startup.sh && \
+    echo '  echo "Starting server without Docker support..."' >> /app/startup.sh && \
+    echo '  exec npm start' >> /app/startup.sh && \
+    echo 'fi' >> /app/startup.sh && \
+    echo 'echo "Docker daemon is ready"' >> /app/startup.sh && \
+    echo 'echo "Starting Node.js server..."' >> /app/startup.sh && \
+    echo 'exec npm start' >> /app/startup.sh && \
+    chmod +x /app/startup.sh
 
-# Run as non-root user
-USER portfolio
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
-
-# Start server
-CMD ["npm", "start"]
+# Start with the startup script
+CMD ["/app/startup.sh"]
