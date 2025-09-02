@@ -1,145 +1,75 @@
-console.log('Starting terminal backend server...');
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const SecureSessionManager = require('./session');
+const SessionManager = require('./session');
 
 const app = express();
 const server = http.createServer(app);
 
-// Enable trust proxy for Cloud Run (required for rate limiting)
-app.set('trust proxy', true);
-
-// Security middleware - helmet for security headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],  // For terminal
-      connectSrc: ["'self'", "wss:", "ws:"],
-      imgSrc: ["'self'", "data:"],
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
-
-// Rate limiting middleware
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 sessions per IP
-  message: 'Too many sessions from this IP, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use('/health', limiter);
-app.use('/stats', limiter);
-
-// Stricter rate limiting for connections
-const connectionLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3, // 3 connection attempts per IP
-  message: 'Too many connection attempts, please try again later',
-});
-
-// Configure CORS for Express - temporarily permissive for debugging
+// Configure CORS for Express
 app.use(cors({
-  origin: true, // Allow all origins temporarily for debugging
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
+        'https://term-site-eed0kfe1k-twaldin.vercel.app',
+        'https://term-site.vercel.app'
+      ]
+    : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
 
-// Configure Socket.IO with CORS and rate limiting
+// Configure Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: true, // Allow all origins temporarily for debugging
+    origin: process.env.NODE_ENV === 'production' 
+      ? [
+          process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
+          'https://term-site-eed0kfe1k-twaldin.vercel.app',
+          'https://term-site.vercel.app'
+        ]
+      : ['http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['polling', 'websocket'], // Prioritize polling for Cloud Run
-  pingTimeout: 60000, // 60 seconds ping timeout
-  pingInterval: 25000, // 25 seconds between pings
-  upgradeTimeout: 30000, // 30 seconds to upgrade transport
-  maxHttpBufferSize: 1e6, // 1MB max buffer
-  allowEIO3: true, // Allow older Engine.IO versions for compatibility
+  transports: ['websocket']
 });
 
-console.log('Creating session manager...');
-// Initialize secure session manager (no Docker needed)
-const sessionManager = new SecureSessionManager();
-console.log('Session manager created');
+// Initialize session manager
+const sessionManager = new SessionManager();
 
-// Wait for session manager to initialize (with timeout)
-const waitForInitialization = async () => {
-  const startTime = Date.now();
-  while (!sessionManager.initialized && (Date.now() - startTime) < 5000) { // Reduced to 5 seconds
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  if (!sessionManager.initialized) {
-    console.warn('Session manager initialization timed out after 5 seconds, proceeding anyway');
-    sessionManager.initialized = true; // Force initialization complete
-  }
-  console.log('Session manager ready, starting server...');
-};
-
-// Start periodic cleanup
-sessionManager.startPeriodicCleanup();
-
-// Track connection attempts per IP
-const connectionAttempts = new Map();
-
-// Socket.IO connection handling with security
+// Socket.IO connection handling
 io.on('connection', (socket) => {
-  const clientIP = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-  console.log(`Secure client connected: ${socket.id} from IP: ${clientIP}`);
+  console.log(`Client connected: ${socket.id}`);
 
-  // Track connection attempts for additional security (disabled for Cloud Run)
-  // Note: Behind Cloud Run load balancer, all connections appear from same internal IP
-  // This rate limiting is handled by Cloud Run and express rate limiting middleware instead
+  // Track client IP for rate limiting
+  const clientIP = socket.handshake.address;
+  console.log(`Client IP: ${clientIP}`);
 
-  // Create secure session (no Docker containers)
+  // Create new terminal session
   sessionManager.createSession(socket.id, socket)
     .then(() => {
-      console.log(`Secure session created for ${socket.id}`);
+      console.log(`Session created for ${socket.id}`);
     })
     .catch((error) => {
-      console.error(`Failed to create secure session for ${socket.id}:`, error);
-      socket.emit('error', 'Failed to create secure terminal session');
+      console.error(`Failed to create session for ${socket.id}:`, error);
+      socket.emit('error', 'Failed to create terminal session');
       socket.disconnect();
     });
 
-  // Handle terminal input with basic validation
+  // Handle terminal input
   socket.on('input', (data) => {
-    // Basic input validation
-    if (typeof data !== 'string' || data.length > 1000) {
-      console.warn(`Invalid input from ${socket.id}: ${typeof data}, length: ${data?.length}`);
-      return;
-    }
     sessionManager.sendInput(socket.id, data);
   });
 
-  // Handle terminal resize with validation
-  socket.on('resize', (dimensions) => {
-    if (!dimensions || 
-        typeof dimensions.cols !== 'number' || 
-        typeof dimensions.rows !== 'number' ||
-        dimensions.cols < 1 || dimensions.cols > 500 ||
-        dimensions.rows < 1 || dimensions.rows > 200) {
-      console.warn(`Invalid resize from ${socket.id}:`, dimensions);
-      return;
-    }
-    sessionManager.resizeTerminal(socket.id, dimensions.cols, dimensions.rows);
+  // Handle terminal resize
+  socket.on('resize', ({ cols, rows }) => {
+    sessionManager.resizeTerminal(socket.id, cols, rows);
   });
 
   // Handle client disconnect
   socket.on('disconnect', (reason) => {
-    console.log(`Secure client disconnected: ${socket.id}, reason: ${reason}`);
+    console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
     sessionManager.destroySession(socket.id);
   });
 
@@ -148,9 +78,6 @@ io.on('connection', (socket) => {
     console.error(`Socket error for ${socket.id}:`, error);
     sessionManager.destroySession(socket.id);
   });
-
-  // Note: Socket.IO handles timeouts differently than raw sockets
-  // Session timeout is handled by SecureSessionManager instead
 });
 
 // Health check endpoint
@@ -158,54 +85,24 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    activeSessions: sessionManager.getActiveSessionCount(),
-    mode: 'secure',
-    version: '2.0.0-secure'
+    activeSessions: sessionManager.getActiveSessionCount()
   });
 });
 
-// Get session statistics (with rate limiting)
+// Get session statistics
 app.get('/stats', (req, res) => {
   res.json({
     activeSessions: sessionManager.getActiveSessionCount(),
-    totalContainers: 0, // No containers in secure mode
-    uptime: process.uptime(),
-    mode: 'secure-cloud-run',
-    memory: process.memoryUsage(),
-    nodeVersion: process.version
+    totalContainers: sessionManager.getTotalContainerCount(),
+    uptime: process.uptime()
   });
 });
 
-// Security info endpoint
-app.get('/security', (req, res) => {
-  res.json({
-    mode: 'secure',
-    isolation: 'gvisor',
-    dockerAccess: false,
-    maxSessions: sessionManager.maxSessions,
-    sessionTimeout: sessionManager.sessionTimeout / 1000 / 60 + ' minutes',
-    rateLimit: 'enabled'
-  });
-});
-
-// Start server after initialization
-const startServer = async () => {
-  await waitForInitialization();
-  
-  const PORT = process.env.PORT || 3001;
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Secure terminal backend server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('Security: gVisor isolation enabled');
-    console.log('Docker access: DISABLED');
-    console.log('Mode: SECURE');
-  });
-};
-
-// Start the server
-startServer().catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
+// Start server  
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Terminal backend server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Track shutdown state to prevent multiple shutdown attempts
@@ -222,12 +119,12 @@ async function gracefulShutdown(signal) {
   console.log(`Received ${signal}, shutting down gracefully...`);
   
   try {
-    // Close all secure sessions
+    // Close all sessions
     await sessionManager.destroyAllSessions();
     
     // Close server
     server.close(() => {
-      console.log('Secure server closed');
+      console.log('Server closed');
       process.exit(0);
     });
     
@@ -246,14 +143,3 @@ async function gracefulShutdown(signal) {
 // Graceful shutdown handling
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  gracefulShutdown('UNCAUGHT_EXCEPTION');
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  gracefulShutdown('UNHANDLED_REJECTION');
-});

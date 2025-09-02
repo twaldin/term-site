@@ -1,693 +1,557 @@
+const Docker = require('dockerode');
 const pty = require('node-pty');
-const fs = require('fs').promises;
-const path = require('path');
-
-class SecureSessionManager {
-	constructor() {
-		this.sessions = new Map();
-		this.maxSessions = 10;
-		this.sessionTimeout = 60 * 60 * 1000; // 1 hour timeout for active terminal usage
-		this.initialized = false;
-
-		// Initialize portfolio environment asynchronously
-		this.initializePortfolioEnvironment().catch(error => {
-			console.error('Failed to initialize portfolio environment:', error);
-		});
-	}
-
-	async initializePortfolioEnvironment() {
-		console.log('Starting portfolio environment initialization...');
-
-		try {
-			// Create user directory structure
-			console.log('Creating base directories...');
-			await fs.mkdir('/tmp/portfolio-template', { recursive: true });
-			await fs.mkdir('/tmp/portfolio-template/projects', { recursive: true });
-			await fs.mkdir('/tmp/portfolio-template/workspace', { recursive: true });
-
-			// Copy portfolio scripts and configs from embedded container directory
-			const containerPath = path.join(__dirname, 'container');
-			console.log('Checking for container directory at:', containerPath);
-
-			try {
-				const stats = await fs.stat(containerPath);
-				if (stats.isDirectory()) {
-					console.log('Container directory found, copying contents...');
-
-					// Copy scripts
-					const scriptsPath = path.join(containerPath, 'scripts');
-					try {
-						await this.copyDirectory(scriptsPath, '/tmp/portfolio-template/scripts');
-						console.log('Scripts copied successfully');
-					} catch (scriptsErr) {
-						console.log('Failed to copy scripts:', scriptsErr.message);
-					}
-
-					// Copy blog posts
-					const blogPath = path.join(containerPath, 'blog');
-					try {
-						await this.copyDirectory(blogPath, '/tmp/portfolio-template/blog');
-						console.log('Blog posts copied successfully');
-					} catch (blogErr) {
-						console.log('Failed to copy blog posts:', blogErr.message);
-					}
-
-					// Copy figlet font
-					const fontPath = path.join(containerPath, 'Univers.flf');
-					try {
-						await fs.copyFile(fontPath, '/tmp/portfolio-template/Univers.flf');
-						console.log('Figlet font copied successfully');
-					} catch (fontErr) {
-						console.log('Figlet font not copied:', fontErr.message);
-					}
-
-					console.log('Complete portfolio environment copied to template');
-				}
-			} catch (err) {
-				console.log('Container directory not found, creating basic environment:', err.message);
-				await this.createBasicScripts();
-			}
-
-			// Clone projects to template directory for faster session creation
-			console.log('Cloning projects to template directory...');
-			await this.cloneProjects('/tmp/portfolio-template');
-			
-			// Clone and setup nvim config in template
-			console.log('Setting up nvim config in template...');
-			await this.setupNvimConfigFromDotfiles('/tmp/portfolio-template');
-
-			console.log('Portfolio environment template initialized successfully');
-			this.initialized = true;
-		} catch (error) {
-			console.error('Error initializing portfolio environment:', error);
-			console.log('Continuing with basic environment...');
-
-			// Even if initialization fails, try to create basic environment
-			try {
-				await this.createBasicScripts();
-				console.log('Basic environment created successfully');
-			} catch (basicErr) {
-				console.error('Failed to create basic environment:', basicErr);
-			}
-
-			// Always mark as initialized so server can start
-			this.initialized = true;
-		}
-	}
-
-	async copyDirectory(src, dest) {
-		await fs.mkdir(dest, { recursive: true });
-		const entries = await fs.readdir(src, { withFileTypes: true });
-
-		for (const entry of entries) {
-			const srcPath = path.join(src, entry.name);
-			const destPath = path.join(dest, entry.name);
-
-			if (entry.isDirectory()) {
-				await this.copyDirectory(srcPath, destPath);
-			} else {
-				await fs.copyFile(srcPath, destPath);
-			}
-		}
-	}
-
-	async createBasicScripts() {
-		const scriptsDir = '/tmp/portfolio-template/scripts';
-		await fs.mkdir(scriptsDir, { recursive: true });
-
-		// Create basic welcome script
-		const welcomeScript = `#!/bin/bash
-echo "Welcome to Terminal Portfolio!"
-echo "Available commands:"
-echo "  ls, cat, vim, nano - File operations"
-echo "  help - Show this help"
-echo "  about - About this portfolio"
-echo ""
-`;
-
-		await fs.writeFile(path.join(scriptsDir, 'welcome.sh'), welcomeScript, { mode: 0o755 });
-
-		// Create help script
-		const helpScript = `#!/bin/bash
-echo "Terminal Portfolio Help"
-echo "======================"
-echo "This is a secure containerized terminal."
-echo "You can explore files and run basic commands."
-echo ""
-echo "Navigation:"
-echo "  ls - List files"
-echo "  cd - Change directory"
-echo "  pwd - Show current directory"
-echo ""
-echo "File operations:"
-echo "  cat file - View file contents"
-echo "  vim/nano - Edit files"
-echo ""
-`;
-
-		await fs.writeFile(path.join(scriptsDir, 'help.sh'), helpScript, { mode: 0o755 });
-	}
-
-	async createSession(sessionId, socket) {
-		// Check session limit
-		if (this.sessions.size >= this.maxSessions) {
-			throw new Error('Maximum session limit reached');
-		}
-
-		try {
-			console.log(`Creating secure session for ${sessionId}`);
-
-			// Create isolated session directory
-			const sessionDir = `/tmp/sessions/${sessionId}`;
-			await fs.mkdir(sessionDir, { recursive: true });
-
-			// Copy portfolio template to session
-			try {
-				await this.copyDirectory('/tmp/portfolio-template', sessionDir);
-			} catch (err) {
-				console.log('Template copy failed, creating minimal environment:', err.message);
-				await fs.mkdir(path.join(sessionDir, 'workspace'), { recursive: true });
-				await fs.mkdir(path.join(sessionDir, 'scripts'), { recursive: true });
-			}
-
-			// Create basic environment files
-			await this.setupSessionEnvironment(sessionDir);
-
-			// Spawn zsh shell in session directory with full environment
-			const shell = pty.spawn('/bin/zsh', [], {
-				name: 'xterm-256color',
-				cols: 120,
-				rows: 30,
-				cwd: sessionDir,
-				env: {
-					TERM: 'xterm-256color',
-					COLORTERM: 'truecolor',
-					PATH: `${sessionDir}/scripts:/usr/local/bin:/usr/bin:/bin:/sbin`,
-					HOME: sessionDir,
-					USER: 'portfolio',
-					SHELL: '/bin/zsh',
-					ZDOTDIR: sessionDir,
-					// Enable colors for ls and other tools
-					CLICOLOR: '1',
-					LSCOLORS: 'ExFxBxDxCxegedabagacad',
-					// Set figlet font directory
-					FIGLET_FONTDIR: sessionDir
-				}
-			});
-
-			// Handle terminal output
-			shell.onData((data) => {
-				if (data.length > 0) {
-					socket.emit('output', data);
-				}
-			});
-
-			// Handle terminal exit
-			shell.onExit((exitCode) => {
-				console.log(`Secure terminal exited for session ${sessionId} with code ${exitCode}`);
-				this.destroySession(sessionId);
-				socket.disconnect();
-			});
-
-			// Store session
-			const session = {
-				id: sessionId,
-				type: 'secure',
-				terminal: shell,
-				socket: socket,
-				sessionDir: sessionDir,
-				startTime: Date.now(),
-				lastActivity: Date.now()
-			};
-
-			this.sessions.set(sessionId, session);
-
-			// Set session timeout
-			this.setSessionTimeout(sessionId);
-
-			// Auto-run welcome with typewriter effect after a short delay
-			setTimeout(() => {
-				this.runAutoWelcome(sessionId);
-			}, 1500); // Give time for shell to fully initialize
-
-			console.log(`Secure session created for ${sessionId} with full portfolio environment`);
-			return Promise.resolve();
-
-		} catch (error) {
-			console.error(`Error creating secure session ${sessionId}:`, error);
-			throw error;
-		}
-	}
-
-	async setupSessionEnvironment(sessionDir) {
-		// Create .zshrc with full portfolio configuration
-		const zshrc = `
-export TERM=xterm-256color
-export COLORTERM=truecolor
-export SHELL=/bin/zsh
-
-export CYAN='\\033[38;2;142;192;124m'      # Bright Cyan #8ec07c
-export GREEN='\\033[38;2;184;187;38m'      # Bright Green #b8bb26
-export WHITE='\\033[38;2;235;219;178m'     # Foreground #ebdbb2
-export YELLOW='\\033[38;2;250;189;47m'     # Bright Yellow #fabd2f
-export BLUE='\\033[38;2;131;165;152m'      # Bright Blue #83a598
-export RED='\\033[38;2;251;73;52m'         # Bright Red #fb4934
-export MAGENTA='\\033[38;2;211;134;155m'   # Bright Magenta #d3869b
-export ORANGE='\\033[38;2;254;128;25m'     # Orange
-export GRAY='\\033[38;2;146;131;116m'      # Gray #928374
-export BG='\\033[48;2;29;32;33m'           # Background #1d2021
-export FG='\\033[38;2;235;219;178m'        # Foreground #ebdbb2
-export RESET='\\033[0m'
-export BOLD='\\033[1m'
-export DIM='\\033[2m'
-
-alias welcome='cd ${sessionDir} && ${sessionDir}/scripts/welcome.sh'
-alias help='${sessionDir}/scripts/help.sh'
-alias about='${sessionDir}/scripts/about.sh'
-alias contact='${sessionDir}/scripts/contact.sh'
-alias blog='${sessionDir}/scripts/blog.sh'
-alias projects='cd ${sessionDir}/projects && ${sessionDir}/scripts/projects.sh'
-alias dotfiles='cd ${sessionDir}/projects/dotfiles && ${sessionDir}/scripts/dotfiles.sh'
-alias stm32-games='cd ${sessionDir}/projects/stm32-games && ${sessionDir}/scripts/stm32-games.sh'
-alias sulfur-recipies='cd ${sessionDir}/projects/sulfur-recipies && ${sessionDir}/scripts/sulfur-recipies.sh'
-alias term-site='cd ${sessionDir}/projects/term-site && ${sessionDir}/scripts/term-site.sh'
-
-# Neovim alias
-alias vi='nvim'
-
-eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/pure.omp.json)"
-
-if [ -f "${sessionDir}/Univers.flf" ]; then
-    export FIGLET_FONTDIR="${sessionDir}"
-fi
-`;
-
-		await fs.writeFile(path.join(sessionDir, '.zshrc'), zshrc);
-
-		// Also create .bashrc for compatibility
-		const bashrc = `# Fallback bash configuration
-source ${sessionDir}/.zshrc
-`;
-		await fs.writeFile(path.join(sessionDir, '.bashrc'), bashrc);
-
-		// Copy figlet font to user session if available
-		const fontSource = '/tmp/portfolio-template/Univers.flf';
-		const fontDest = path.join(sessionDir, 'Univers.flf');
-		try {
-			await fs.copyFile(fontSource, fontDest);
-		} catch (err) {
-			console.log('Figlet font not available for session');
-		}
-
-		// Copy pre-cloned projects from template to session directory
-		await this.copyProjectsFromTemplate(sessionDir);
-
-		// Copy pre-configured nvim from template
-		await this.copyNvimFromTemplate(sessionDir);
-	}
-
-	async copyProjectsFromTemplate(sessionDir) {
-		const templateProjectsDir = '/tmp/portfolio-template/projects';
-		const sessionProjectsDir = path.join(sessionDir, 'projects');
-
-		try {
-			// Check if template projects directory exists
-			const stats = await fs.stat(templateProjectsDir);
-			if (stats.isDirectory()) {
-				console.log('Copying projects from template...');
-				await this.copyDirectory(templateProjectsDir, sessionProjectsDir);
-				console.log('Projects copied from template successfully');
-			} else {
-				console.log('No template projects found, will clone fresh');
-				await this.cloneProjects(sessionDir);
-			}
-		} catch (error) {
-			console.log('Template projects not available, cloning fresh:', error.message);
-			await this.cloneProjects(sessionDir);
-		}
-	}
-
-	async copyNvimFromTemplate(sessionDir) {
-		const templateNvimDir = '/tmp/portfolio-template/.config/nvim';
-		const sessionNvimDir = path.join(sessionDir, '.config/nvim');
-
-		try {
-			// Check if template nvim config exists
-			const stats = await fs.stat(templateNvimDir);
-			if (stats.isDirectory()) {
-				console.log('Copying nvim config from template...');
-				await fs.mkdir(path.join(sessionDir, '.config'), { recursive: true });
-				await this.copyDirectory(templateNvimDir, sessionNvimDir);
-				console.log('Nvim config copied from template successfully');
-			} else {
-				console.log('No template nvim config found, setting up from dotfiles');
-				await this.setupNvimConfigFromDotfiles(sessionDir);
-			}
-		} catch (error) {
-			console.log('Template nvim config not available, setting up from dotfiles:', error.message);
-			await this.setupNvimConfigFromDotfiles(sessionDir);
-		}
-	}
-
-	async setupNvimConfigFromDotfiles(baseDir) {
-		const dotfilesPath = path.join(baseDir, 'projects/dotfiles');
-		const nvimSourcePath = path.join(dotfilesPath, 'nvim');
-		const nvimDestPath = path.join(baseDir, '.config/nvim');
-
-		try {
-			// Check if dotfiles have been cloned
-			await fs.access(nvimSourcePath);
-			
-			// Create .config directory
-			await fs.mkdir(path.join(baseDir, '.config'), { recursive: true });
-			
-			// Copy nvim config from dotfiles
-			console.log('Copying nvim config from dotfiles...');
-			await this.copyDirectory(nvimSourcePath, nvimDestPath);
-			console.log('Nvim config copied from dotfiles successfully');
-			
-			// Note: vim.pack plugins will be auto-installed on first nvim launch
-			// with 0.12+ which supports vim.pack
-		} catch (error) {
-			console.log('Could not copy nvim config from dotfiles:', error.message);
-			// Fall back to basic config
-			await this.setupNvimConfig(baseDir);
-		}
-	}
-
-	async cloneProjects(sessionDir) {
-		const projectsDir = path.join(sessionDir, 'projects');
-
-		// Ensure projects directory exists
-		await fs.mkdir(projectsDir, { recursive: true });
-
-		const projects = [
-			{ name: 'term-site', url: 'https://github.com/twaldin/term-site.git' },
-			{ name: 'stm32-games', url: 'https://github.com/twaldin/stm32-games.git' },
-			{ name: 'dotfiles', url: 'https://github.com/twaldin/dotfiles.git' },
-			{ name: 'sulfur-recipies', url: 'https://github.com/twaldin/sulfur-recipies.git' }
-		];
-
-		const { spawn } = require('child_process');
-
-		for (const project of projects) {
-			const projectPath = path.join(projectsDir, project.name);
-
-			try {
-				// Check if project already exists
-				try {
-					await fs.access(projectPath);
-					console.log(`Project ${project.name} already exists, skipping clone`);
-					continue;
-				} catch {
-					// Project doesn't exist, proceed with clone
-				}
-
-				console.log(`Cloning ${project.name} from ${project.url}...`);
-
-				await new Promise((resolve, reject) => {
-					const gitClone = spawn('git', ['clone', project.url, projectPath], {
-						stdio: ['pipe', 'pipe', 'pipe'],
-						timeout: 30000 // 30 second timeout
-					});
-
-					gitClone.on('close', (code) => {
-						if (code === 0) {
-							console.log(`Successfully cloned ${project.name}`);
-							resolve();
-						} else {
-							console.error(`Failed to clone ${project.name}, exit code: ${code}`);
-							reject(new Error(`Git clone failed for ${project.name}`));
-						}
-					});
-
-					gitClone.on('error', (error) => {
-						console.error(`Error cloning ${project.name}:`, error.message);
-						reject(error);
-					});
-				});
-
-			} catch (error) {
-				console.error(`Failed to clone ${project.name}:`, error.message);
-				// Continue with other projects even if one fails
-			}
-		}
-
-		console.log('Project cloning completed');
-	}
-
-	async setupNvimConfig(sessionDir) {
-		try {
-			const dotfilesNvimPath = path.join(sessionDir, 'projects', 'dotfiles', 'nvim');
-			const sessionNvimPath = path.join(sessionDir, '.config', 'nvim');
-
-			// Check if dotfiles nvim config exists
-			try {
-				await fs.access(dotfilesNvimPath);
-			} catch {
-				console.log('Dotfiles nvim config not found, keeping basic config');
-				return;
-			}
-
-			// Ensure .config directory exists
-			await fs.mkdir(path.join(sessionDir, '.config'), { recursive: true });
-
-			// Copy nvim config from dotfiles
-			console.log('Copying nvim configuration from dotfiles...');
-			await this.copyDirectory(dotfilesNvimPath, sessionNvimPath);
-
-			// Install vim plugins using vim-pack
-			console.log('Installing nvim plugins...');
-			await this.installNvimPlugins(sessionDir);
-
-			console.log('Nvim configuration setup completed');
-
-		} catch (error) {
-			console.error('Failed to setup nvim config:', error.message);
-			console.log('Continuing with basic nvim config');
-		}
-	}
-
-	async installNvimPlugins(sessionDir) {
-		const { spawn } = require('child_process');
-
-		try {
-			// Run nvim with native vim.pack plugin installation
-			console.log('Installing nvim plugins with vim.pack (this may take a moment)...');
-
-			await new Promise((resolve, reject) => {
-				// Use vim.pack native package manager commands
-				const pluginInstall = spawn('nvim', [
-					'--headless',
-					'-c', 'vim.pack.install()',
-					'-c', 'quitall'
-				], {
-					cwd: sessionDir,
-					stdio: ['pipe', 'pipe', 'pipe'],
-					timeout: 120000, // 2 minute timeout for plugin installation
-					env: {
-						...process.env,
-						HOME: sessionDir,
-						XDG_CONFIG_HOME: path.join(sessionDir, '.config')
-					}
-				});
-
-				let output = '';
-				let errorOutput = '';
-
-				pluginInstall.stdout.on('data', (data) => {
-					output += data.toString();
-				});
-
-				pluginInstall.stderr.on('data', (data) => {
-					errorOutput += data.toString();
-				});
-
-				pluginInstall.on('close', (code) => {
-					if (code === 0) {
-						console.log('Nvim plugins installed successfully with vim.pack');
-						resolve();
-					} else {
-						console.log('Plugin installation completed with code:', code);
-						console.log('Output:', output);
-						console.log('Error output:', errorOutput);
-						// Don't reject - plugins might still work
-						resolve();
-					}
-				});
-
-				pluginInstall.on('error', (error) => {
-					console.error('Error installing nvim plugins:', error.message);
-					// Don't reject - continue without plugins
-					resolve();
-				});
-			});
-
-		} catch (error) {
-			console.error('Failed to install nvim plugins:', error.message);
-			// Continue without plugins
-		}
-	}
-
-	runAutoWelcome(sessionId) {
-		const session = this.sessions.get(sessionId);
-		if (!session) {
-			return;
-		}
-
-		console.log(`Running auto-welcome with typewriter effect for session ${sessionId}`);
-
-		// Create flag file
-		const sessionDir = session.sessionDir;
-		const flagFile = `${sessionDir}/.welcomed`;
-
-		// if already welcomed
-		const fs = require('fs');
-		if (fs.existsSync(flagFile)) {
-			return;
-		}
-
-		fs.writeFileSync(flagFile, '');
-
-		setTimeout(() => {
-			this.typeCommand(sessionId, 'welcome');
-		}, 10);
-	}
-
-	typeCommand(sessionId, command) {
-		const session = this.sessions.get(sessionId);
-		if (!session) {
-			return;
-		}
-
-		let index = 0;
-		const typeNextChar = () => {
-			if (index < command.length) {
-				session.terminal.write(command[index]);
-				index++;
-				setTimeout(typeNextChar, 100);
-			} else {
-				// Send enter to execute the command
-				setTimeout(() => {
-					session.terminal.write('\r');
-				}, 100);
-			}
-		};
-
-		typeNextChar();
-	}
-
-	sendInput(sessionId, data) {
-		const session = this.sessions.get(sessionId);
-		if (!session) {
-			console.log(`Session ${sessionId} not found`);
-			return;
-		}
-
-		session.lastActivity = Date.now();
-		session.terminal.write(data);
-	}
-
-	resizeTerminal(sessionId, cols, rows) {
-		const session = this.sessions.get(sessionId);
-		if (!session) {
-			return;
-		}
-
-		session.lastActivity = Date.now();
-		session.terminal.resize(cols, rows);
-	}
-
-	async destroySession(sessionId) {
-		const session = this.sessions.get(sessionId);
-		if (!session) {
-			return;
-		}
-
-		console.log(`Destroying secure session ${sessionId}`);
-
-		try {
-			// Kill terminal
-			if (session.terminal && !session.terminal.killed) {
-				session.terminal.kill();
-			}
-
-			// Clean up session directory
-			if (session.sessionDir) {
-				try {
-					await fs.rm(session.sessionDir, { recursive: true, force: true });
-				} catch (err) {
-					console.error(`Failed to clean up session directory: ${err.message}`);
-				}
-			}
-
-			// Clear timeout
-			if (session.timeout) {
-				clearTimeout(session.timeout);
-			}
-
-			this.sessions.delete(sessionId);
-			console.log(`Secure session ${sessionId} destroyed`);
-
-		} catch (error) {
-			console.error(`Error destroying secure session ${sessionId}:`, error);
-			this.sessions.delete(sessionId);
-		}
-	}
-
-	async destroyAllSessions() {
-		console.log('Destroying all secure sessions...');
-		const promises = Array.from(this.sessions.keys()).map(sessionId =>
-			this.destroySession(sessionId)
-		);
-		await Promise.all(promises);
-		console.log('All secure sessions destroyed');
-	}
-
-	setSessionTimeout(sessionId) {
-		const session = this.sessions.get(sessionId);
-		if (!session) {
-			return;
-		}
-
-		// Clear existing timeout
-		if (session.timeout) {
-			clearTimeout(session.timeout);
-		}
-
-		// Set new timeout
-		session.timeout = setTimeout(() => {
-			console.log(`Secure session ${sessionId} timed out`);
-			this.destroySession(sessionId);
-			if (session.socket) {
-				session.socket.emit('output', '\r\n[Session timed out for security]\r\n');
-				session.socket.disconnect();
-			}
-		}, this.sessionTimeout);
-	}
-
-	getActiveSessionCount() {
-		return this.sessions.size;
-	}
-
-	getTotalContainerCount() {
-		// No containers in secure mode
-		return 0;
-	}
-
-	// Periodic cleanup of abandoned sessions
-	startPeriodicCleanup() {
-		setInterval(() => {
-			const now = Date.now();
-			for (const [sessionId, session] of this.sessions.entries()) {
-				// Clean up sessions inactive for more than timeout period
-				if (now - session.lastActivity > this.sessionTimeout) {
-					console.log(`Cleaning up inactive session: ${sessionId}`);
-					this.destroySession(sessionId);
-				}
-			}
-		}, 60000); // Check every minute
-	}
+
+class SessionManager {
+  constructor() {
+    this.sessions = new Map();
+    this.docker = new Docker();
+    this.maxSessions = 10;
+    this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
+    this.imagePreloaded = false;
+    
+    // Preload the image on startup
+    this.preloadImage();
+  }
+  
+  async cleanupDockerSmart() {
+    console.log('Smart Docker cleanup - keeping only recent images...');
+    try {
+      // Remove all stopped containers first
+      const containers = await this.docker.listContainers({ all: true });
+      for (const containerInfo of containers) {
+        if (containerInfo.State !== 'running') {
+          try {
+            const container = this.docker.getContainer(containerInfo.Id);
+            await container.remove({ force: true });
+            console.log(`Removed stopped container: ${containerInfo.Id}`);
+          } catch (err) {
+            console.log(`Could not remove container ${containerInfo.Id}:`, err.message);
+          }
+        }
+      }
+      
+      // Get all images sorted by creation date (newest first)
+      const images = await this.docker.listImages();
+      const portfolioImages = images
+        .filter(img => img.RepoTags && img.RepoTags.some(tag => tag.includes('terminal-portfolio')))
+        .sort((a, b) => b.Created - a.Created); // Sort by creation time, newest first
+      
+      // Keep only the most recent portfolio image, remove the rest
+      if (portfolioImages.length > 1) {
+        console.log(`Found ${portfolioImages.length} portfolio images, keeping newest, removing ${portfolioImages.length - 1} old ones`);
+        for (let i = 1; i < portfolioImages.length; i++) {
+          try {
+            const image = this.docker.getImage(portfolioImages[i].Id);
+            await image.remove({ force: true });
+            console.log(`Removed old portfolio image: ${portfolioImages[i].Id}`);
+          } catch (err) {
+            console.log(`Could not remove old image ${portfolioImages[i].Id}:`, err.message);
+          }
+        }
+      }
+      
+      // Remove any dangling/untagged images to free up space
+      const danglingImages = images.filter(img => !img.RepoTags || img.RepoTags.includes('<none>:<none>'));
+      for (const img of danglingImages) {
+        try {
+          const image = this.docker.getImage(img.Id);
+          await image.remove({ force: true });
+          console.log(`Removed dangling image: ${img.Id}`);
+        } catch (err) {
+          console.log(`Could not remove dangling image ${img.Id}:`, err.message);
+        }
+      }
+      
+      // Prune system to remove unused data
+      try {
+        await this.docker.pruneImages({ filters: { dangling: ['true'] } });
+        await this.docker.pruneContainers();
+        console.log('Pruned unused Docker resources');
+      } catch (err) {
+        console.log('Could not prune Docker resources:', err.message);
+      }
+      
+    } catch (err) {
+      console.error('Error during smart Docker cleanup:', err);
+    }
+  }
+  
+  async preloadImage() {
+    const imageName = 'twaldin/terminal-portfolio:latest';
+    console.log(`Preloading Docker image ${imageName} on startup...`);
+    
+    try {
+      // Wait for Docker to be ready first
+      let dockerReady = false;
+      let retries = 30;
+      while (!dockerReady && retries > 0) {
+        try {
+          await this.docker.ping();
+          dockerReady = true;
+          console.log('Docker daemon is ready');
+        } catch (err) {
+          console.log(`Waiting for Docker daemon... (${retries} retries left)`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          retries--;
+        }
+      }
+      
+      if (!dockerReady) {
+        console.error('Docker daemon not ready after 30 seconds, skipping preload');
+        return;
+      }
+      
+      // Smart cleanup - keep only the most recent image
+      await this.cleanupDockerSmart();
+      
+      // Pull fresh image with explicit latest tag
+      console.log('Pulling fresh image from Docker Hub...');
+      await new Promise((resolve, reject) => {
+        // Force pull from registry by using registry URL
+        const pullOptions = {
+          authconfig: {} // Empty auth for public images
+        };
+        
+        this.docker.pull(`docker.io/${imageName}`, pullOptions, (err, stream) => {
+          if (err) {
+            console.error(`Failed to start image pull:`, err);
+            reject(err);
+            return;
+          }
+          
+          this.docker.modem.followProgress(stream, (err, res) => {
+            if (err) {
+              console.error(`Failed during image pull:`, err);
+              reject(err);
+            } else {
+              console.log(`Successfully pulled fresh ${imageName} from registry`);
+              this.imagePreloaded = true;
+              // Clean up any duplicates that might have been created during pull
+              this.cleanupDockerSmart().catch(err => console.log('Post-pull cleanup failed:', err));
+              resolve(res);
+            }
+          });
+        });
+      });
+    } catch (error) {
+      console.error(`Error preloading image - will pull on demand:`, error);
+      this.imagePreloaded = false;
+    }
+  }
+
+  async createSession(sessionId, socket) {
+    // Check session limit
+    if (this.sessions.size >= this.maxSessions) {
+      throw new Error('Maximum session limit reached');
+    }
+
+    try {
+      // Always use Docker containers for security and isolation
+      // Use local shell only if FORCE_LOCAL_SHELL environment variable is set
+      if (process.env.FORCE_LOCAL_SHELL === 'true') {
+        console.warn('WARNING: Using local shell - this is unsafe for production!');
+        return this.createLocalSession(sessionId, socket);
+      }
+
+      // Default: Create Docker container for isolation
+      return this.createContainerSession(sessionId, socket);
+    } catch (error) {
+      console.error(`Error creating session ${sessionId}:`, error);
+      throw error;
+    }
+  }
+
+  createLocalSession(sessionId, socket) {
+    console.log(`Creating local shell session for ${sessionId}`);
+
+    // Spawn local shell - using sh for compatibility
+    const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
+    const terminal = pty.spawn(shell, [], {
+      name: 'xterm-color',
+      cols: 120,
+      rows: 30,
+      cwd: '/tmp',
+      env: {
+        TERM: 'xterm-256color',
+        PATH: '/usr/local/bin:/usr/bin:/bin',
+        HOME: '/tmp'
+      }
+    });
+
+    // Handle terminal output
+    terminal.onData((data) => {
+      console.log(`Terminal output for ${sessionId}:`, JSON.stringify(data), 'length:', data.length);
+      if (data.length > 0) {
+        socket.emit('output', data);
+      } else {
+        console.log(`Skipping empty output for ${sessionId}`);
+      }
+    });
+
+    // Handle terminal exit
+    terminal.onExit((exitCode) => {
+      console.log(`Terminal exited for session ${sessionId} with code ${exitCode}`);
+      this.destroySession(sessionId);
+      socket.disconnect();
+    });
+
+    // Let the shell initialize naturally without interference
+    console.log(`Shell initialization started for ${sessionId}`);
+
+    // Store session
+    const session = {
+      id: sessionId,
+      type: 'local',
+      terminal: terminal,
+      socket: socket,
+      startTime: Date.now(),
+      lastActivity: Date.now()
+    };
+
+    this.sessions.set(sessionId, session);
+
+    // Set session timeout
+    this.setSessionTimeout(sessionId);
+
+    console.log(`Local session created for ${sessionId}`);
+    return Promise.resolve();
+  }
+
+  async createContainerSession(sessionId, socket) {
+    console.log(`Creating container session for ${sessionId}`);
+
+    try {
+      const imageName = 'twaldin/terminal-portfolio:latest';
+      
+      // Check if image exists locally
+      let imageExists = false;
+      try {
+        const images = await this.docker.listImages();
+        imageExists = images.some(img => 
+          img.RepoTags && img.RepoTags.includes(imageName)
+        );
+      } catch (err) {
+        console.error('Failed to list images:', err);
+      }
+      
+      // Pull if image doesn't exist or wasn't preloaded
+      if (!imageExists || !this.imagePreloaded) {
+        console.log(`Need to pull ${imageName} (exists: ${imageExists}, preloaded: ${this.imagePreloaded})`);
+        try {
+          await new Promise((resolve, reject) => {
+            const pullOptions = {
+              authconfig: {} // Empty auth for public images
+            };
+            
+            // Use full registry path to ensure we pull from Docker Hub
+            this.docker.pull(`docker.io/${imageName}`, pullOptions, (err, stream) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              
+              this.docker.modem.followProgress(stream, (err, res) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  console.log(`Successfully pulled fresh ${imageName} from Docker Hub`);
+                  resolve(res);
+                }
+              });
+            });
+          });
+          this.imagePreloaded = true;
+        } catch (pullError) {
+          console.error(`Failed to pull image ${imageName}:`, pullError);
+          throw new Error(`Failed to pull terminal image: ${pullError.message}`);
+        }
+      } else {
+        console.log(`Using existing ${imageName} image`);
+      }
+
+      // Create Docker container with enhanced security
+      const container = await this.docker.createContainer({
+        Image: imageName,
+        Hostname: 'twaldin',
+        Tty: true,
+        OpenStdin: true,
+        StdinOnce: false,
+        AttachStdout: true,
+        AttachStderr: true,
+        AttachStdin: true,
+        Env: [
+          'TERM=xterm-256color',
+          'PS1=portfolio@twaldin:$ ',
+          'COLUMNS=120',  // Set default columns for welcome script
+          'LINES=30'      // Set default lines
+        ],
+        WorkingDir: '/home/portfolio',
+        User: 'portfolio',
+        Labels: {
+          'app': 'terminal-portfolio',
+          'session': sessionId
+        },
+        HostConfig: {
+          Memory: 512 * 1024 * 1024, // 512MB limit
+          CpuQuota: 50000, // 0.5 CPU limit
+          PidsLimit: 100, // Process limit
+          ReadonlyRootfs: false, // Need write for nvim plugins
+          NetworkMode: 'none', // No network access for security
+          SecurityOpt: [
+            'no-new-privileges:true',
+            'seccomp=unconfined' // Required for some terminal operations
+          ],
+          CapDrop: [ // Drop all capabilities except essential ones
+            'ALL'
+          ],
+          CapAdd: [
+            'CHOWN',
+            'SETUID',
+            'SETGID',
+            'DAC_OVERRIDE'
+          ],
+          Tmpfs: { // Use tmpfs for temp directories
+            '/tmp': 'rw,noexec,nosuid,size=100m'
+          }
+        }
+      });
+
+      // Start container
+      await container.start();
+
+      // Attach to container
+      const stream = await container.attach({
+        stream: true,
+        stdin: true,
+        stdout: true,
+        stderr: true,
+        hijack: true
+      });
+
+      // Track if we've sent the welcome command
+      let welcomeSent = false;
+
+      // Handle container output
+      stream.on('data', (data) => {
+        const output = data.toString();
+        // Filter out Docker debug messages that shouldn't be shown to users
+        if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
+          socket.emit('output', output);
+          
+          // Check if the prompt has appeared and we haven't sent welcome yet
+          if (!welcomeSent && output.includes('~ ')) {
+            welcomeSent = true;
+            console.log(`Prompt detected for session ${sessionId}, auto-typing welcome...`);
+            // Small delay to ensure prompt is fully rendered
+            setTimeout(() => {
+              this.autoTypeWelcome(sessionId);
+            }, 200);
+          }
+        }
+      });
+
+      // Handle container close
+      stream.on('close', () => {
+        console.log(`Container stream closed for session ${sessionId}`);
+        this.destroySession(sessionId);
+      });
+
+      // Store session
+      const session = {
+        id: sessionId,
+        type: 'container',
+        container: container,
+        stream: stream,
+        socket: socket,
+        startTime: Date.now(),
+        lastActivity: Date.now()
+      };
+
+      this.sessions.set(sessionId, session);
+
+      console.log(`Container session created for ${sessionId}`);
+      return Promise.resolve();
+
+    } catch (error) {
+      console.error(`Failed to create container for session ${sessionId}:`, error);
+      throw error;
+    }
+  }
+
+  autoTypeWelcome(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      console.log(`Session ${sessionId} not found for auto-typing welcome`);
+      return;
+    }
+
+    console.log(`Auto-typing 'welcome' for session ${sessionId}`);
+    
+    // Type "welcome" letter by letter with delays
+    const letters = ['w', 'e', 'l', 'c', 'o', 'm', 'e'];
+    let index = 0;
+    
+    const typeNextLetter = () => {
+      if (index < letters.length) {
+        this.sendInput(sessionId, letters[index]);
+        index++;
+        setTimeout(typeNextLetter, 100); // 100ms between letters (slower typing)
+      } else {
+        // After typing all letters, press Enter
+        setTimeout(() => {
+          this.sendInput(sessionId, '\r');
+          console.log(`Completed auto-typing 'welcome' for session ${sessionId}`);
+        }, 100);
+      }
+    };
+    
+    typeNextLetter();
+  }
+
+  sendInput(sessionId, data) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      console.log(`Session ${sessionId} not found`);
+      return;
+    }
+
+    console.log(`Received input for ${sessionId}:`, JSON.stringify(data));
+    session.lastActivity = Date.now();
+
+    if (session.type === 'local') {
+      session.terminal.write(data);
+    } else if (session.type === 'container') {
+      session.stream.write(data);
+    }
+  }
+
+  resizeTerminal(sessionId, cols, rows) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return;
+    }
+
+    session.lastActivity = Date.now();
+
+    if (session.type === 'local') {
+      session.terminal.resize(cols, rows);
+    } else if (session.type === 'container') {
+      // Resize container terminal
+      session.container.resize({
+        h: rows,
+        w: cols
+      }).catch((error) => {
+        console.error(`Failed to resize container terminal for ${sessionId}:`, error);
+      });
+    }
+  }
+
+  async destroySession(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return;
+    }
+
+    console.log(`Destroying session ${sessionId}`);
+
+    try {
+      if (session.type === 'local') {
+        if (session.terminal && !session.terminal.killed) {
+          session.terminal.kill();
+        }
+      } else if (session.type === 'container') {
+        if (session.stream) {
+          session.stream.end();
+        }
+        
+        if (session.container) {
+          // Kill and remove container
+          await session.container.kill().catch(() => {});
+          await session.container.remove({ force: true }).catch(() => {});
+        }
+      }
+
+      // Clear timeout
+      if (session.timeout) {
+        clearTimeout(session.timeout);
+      }
+
+      this.sessions.delete(sessionId);
+      console.log(`Session ${sessionId} destroyed`);
+
+    } catch (error) {
+      console.error(`Error destroying session ${sessionId}:`, error);
+      this.sessions.delete(sessionId);
+    }
+  }
+
+  async destroyAllSessions() {
+    console.log('Destroying all sessions...');
+    const promises = Array.from(this.sessions.keys()).map(sessionId => 
+      this.destroySession(sessionId)
+    );
+    await Promise.all(promises);
+    console.log('All sessions destroyed');
+  }
+
+  setSessionTimeout(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (session.timeout) {
+      clearTimeout(session.timeout);
+    }
+
+    // Set new timeout
+    session.timeout = setTimeout(() => {
+      console.log(`Session ${sessionId} timed out`);
+      this.destroySession(sessionId);
+      if (session.socket) {
+        session.socket.emit('output', '\r\n[Session timed out]\r\n');
+        session.socket.disconnect();
+      }
+    }, this.sessionTimeout);
+  }
+
+  getActiveSessionCount() {
+    return this.sessions.size;
+  }
+
+  getTotalContainerCount() {
+    return Array.from(this.sessions.values()).filter(s => s.type === 'container').length;
+  }
+
+  // Cleanup orphaned containers periodically
+  async cleanupOrphanedContainers() {
+    try {
+      const containers = await this.docker.listContainers({
+        all: true,
+        filters: {
+          label: ['app=terminal-portfolio']
+        }
+      });
+
+      for (const containerInfo of containers) {
+        const container = this.docker.getContainer(containerInfo.Id);
+        
+        // Check if container is in our active sessions
+        const isActive = Array.from(this.sessions.values()).some(
+          session => session.container && session.container.id === containerInfo.Id
+        );
+
+        if (!isActive) {
+          console.log(`Cleaning up orphaned container: ${containerInfo.Id}`);
+          await container.kill().catch(() => {});
+          await container.remove({ force: true }).catch(() => {});
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up orphaned containers:', error);
+    }
+  }
 }
 
-module.exports = SecureSessionManager;
+module.exports = SessionManager;

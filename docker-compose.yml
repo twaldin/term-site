@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Nginx reverse proxy to route traffic
+  nginx:
+    image: nginx:alpine
+    container_name: term-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # Next.js frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.production
+    container_name: term-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3001
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  # Terminal backend with Docker-in-Docker
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: term-backend
+    privileged: true  # Required for Docker-in-Docker
+    environment:
+      - NODE_ENV=production
+      - FRONTEND_URL=http://frontend:3000
+    expose:
+      - "3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for container management
+      - backend-data:/var/lib/docker  # Docker data persistence
+    restart: unless-stopped
+
+  # Cloudflare Tunnel (optional - can run separately)
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: term-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}  # Set in .env file
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    network_mode: "host"  # Needs host network to access nginx
+
+volumes:
+  backend-data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

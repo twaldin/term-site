@@ -20,10 +20,16 @@ export function createWebSocketManager(): WebSocketManager {
   let outputCallback: ((data: string) => void) | null = null;
 
   const getWebSocketUrl = (): string => {
-    const isDev = process.env.NODE_ENV === 'development';
-    return isDev 
-      ? 'http://localhost:3001'
-      : process.env.NEXT_PUBLIC_API_URL || 'https://terminal-portfolio-614734471800.us-central1.run.app';
+    // For self-hosted: If no API URL is set, use same origin (nginx will route)
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    // Use same origin for self-hosted deployment
+    if (typeof window !== 'undefined') {
+      return `${window.location.protocol}//${window.location.host}`;
+    }
+    // Fallback for SSR/development
+    return 'http://localhost:3001';
   };
 
   const connect = () => {
