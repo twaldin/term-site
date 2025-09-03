@@ -10,16 +10,15 @@ ascii_typewriter "term site" "Univers" "${BOLD}${CYAN}"
 echo ""
 
 # Create boxed content for main info
-create_box "Description" "My portfolio/personal website, written in bash (not really). Consists of 
-a web terminal interface using xterm.js connected to a node-pty instance to execute commands inside a docker container filesystem"
+create_box "Description" "My portfolio website that looks like a terminal. Users get an xterm.js frontend that connects to Docker containers where they can explore my projects and blog."
 
 echo ""
 
 # Tech Stack section
 typewriter "${CYAN}Tech Stack:${RESET}"
-typewriter "   ${YELLOW}Frontend:${RESET} Basically just xterm.js terminal component served with nextjs router"
-typewriter "   ${YELLOW}Backend:${RESET} Node.js to spawn docker containers, Express, Socket.IO WebSockets"
-typewriter "   ${YELLOW}Terminal:${RESET} xterm.js for frontend, node-pty for execution, Ubuntu Linux docker containers for filesystem"
+typewriter "   ${YELLOW}Frontend:${RESET} Next.js app with xterm.js terminal"
+typewriter "   ${YELLOW}Backend:${RESET} Node.js server that spawns Docker containers via Socket.IO"
+typewriter "   ${YELLOW}Terminal:${RESET} Each user gets their own Ubuntu container with portfolio content"
 
 echo ""
 animated_separator "~" 70
@@ -50,8 +49,7 @@ fi
 
 echo ""
 
-typewriter "${YELLOW}you are now in the projects/term-site directory${RESET}"
-typewriter "${DIM}use ls, tree, cat, nvim, or other commands to explore the actual git repository of this project,${RESET}"
-typewriter "${DIM}or type home to go back to the home page ${RESET}"
+typewriter "${YELLOW}You're now in the projects/term-site directory${RESET}"
+typewriter "${DIM}Use ls, cat, vim, etc. to explore this project, or type 'home' to go back${RESET}"
 
 echo ""
