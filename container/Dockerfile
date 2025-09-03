@@ -83,7 +83,7 @@ RUN echo 'set number' > /home/portfolio/.config/nvim/init.vim && \
     echo 'highlight Type ctermfg=13' >> /home/portfolio/.config/nvim/init.vim && \
     echo 'highlight LineNr ctermfg=8' >> /home/portfolio/.config/nvim/init.vim
 
-# Create basic .vimrc with same config  
+# Create basic .vimrc with same config
 RUN ln -sf /home/portfolio/.config/nvim/init.vim /home/portfolio/.vimrc
 
 # Set proper ownership for all user directories
@@ -107,8 +107,7 @@ RUN mkdir -p /home/portfolio/.local/share/fonts && \
 # Install Oh My Posh and download pure theme
 RUN mkdir -p /home/portfolio/.local/share/themes && \
     curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin -t /home/portfolio/.local/share/themes && \
-    curl -s https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json -o /home/portfolio/.local/share/themes/pure.omp.json && \
-    curl -s https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/minimal.omp.json -o /home/portfolio/.local/share/themes/minimal.omp.json
+    curl -s https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json -o /home/portfolio/.local/share/themes/pure.omp.json
 
 # Clone dotfiles and project repositories directly into container
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
@@ -192,7 +191,7 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
 
-# Create a restricted shell environment 
+# Create a restricted shell environment
 RUN echo '#!/bin/zsh' > /home/portfolio/secure-shell.sh && \
     echo 'export HOME=/home/portfolio' >> /home/portfolio/secure-shell.sh && \
     echo 'export USER=portfolio' >> /home/portfolio/secure-shell.sh && \
