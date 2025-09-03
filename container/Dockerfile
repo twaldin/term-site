@@ -38,6 +38,7 @@ RUN apt-get install -y \
     ncurses-base \
     zsh \
     figlet \
+    fontconfig \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
     && ln -s /usr/bin/batcat /usr/bin/bat \
@@ -49,9 +50,9 @@ RUN apt-get install -y \
 # Clone dotfiles repository will be done later after user creation
 
 # Copy all scripts
-COPY container/scripts/ /home/portfolio/scripts/
-COPY container/blog/ /home/portfolio/blog/
-COPY container/Univers.flf /usr/share/figlet/Univers.flf
+COPY scripts/ /home/portfolio/scripts/
+COPY blog/ /home/portfolio/blog/
+COPY Univers.flf /usr/share/figlet/Univers.flf
 
 # No longer need glow config since we're using bat for markdown
 # bat uses themes directly without config files
@@ -95,8 +96,19 @@ RUN chown -R portfolio:portfolio /home/portfolio/.config && \
 USER portfolio
 WORKDIR /home/portfolio
 
-# Install Oh My Posh
-RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin
+# Install JetBrains Mono Nerd Font
+RUN mkdir -p /home/portfolio/.local/share/fonts && \
+    cd /tmp && \
+    wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip && \
+    unzip JetBrainsMono.zip -d /home/portfolio/.local/share/fonts/ && \
+    rm JetBrainsMono.zip && \
+    fc-cache -fv
+
+# Install Oh My Posh and download pure theme
+RUN mkdir -p /home/portfolio/.local/share/themes && \
+    curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin -t /home/portfolio/.local/share/themes && \
+    curl -s https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json -o /home/portfolio/.local/share/themes/pure.omp.json && \
+    curl -s https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/minimal.omp.json -o /home/portfolio/.local/share/themes/minimal.omp.json
 
 # Clone dotfiles and project repositories directly into container
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
@@ -108,7 +120,8 @@ RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles 
     ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
     ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
     ln -sf /home/portfolio/scripts/sulfur-recipies.sh /home/portfolio/projects/sulfur-recipies/sulfur-recipies.sh && \
-    ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh
+    ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh && \
+    ln -sf /home/portfolio/.dotfiles /home/portfolio/projects/dotfiles
 
 # Create custom .zshrc with navigation aliases
 RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
@@ -125,6 +138,10 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
+    echo "" >> /home/portfolio/.zshrc && \
+    echo "# Oh My Posh configuration" >> /home/portfolio/.zshrc && \
+    echo "export PATH=\$PATH:/home/portfolio/.local/bin" >> /home/portfolio/.zshrc && \
+    echo "eval \"\$(/home/portfolio/.local/bin/oh-my-posh init zsh --config /home/portfolio/.local/share/themes/pure.omp.json)\"" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch back to root to continue setup
