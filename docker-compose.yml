@@ -53,7 +53,6 @@ services:
     restart: unless-stopped
     depends_on:
       - nginx
-    network_mode: "host"  # Needs host network to access nginx
 
 volumes:
   backend-data:
