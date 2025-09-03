@@ -11,9 +11,10 @@ const server = http.createServer(app);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
-        'https://term-site-eed0kfe1k-twaldin.vercel.app',
-        'https://term-site.vercel.app'
+        'https://twald.in',
+        'https://terminal.twald.in',
+        'http://localhost',
+        'http://localhost:80'
       ]
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
@@ -24,15 +25,16 @@ const io = socketIo(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
       ? [
-          process.env.FRONTEND_URL || 'https://term-site-eed0kfe1k-twaldin.vercel.app',
-          'https://term-site-eed0kfe1k-twaldin.vercel.app',
-          'https://term-site.vercel.app'
+          'https://twald.in',
+          'https://terminal.twald.in',
+          'http://localhost',
+          'http://localhost:80'
         ]
       : ['http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['websocket']
+  transports: ['polling', 'websocket']
 });
 
 // Initialize session manager
