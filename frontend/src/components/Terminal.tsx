@@ -39,14 +39,46 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       let cleanupFunctions: (() => void)[] = [];
 
-      // Dynamic import to avoid SSR issues
-      import("@xterm/xterm").then(({ Terminal }) => {
-        import("@xterm/addon-fit").then(({ FitAddon }) => {
-          import("@xterm/addon-web-links").then(({ WebLinksAddon }) => {
-            // CSS is imported via next.config or global CSS
+      // Ensure Nerd Font is loaded before initializing terminal
+      const loadFonts = async () => {
+        try {
+          // Create font face objects for the fonts we need
+          const nerdFont = new FontFace(
+            'JetBrainsMono Nerd Font Mono',
+            'url(/fonts/JetBrainsMonoNerdFontMono-Regular.ttf)',
+            { weight: 'normal', style: 'normal' }
+          );
+          
+          const nerdFontBold = new FontFace(
+            'JetBrainsMono Nerd Font Mono',
+            'url(/fonts/JetBrainsMonoNerdFontMono-Bold.ttf)',
+            { weight: 'bold', style: 'normal' }
+          );
 
-          // Check if component is still mounted
-          if (!terminalRef.current) return;
+          // Load the fonts
+          await nerdFont.load();
+          await nerdFontBold.load();
+          
+          // Add them to the document
+          document.fonts.add(nerdFont);
+          document.fonts.add(nerdFontBold);
+          
+          console.log('Nerd Fonts loaded successfully');
+        } catch (error) {
+          console.warn('Failed to load Nerd Fonts, falling back to system fonts:', error);
+        }
+      };
+
+      // Load fonts first, then initialize terminal
+      loadFonts().then(() => {
+        // Dynamic import to avoid SSR issues
+        import("@xterm/xterm").then(({ Terminal }) => {
+          import("@xterm/addon-fit").then(({ FitAddon }) => {
+            import("@xterm/addon-web-links").then(({ WebLinksAddon }) => {
+              // CSS is imported via next.config or global CSS
+
+            // Check if component is still mounted
+            if (!terminalRef.current) return;
 
           // Calculate dynamic font size to ensure ASCII art fits
           const asciiWidth = 139; // Width of ASCII art in characters (tim@waldin.net)
@@ -249,6 +281,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             () => resizeDisposable.dispose(),
             () => xterm.dispose(),
           ];
+            });
           });
         });
       });

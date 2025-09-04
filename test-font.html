@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Font Test</title>
+    <style>
+        @font-face {
+            font-family: 'JetBrainsMono Nerd Font';
+            src: url('http://localhost/fonts/JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
+        }
+        body { 
+            background: #1d2021; 
+            color: #ebdbb2;
+            font-family: 'JetBrainsMono Nerd Font', monospace;
+            font-size: 24px;
+            padding: 20px;
+        }
+        .icon { font-size: 32px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Nerd Font Icon Test</h1>
+    <div class="icon">Icon from contact.sh (hex f3b087ae): 󰇮</div>
+    <div class="icon">GitHub icon (hex f09b): </div>
+    <div class="icon">LinkedIn icon (hex f08c): </div>
+    <div class="icon">Instagram icon (hex f16d): </div>
+    <div class="icon">Twitter icon (hex f099): </div>
+    <div class="icon">Regular text: ABCDEFG 12345</div>
+    
+    <script>
+        document.fonts.ready.then(() => {
+            console.log('Fonts loaded:', Array.from(document.fonts).map(f => `${f.family}: ${f.status}`));
+        });
+    </script>
+</body>
+</html>
