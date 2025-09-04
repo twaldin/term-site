@@ -1,14 +1,15 @@
-# Docker daemon service with terminal image built-in
+# Docker daemon service with terminal container files embedded
 FROM docker:24-dind
 
 # Copy terminal container files
 COPY container/ /terminal-container/
 
-# Build terminal image on startup and start Docker daemon
+# Create startup script that force rebuilds terminal image
 RUN echo '#!/bin/sh' > /usr/local/bin/start-daemon.sh && \
     echo 'set -e' >> /usr/local/bin/start-daemon.sh && \
     echo 'echo "Starting Docker daemon..."' >> /usr/local/bin/start-daemon.sh && \
     echo 'dockerd-entrypoint.sh &' >> /usr/local/bin/start-daemon.sh && \
+    echo 'DOCKER_PID=$!' >> /usr/local/bin/start-daemon.sh && \
     echo 'echo "Waiting for Docker daemon to be ready..."' >> /usr/local/bin/start-daemon.sh && \
     echo 'timeout=30' >> /usr/local/bin/start-daemon.sh && \
     echo 'while [ $timeout -gt 0 ] && ! docker version > /dev/null 2>&1; do' >> /usr/local/bin/start-daemon.sh && \
@@ -19,11 +20,11 @@ RUN echo '#!/bin/sh' > /usr/local/bin/start-daemon.sh && \
     echo '  echo "ERROR: Docker daemon failed to start within 30 seconds"' >> /usr/local/bin/start-daemon.sh && \
     echo '  exit 1' >> /usr/local/bin/start-daemon.sh && \
     echo 'fi' >> /usr/local/bin/start-daemon.sh && \
-    echo 'echo "Docker daemon is ready, building terminal image..."' >> /usr/local/bin/start-daemon.sh && \
-    echo 'docker build -t twaldin/terminal-portfolio:latest /terminal-container' >> /usr/local/bin/start-daemon.sh && \
-    echo 'echo "Terminal image built successfully"' >> /usr/local/bin/start-daemon.sh && \
+    echo 'echo "Docker daemon is ready, force rebuilding terminal image..."' >> /usr/local/bin/start-daemon.sh && \
+    echo 'docker build --no-cache -t twaldin/terminal-portfolio:latest /terminal-container' >> /usr/local/bin/start-daemon.sh && \
+    echo 'echo "Terminal image rebuilt successfully"' >> /usr/local/bin/start-daemon.sh && \
     echo 'echo "Docker daemon ready for connections"' >> /usr/local/bin/start-daemon.sh && \
-    echo 'wait' >> /usr/local/bin/start-daemon.sh && \
+    echo 'wait $DOCKER_PID' >> /usr/local/bin/start-daemon.sh && \
     chmod +x /usr/local/bin/start-daemon.sh
 
 CMD ["/usr/local/bin/start-daemon.sh"]
