@@ -1,22 +1,17 @@
 #!/bin/bash
-
-# Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
-# ASCII header with progressive typewriter display
 ascii_typewriter "sulfur recipies" "Univers" "${BOLD}${YELLOW}"
 
 echo ""
 
-# Create boxed content for main info
-create_box "Info" "Using data scraped from wiki.sulfur.gg, a full database of cooking recipies 
-from the game sulfur. Most important features are sorting and filtering by 
+create_box "Info" "Using data scraped from wiki.sulfur.gg, a full database of cooking recipies
+from the game sulfur. Most important features are sorting and filtering by
 multiple ingredients or stats." "${YELLOW}"
 
 echo ""
 
-# Tech Stack section
 typewriter "${YELLOW}Tech Stack:${RESET}"
 typewriter "   ${YELLOW}•${RESET} Next.js 15, React 19, TypeScript"
 typewriter "   ${YELLOW}•${RESET} Tailwind CSS 3 with animations"
@@ -25,8 +20,6 @@ typewriter "   ${YELLOW}•${RESET} shadcn/ui design system"
 echo ""
 animated_separator "*" 60 "${YELLOW}"
 
-
-# Git repository information (same as other scripts)
 typewriter "${YELLOW}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   branch=$(git branch --show-current 2>/dev/null || echo "main")

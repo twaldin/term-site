@@ -1,12 +1,11 @@
 #!/bin/bash
-
-# Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
 
-# ASCII header with progressive typewriter display
 ascii_typewriter "timothy waldin" "Univers" "${BOLD}${CYAN}"
-typewriter "${DIM}Type 'help' for a list of available commands.${RESET}"
+typewriter "${DIM}Type 'contact' for contact info.${RESET}"
+typewriter "${DIM}Type 'about' for info about me.${RESET}"
+typewriter "${DIM}Type 'help' for all available commands.${RESET}"
 
 echo ""
