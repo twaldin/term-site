@@ -1,10 +1,39 @@
 const Docker = require('dockerode');
 const pty = require('node-pty');
+const fs = require('fs');
 
 class SessionManager {
   constructor() {
     this.sessions = new Map();
-    this.docker = new Docker();
+    
+    // Configure Docker client for remote connection
+    const dockerOptions = {};
+    
+    if (process.env.DOCKER_HOST) {
+      const hostParts = process.env.DOCKER_HOST.replace('tcp://', '').split(':');
+      dockerOptions.host = hostParts[0];
+      dockerOptions.port = parseInt(hostParts[1]) || 2376;
+    }
+    
+    if (process.env.DOCKER_TLS_VERIFY === '1' && process.env.DOCKER_CERT_PATH) {
+      dockerOptions.protocol = 'https';
+      try {
+        dockerOptions.ca = fs.readFileSync(process.env.DOCKER_CERT_PATH + '/ca.pem');
+        dockerOptions.cert = fs.readFileSync(process.env.DOCKER_CERT_PATH + '/cert.pem');
+        dockerOptions.key = fs.readFileSync(process.env.DOCKER_CERT_PATH + '/key.pem');
+        console.log('Using TLS connection to Docker daemon');
+      } catch (err) {
+        console.warn('Could not read Docker TLS certificates, falling back to insecure connection:', err.message);
+        // Fall back to insecure connection
+        dockerOptions.protocol = 'http';
+        delete dockerOptions.ca;
+        delete dockerOptions.cert;
+        delete dockerOptions.key;
+        dockerOptions.port = 2375; // Use insecure port
+      }
+    }
+    
+    this.docker = new Docker(dockerOptions);
     this.maxSessions = 10;
     this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
     this.imagePreloaded = false;
@@ -88,9 +117,9 @@ class SessionManager {
         try {
           await this.docker.ping();
           dockerReady = true;
-          console.log('Docker daemon is ready');
+          console.log('Connected to Docker daemon');
         } catch (err) {
-          console.log(`Waiting for Docker daemon... (${retries} retries left)`);
+          console.log(`Waiting for Docker daemon... (${retries} retries left):`, err.message);
           await new Promise(resolve => setTimeout(resolve, 1000));
           retries--;
         }

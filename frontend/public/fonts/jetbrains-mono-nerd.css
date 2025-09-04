@@ -1,22 +1,10 @@
-/* JetBrains Mono Nerd Font */
-/* This will be loaded from the container's font directory */
+/* JetBrains Mono Nerd Font - Web Font Configuration */
+/* Using actual font files instead of local() for consistent cross-browser support */
 
+/* Regular Nerd Font */
 @font-face {
   font-family: 'JetBrainsMono Nerd Font';
-  src: local('JetBrainsMono Nerd Font Regular'),
-       local('JetBrainsMono NF'),
-       local('JetBrains Mono');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'JetBrainsMono Nerd Font Mono';
-  src: local('JetBrainsMono Nerd Font Mono Regular'),
-       local('JetBrainsMono Nerd Font Mono'),
-       local('JetBrainsMono NFM'),
-       local('JetBrains Mono');
+  src: url('./JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -24,17 +12,44 @@
 
 @font-face {
   font-family: 'JetBrainsMono Nerd Font';
-  src: local('JetBrainsMono Nerd Font Bold'),
-       local('JetBrainsMono NF Bold');
+  src: url('./JetBrainsMonoNerdFont-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
 }
 
+/* Monospace Variant (all glyphs same width) */
 @font-face {
   font-family: 'JetBrainsMono Nerd Font Mono';
-  src: local('JetBrainsMono Nerd Font Mono Bold'),
-       local('JetBrainsMono NFM Bold');
+  src: url('./JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrainsMono Nerd Font Mono';
+  src: url('./JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fallback to standard JetBrains Mono (without Nerd Font icons) */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono Regular'),
+       local('JetBrains Mono'),
+       local('JetBrainsMono-Regular');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono Bold'),
+       local('JetBrainsMono-Bold');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
