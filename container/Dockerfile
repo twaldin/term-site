@@ -138,8 +138,8 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
-    echo "# Oh My Posh configuration" >> /home/portfolio/.zshrc && \
-    echo "export PATH=\$PATH:/home/portfolio/.local/bin" >> /home/portfolio/.zshrc && \
+    echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
+    echo "export PATH=\"/home/portfolio/.local/bin:\$PATH\"" >> /home/portfolio/.zshrc && \
     echo "eval \"\$(/home/portfolio/.local/bin/oh-my-posh init zsh --config /home/portfolio/.local/share/themes/pure.omp.json)\"" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 

@@ -1,11 +1,9 @@
 #!/bin/bash
-
-# Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
 echo ""
 typewriter "${GREEN}commands${RESET}"
-animated_separator "-" 10 "$GREEN" 
+animated_separator "-" 10 "$GREEN"
 typewriter "${YELLOW}  about       ${WHITE}learn about me${RESET}"
 typewriter "${YELLOW}  contact     ${WHITE}my email and links to socials${RESET}"
 typewriter "${YELLOW}  projects    ${WHITE}explore my projects (you can use vim!)${RESET}"

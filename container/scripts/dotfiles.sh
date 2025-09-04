@@ -1,20 +1,13 @@
 #!/bin/bash
-
-# Source shared functions
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
-# ASCII header with progressive typewriter display
 ascii_typewriter "dotfiles" "Univers" "${BOLD}${GREEN}"
-
 echo ""
 
-# Create boxed content for main info
 create_box "Description" "My dotfiles. Currently i have nvim, zsh, ghostty, and tmux in here. contact me if you are dying to know more of my configs." "${GREEN}"
-
 echo ""
 
-# Git repository information
 typewriter "${GREEN}Recent Git Activity:${RESET}"
 if [ -d ".git" ]; then
   branch=$(git branch --show-current 2>/dev/null || echo "main")
