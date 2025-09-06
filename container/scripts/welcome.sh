@@ -2,10 +2,12 @@
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
+echo ""
+ascii_typewriter "timothy waldin" "DOS_Rebel" "${RED}"
+echo ""
+create_box "Welcome to my Portfolio Terminal Emulator" "Type 'contact' for contact info.
 
-ascii_typewriter "timothy waldin" "Univers" "${BOLD}${CYAN}"
-typewriter "${DIM}Type 'contact' for contact info.${RESET}"
-typewriter "${DIM}Type 'about' for info about me.${RESET}"
-typewriter "${DIM}Type 'help' for all available commands.${RESET}"
+Type 'about' for info about me.
 
+Type 'help' for all available commands." "${RED}"
 echo ""

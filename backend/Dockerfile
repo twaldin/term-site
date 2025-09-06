@@ -1,4 +1,5 @@
 # Backend with Docker CLI only (no Docker daemon)
+
 FROM node:18-alpine
 
 # Install Docker CLI and build dependencies for node-pty
@@ -12,7 +13,7 @@ COPY backend/package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source code from backend directory  
+# Copy source code from backend directory
 COPY backend/ .
 
 # Expose port
