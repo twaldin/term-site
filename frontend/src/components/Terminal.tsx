@@ -121,9 +121,28 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           const fitAddon = new FitAddon();
           xterm.loadAddon(fitAddon);
 
-          // Initialize web links addon for clickable URLs
-          const webLinksAddon = new WebLinksAddon();
+          // Custom link handler for OSC 8 hyperlinks and mailto support
+          const linkHandler = {
+            activate: (_event: MouseEvent, text: string) => {
+              console.log(`Opening link: ${text}`);
+              // Remove dangerous link warnings by opening directly
+              window.open(text, '_blank', 'noopener,noreferrer');
+            },
+            hover: () => {
+              // Optional: show link preview
+            },
+            leave: () => {
+              // Optional: hide link preview  
+            },
+            allowNonHttpProtocols: true // Enable mailto: and other protocols
+          };
+
+          // Initialize web links addon with custom handler for OSC 8 support
+          const webLinksAddon = new WebLinksAddon(linkHandler.activate, linkHandler);
           xterm.loadAddon(webLinksAddon);
+
+          // Set link handler for OSC 8 hyperlinks
+          xterm.options.linkHandler = linkHandler;
 
           // Open terminal
           xterm.open(terminalRef.current!);

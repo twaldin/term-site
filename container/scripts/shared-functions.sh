@@ -1,15 +1,15 @@
 #!/bin/bash
-CYAN='\033[38;2;142;192;124m'      # Bright Cyan #8ec07c
-GREEN='\033[38;2;184;187;38m'      # Bright Green #b8bb26
-WHITE='\033[38;2;235;219;178m'     # Foreground #ebdbb2
-YELLOW='\033[38;2;250;189;47m'     # Bright Yellow #fabd2f
-BLUE='\033[38;2;131;165;152m'      # Bright Blue #83a598
-RED='\033[38;2;251;73;52m'         # Bright Red #fb4934
-MAGENTA='\033[38;2;211;134;155m'   # Bright Magenta #d3869b
-ORANGE='\033[38;2;254;128;25m'     # Orange (custom)
-GRAY='\033[38;2;146;131;116m'      # Bright Black/Gray #928374
-BG='\033[48;2;29;32;33m'           # Background #1d2021 (Gruvbox Dark Hard)
-FG='\033[38;2;235;219;178m'        # Foreground #ebdbb2
+CYAN='\033[38;2;142;192;124m'      # Cyan #8ec07c
+GREEN='\033[38;2;184;187;38m'      # Green #b8bb26
+WHITE='\033[38;2;235;219;178m'     # White #ebdbb2
+YELLOW='\033[38;2;250;189;47m'     # Yellow #fabd2f
+BLUE='\033[38;2;69;133;136m'       # Blue #458588
+RED='\033[38;2;204;36;29m'         # Red #cc241d
+MAGENTA='\033[38;2;177;98;134m'    # Magenta #b16286
+ORANGE='\033[38;2;254;128;25m'     # Orange #fe8019
+GRAY='\033[38;2;146;131;116m'      # Gray #928374
+BG='\033[48;2;29;32;33m'           # Background #1d2021
+FG='\033[38;2;251;241;199m'        # Foreground #fbf1c7
 RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
@@ -49,25 +49,30 @@ animated_separator() {
 
 ascii_typewriter() {
   local text="$1"
-  local font="${2:-Univers}"
+  local font="${2:-DOS_Rebel}"
   local color="${3:-${BOLD}${CYAN}}"
 
   local ascii_output
-  ascii_output=$(figlet -f /home/portfolio/term-site/container/DOS_Rebel.flf "$text" 2>/dev/null || figlet "$text")
+  # Use DOS_Rebel font from figlet directory (no locale override needed)
+  ascii_output=$(figlet -f DOS_Rebel "$text" 2>/dev/null || figlet "$text")
 
+  # Strip trailing blank lines using a safer method
+  ascii_output=$(echo "$ascii_output" | awk '/^[[:space:]]*$/ {emptylines=emptylines"\n"; next} {if(emptylines) printf "%s",emptylines; emptylines=""; print}')
+
+  # Line-by-line animation - preserves UTF-8 box-drawing characters
   while IFS= read -r line; do
-    local processed_text=$(echo -e "${color}${line}${RESET}")
-    local length=${#processed_text}
-
-    for ((i = 0; i < length; i += 1)); do
-      local char="${processed_text:$i:1}"
-      printf "%s" "$char"
-      if [[ "$char" != " " && "$char" != $'\t' ]]; then
-        sleep 0.0005
-      fi
-    done
-    printf "\n"
+    # Print entire colored line at once to avoid breaking UTF-8 sequences
+    printf '%b%s%b\n' "${color}" "$line" "${RESET}"
+    sleep 0.02  # Small delay between lines for animation effect
   done <<< "$ascii_output"
+}
+
+# Special typewriter for git output that preserves ANSI colors
+git_typewriter() {
+  local line="$1"
+  # Display git output immediately to preserve ANSI color sequences
+  printf '%s\n' "$line"
+  sleep 0.02  # Small delay for animation effect
 }
 
 create_box() {

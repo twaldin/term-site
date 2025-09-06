@@ -52,7 +52,7 @@ RUN apt-get install -y \
 # Copy all scripts
 COPY scripts/ /home/portfolio/scripts/
 COPY blog/ /home/portfolio/blog/
-COPY DOS_Rebel.flf /usr/share/figlet/Univers.flf
+COPY DOS_Rebel.flf /usr/share/figlet/DOS_Rebel.flf
 
 # No longer need glow config since we're using bat for markdown
 # bat uses themes directly without config files
@@ -67,7 +67,7 @@ RUN mkdir -p /home/portfolio/.config && \
     mkdir -p /home/portfolio/workspace && \
     mkdir -p /home/portfolio/tmp
 
-# Create simple nvim config (no LazyVim) with TokyoNight colors
+# Create simple nvim config with Gruvbox colors
 RUN echo 'set number' > /home/portfolio/.config/nvim/init.vim && \
     echo 'set relativenumber' >> /home/portfolio/.config/nvim/init.vim && \
     echo 'set tabstop=2' >> /home/portfolio/.config/nvim/init.vim && \
@@ -75,13 +75,13 @@ RUN echo 'set number' > /home/portfolio/.config/nvim/init.vim && \
     echo 'set expandtab' >> /home/portfolio/.config/nvim/init.vim && \
     echo 'syntax enable' >> /home/portfolio/.config/nvim/init.vim && \
     echo 'set background=dark' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Normal ctermfg=15 ctermbg=0' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Comment ctermfg=8' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight String ctermfg=10' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Keyword ctermfg=12' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Function ctermfg=14' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Type ctermfg=13' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight LineNr ctermfg=8' >> /home/portfolio/.config/nvim/init.vim
+    echo 'highlight Normal guifg=#fbf1c7 guibg=#1d2021 ctermfg=15 ctermbg=0' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Comment guifg=#928374 ctermfg=8' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight String guifg=#b8bb26 ctermfg=10' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Keyword guifg=#458588 ctermfg=12' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Function guifg=#8ec07c ctermfg=14' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight Type guifg=#b16286 ctermfg=13' >> /home/portfolio/.config/nvim/init.vim && \
+    echo 'highlight LineNr guifg=#928374 ctermfg=8' >> /home/portfolio/.config/nvim/init.vim
 
 # Create basic .vimrc with same config
 RUN ln -sf /home/portfolio/.config/nvim/init.vim /home/portfolio/.vimrc

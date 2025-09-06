@@ -11,7 +11,7 @@ ensure_blog_dirs() {
 show_help() {
     clear
     animated_separator "═" 139
-    ascii_typewriter "blog help" "Univers" "${BOLD}${CYAN}"
+    ascii_typewriter "blog help" "DOS_Rebel" "${BOLD}${CYAN}"
     echo ""
 
     typewriter "${BOLD}${WHITE}Available Commands:${RESET}"
@@ -35,7 +35,7 @@ show_help() {
 list_posts() {
     clear
     animated_separator "═" 139
-    ascii_typewriter "blog" "Univers" "${BOLD}${CYAN}"
+    ascii_typewriter "blog" "DOS_Rebel" "${BOLD}${CYAN}"
     echo ""
 
     typewriter "${BOLD}${WHITE}📚 Available Blog Posts:${RESET}"
@@ -138,7 +138,7 @@ search_posts() {
 
     clear
     animated_separator "═" 139
-    ascii_typewriter "search" "Univers" "${BOLD}${CYAN}"
+    ascii_typewriter "search" "DOS_Rebel" "${BOLD}${CYAN}"
     echo ""
 
     typewriter "${BOLD}${WHITE}🔍 Searching for: \"$query\"${RESET}"

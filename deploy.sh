@@ -46,12 +46,10 @@ if [ "$ALL_RUNNING" = false ]; then
     sleep 10
 fi
 
-# Terminal image is now built automatically as part of docker-daemon startup
-echo "Terminal container image built during docker-daemon initialization"
 
 echo "Deployment complete. Container status:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
+docker exec term-docker-daemon docker build --no-cache -t twaldin/terminal-portfolio:latest /terminal-container
 # Final health check
 echo ""
 echo "Testing site connectivity..."

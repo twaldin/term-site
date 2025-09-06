@@ -2,7 +2,8 @@
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
-ascii_typewriter "stm32 games" "Univers" "${BOLD}${BLUE}"
+echo ""
+ascii_typewriter "stm32 games" "DOS_Rebel" "${BLUE}"
 
 echo ""
 create_box "Description" "Game console using the stm32 blue pill and an lcd display, written in C.
@@ -23,7 +24,7 @@ if [ -d ".git" ]; then
   typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
   typewriter "   ${BLUE}Recent commits:${RESET}"
   git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    typewriter "     ${DIM}•${RESET} $line"
+    git_typewriter "     $line"
   done
   if git status --porcelain | grep -q .; then
     typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"

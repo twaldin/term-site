@@ -2,7 +2,8 @@
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
-ascii_typewriter "dotfiles" "Univers" "${BOLD}${GREEN}"
+echo ""
+ascii_typewriter "dotfiles" "DOS_Rebel" "${GREEN}"
 echo ""
 
 create_box "Description" "My dotfiles. Currently i have nvim, zsh, ghostty, and tmux in here. contact me if you are dying to know more of my configs." "${GREEN}"
@@ -14,7 +15,7 @@ if [ -d ".git" ]; then
   typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
   typewriter "   ${BLUE}Recent commits:${RESET}"
   git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    typewriter "     ${DIM}•${RESET} $line"
+    git_typewriter "     $line"
   done
   if git status --porcelain | grep -q .; then
     typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"

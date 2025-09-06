@@ -2,7 +2,8 @@
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
-ascii_typewriter "projects" "Univers" "${BOLD}${GREEN}"
+echo ""
+ascii_typewriter "projects" "DOS_Rebel" "${GREEN}"
 
 echo ""
 animated_separator "+" 60

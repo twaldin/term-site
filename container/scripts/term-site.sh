@@ -2,7 +2,8 @@
 source "$(dirname "$0")/shared-functions.sh"
 
 clear
-ascii_typewriter "term site" "Univers" "${BOLD}${CYAN}"
+echo ""
+ascii_typewriter "term site" "DOS_Rebel" "${CYAN}"
 
 echo ""
 
@@ -26,7 +27,7 @@ if [ -d ".git" ]; then
 
   typewriter "   ${BLUE}Recent commits:${RESET}"
   git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    typewriter "     ${DIM}•${RESET} $line"
+    git_typewriter "     $line"
   done
 
   if git status --porcelain | grep -q .; then

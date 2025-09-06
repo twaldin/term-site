@@ -37,7 +37,7 @@ export const terminalConfig = {
   fontSize: 12, // Reduced font size for better screen utilization
   fontWeight: 'normal' as const,
   fontWeightBold: 'bold' as const,
-  lineHeight: 1.2,
+  lineHeight: 1.0, // Tighter line spacing for better ASCII art rendering
   
   // Terminal behavior
   cursorBlink: true,
