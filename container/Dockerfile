@@ -52,7 +52,7 @@ RUN apt-get install -y \
 # Copy all scripts
 COPY scripts/ /home/portfolio/scripts/
 COPY blog/ /home/portfolio/blog/
-COPY Univers.flf /usr/share/figlet/Univers.flf
+COPY DOS_Rebel.flf /usr/share/figlet/Univers.flf
 
 # No longer need glow config since we're using bat for markdown
 # bat uses themes directly without config files
@@ -104,13 +104,13 @@ RUN mkdir -p /home/portfolio/.local/share/fonts && \
     rm JetBrainsMono.zip && \
     fc-cache -fv
 
-# Install Oh My Posh and download pure theme
+# Install Oh My Posh
 RUN mkdir -p /home/portfolio/.local/share/themes && \
-    curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin -t /home/portfolio/.local/share/themes && \
-    curl -s https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/pure.omp.json -o /home/portfolio/.local/share/themes/pure.omp.json
+    curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin -t /home/portfolio/.local/share/themes
 
 # Clone dotfiles and project repositories directly into container
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
+		ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
     mkdir -p /home/portfolio/projects && \
     cd /home/portfolio/projects && \
     git clone https://github.com/twaldin/stm32-games.git && \
@@ -140,7 +140,7 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
     echo "export PATH=\"/home/portfolio/.local/bin:\$PATH\"" >> /home/portfolio/.zshrc && \
-    echo "eval \"\$(/home/portfolio/.local/bin/oh-my-posh init zsh --config /home/portfolio/.local/share/themes/pure.omp.json)\"" >> /home/portfolio/.zshrc && \
+    echo "eval \"\$(/home/portfolio/.local/bin/oh-my-posh init zsh --config /home/portfolio/.dotfiles/zsh/pure-modified.omp.json)\"" >> /home/portfolio/.zshrc && \
     chown portfolio:portfolio /home/portfolio/.zshrc
 
 # Switch back to root to continue setup

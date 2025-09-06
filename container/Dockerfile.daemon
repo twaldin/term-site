@@ -17,14 +17,37 @@ RUN echo '#!/bin/sh' > /usr/local/bin/start-daemon.sh && \
     echo '  timeout=$((timeout - 1))' >> /usr/local/bin/start-daemon.sh && \
     echo 'done' >> /usr/local/bin/start-daemon.sh && \
     echo 'if [ $timeout -eq 0 ]; then' >> /usr/local/bin/start-daemon.sh && \
-    echo '  echo "ERROR: Docker daemon failed to start within 30 seconds"' >> /usr/local/bin/start-daemon.sh && \
-    echo '  exit 1' >> /usr/local/bin/start-daemon.sh && \
+    echo '  echo "WARNING: Docker daemon may not be fully ready, but continuing..."' >> /usr/local/bin/start-daemon.sh && \
     echo 'fi' >> /usr/local/bin/start-daemon.sh && \
     echo 'echo "Docker daemon is ready, force rebuilding terminal image..."' >> /usr/local/bin/start-daemon.sh && \
-    echo 'docker build --no-cache -t twaldin/terminal-portfolio:latest /terminal-container' >> /usr/local/bin/start-daemon.sh && \
-    echo 'echo "Terminal image rebuilt successfully"' >> /usr/local/bin/start-daemon.sh && \
+    echo 'export DOCKER_BUILDKIT=0' >> /usr/local/bin/start-daemon.sh && \
+    echo 'export BUILDKIT_PROGRESS=plain' >> /usr/local/bin/start-daemon.sh && \
+    echo 'docker build --no-cache --progress=plain -t twaldin/terminal-portfolio:latest /terminal-container || {' >> /usr/local/bin/start-daemon.sh && \
+    echo '  echo "ERROR: Failed to build terminal image"' >> /usr/local/bin/start-daemon.sh && \
+    echo '  echo "Falling back to pulling from Docker Hub if available..."' >> /usr/local/bin/start-daemon.sh && \
+    echo '  docker pull twaldin/terminal-portfolio:latest || echo "WARNING: No image available"' >> /usr/local/bin/start-daemon.sh && \
+    echo '}' >> /usr/local/bin/start-daemon.sh && \
+    echo 'echo "Terminal image ready"' >> /usr/local/bin/start-daemon.sh && \
     echo 'echo "Docker daemon ready for connections"' >> /usr/local/bin/start-daemon.sh && \
     echo 'wait $DOCKER_PID' >> /usr/local/bin/start-daemon.sh && \
     chmod +x /usr/local/bin/start-daemon.sh
 
-CMD ["/usr/local/bin/start-daemon.sh"]
+# Create a background image builder script
+RUN echo '#!/bin/sh' > /usr/local/bin/build-terminal-image.sh && \
+    echo 'echo "Waiting for Docker daemon to be ready..."' >> /usr/local/bin/build-terminal-image.sh && \
+    echo 'timeout=60' >> /usr/local/bin/build-terminal-image.sh && \
+    echo 'while [ $timeout -gt 0 ] && ! docker version > /dev/null 2>&1; do' >> /usr/local/bin/build-terminal-image.sh && \
+    echo '  sleep 2' >> /usr/local/bin/build-terminal-image.sh && \
+    echo '  timeout=$((timeout - 1))' >> /usr/local/bin/build-terminal-image.sh && \
+    echo 'done' >> /usr/local/bin/build-terminal-image.sh && \
+    echo 'if [ $timeout -gt 0 ]; then' >> /usr/local/bin/build-terminal-image.sh && \
+    echo '  echo "Docker daemon is ready, building terminal image..."' >> /usr/local/bin/build-terminal-image.sh && \
+    echo '  export DOCKER_BUILDKIT=0' >> /usr/local/bin/build-terminal-image.sh && \
+    echo '  docker build --no-cache -t twaldin/terminal-portfolio:latest /terminal-container && echo "Terminal image built successfully" || echo "Terminal image build failed"' >> /usr/local/bin/build-terminal-image.sh && \
+    echo 'else' >> /usr/local/bin/build-terminal-image.sh && \
+    echo '  echo "Docker daemon not ready after 120 seconds"' >> /usr/local/bin/build-terminal-image.sh && \
+    echo 'fi' >> /usr/local/bin/build-terminal-image.sh && \
+    chmod +x /usr/local/bin/build-terminal-image.sh
+
+# Start docker daemon normally and build image in background
+CMD sh -c 'dockerd-entrypoint.sh & /usr/local/bin/build-terminal-image.sh & wait'

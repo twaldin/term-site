@@ -7,14 +7,19 @@ echo "Starting deployment..."
 echo "Stopping existing containers..."
 docker-compose down
 
+# Remove the docker-daemon volumes to force a complete rebuild
+echo "Cleaning docker-daemon volumes to force terminal image rebuild..."
+docker volume rm term-site_docker-data 2>/dev/null || true
+
 # Fix SELinux contexts for nginx configuration
 if command -v selinuxenabled >/dev/null 2>&1 && selinuxenabled; then
     echo "Fixing SELinux contexts for nginx.conf..."
     chcon -t container_file_t nginx.conf 2>/dev/null || true
 fi
 
-# Build and start all services
-echo "Building and starting services..."
+# Build and start all services with no-cache to ensure everything is fresh
+echo "Building and starting services (this will rebuild terminal image inside docker-daemon)..."
+docker-compose build --no-cache docker-daemon
 docker-compose up -d --build --force-recreate
 
 # Wait for Docker daemon to be ready
