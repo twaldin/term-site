@@ -133,35 +133,26 @@ class SessionManager {
       // Smart cleanup - keep only the most recent image
       await this.cleanupDockerSmart();
       
-      // Pull fresh image with explicit latest tag
-      console.log('Pulling fresh image from Docker Hub...');
-      await new Promise((resolve, reject) => {
-        // Force pull from registry by using registry URL
-        const pullOptions = {
-          authconfig: {} // Empty auth for public images
-        };
+      // Check if image exists locally (built by docker-daemon on startup)
+      try {
+        const images = await this.docker.listImages();
+        const imageExists = images.some(img => 
+          img.RepoTags && img.RepoTags.includes(imageName)
+        );
         
-        this.docker.pull(`docker.io/${imageName}`, pullOptions, (err, stream) => {
-          if (err) {
-            console.error(`Failed to start image pull:`, err);
-            reject(err);
-            return;
-          }
-          
-          this.docker.modem.followProgress(stream, (err, res) => {
-            if (err) {
-              console.error(`Failed during image pull:`, err);
-              reject(err);
-            } else {
-              console.log(`Successfully pulled fresh ${imageName} from registry`);
-              this.imagePreloaded = true;
-              // Clean up any duplicates that might have been created during pull
-              this.cleanupDockerSmart().catch(err => console.log('Post-pull cleanup failed:', err));
-              resolve(res);
-            }
-          });
-        });
-      });
+        if (imageExists) {
+          console.log(`Found locally built ${imageName} image`);
+          this.imagePreloaded = true;
+        } else {
+          console.log(`WARNING: ${imageName} not found locally. It should have been built by docker-daemon on startup.`);
+          console.log('The backend will attempt to use it anyway when creating containers.');
+          // Don't pull from Docker Hub - let the docker-daemon handle the image
+          this.imagePreloaded = false;
+        }
+      } catch (err) {
+        console.error('Error checking for local image:', err);
+        this.imagePreloaded = false;
+      }
     } catch (error) {
       console.error(`Error preloading image - will pull on demand:`, error);
       this.imagePreloaded = false;
@@ -263,37 +254,12 @@ class SessionManager {
         console.error('Failed to list images:', err);
       }
       
-      // Pull if image doesn't exist or wasn't preloaded
-      if (!imageExists || !this.imagePreloaded) {
-        console.log(`Need to pull ${imageName} (exists: ${imageExists}, preloaded: ${this.imagePreloaded})`);
-        try {
-          await new Promise((resolve, reject) => {
-            const pullOptions = {
-              authconfig: {} // Empty auth for public images
-            };
-            
-            // Use full registry path to ensure we pull from Docker Hub
-            this.docker.pull(`docker.io/${imageName}`, pullOptions, (err, stream) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              
-              this.docker.modem.followProgress(stream, (err, res) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  console.log(`Successfully pulled fresh ${imageName} from Docker Hub`);
-                  resolve(res);
-                }
-              });
-            });
-          });
-          this.imagePreloaded = true;
-        } catch (pullError) {
-          console.error(`Failed to pull image ${imageName}:`, pullError);
-          throw new Error(`Failed to pull terminal image: ${pullError.message}`);
-        }
+      // Only log if image doesn't exist - don't try to pull from Docker Hub
+      if (!imageExists) {
+        console.log(`WARNING: ${imageName} not found locally. Container creation may fail.`);
+        console.log('The image should have been built by docker-daemon on startup.');
+        console.log('Try restarting the docker-daemon service or running deploy.sh again.');
+        // Don't throw error - let Docker try to create the container anyway
       } else {
         console.log(`Using existing ${imageName} image`);
       }

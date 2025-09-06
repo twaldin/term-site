@@ -53,7 +53,7 @@ ascii_typewriter() {
   local color="${3:-${BOLD}${CYAN}}"
 
   local ascii_output
-  ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
+  ascii_output=$(figlet -f /home/portfolio/term-site/container/DOS_Rebel.flf "$text" 2>/dev/null || figlet "$text")
 
   while IFS= read -r line; do
     local processed_text=$(echo -e "${color}${line}${RESET}")
