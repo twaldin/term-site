@@ -2,8 +2,8 @@
 
 FROM node:18-alpine
 
-# Install Docker CLI and build dependencies for node-pty
-RUN apk add --no-cache docker-cli python3 make g++
+# Install Docker CLI only
+RUN apk add --no-cache docker-cli
 
 WORKDIR /app
 
@@ -19,5 +19,5 @@ COPY backend/ .
 # Expose port
 EXPOSE 3001
 
-# Simple start command (no Docker daemon management)
+# Simple start command
 CMD ["npm", "start"]

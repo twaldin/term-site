@@ -7,30 +7,27 @@ const SessionManager = require('./session');
 const app = express();
 const server = http.createServer(app);
 
+// Production CORS origins
+const PROD_ORIGINS = [
+  'https://twald.in',
+  'https://terminal.twald.in',
+  'https://tim.waldin.net'
+];
+
+const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:3001'];
+
+const allowedOrigins = process.env.NODE_ENV === 'production' ? PROD_ORIGINS : DEV_ORIGINS;
+
 // Configure CORS for Express
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://twald.in',
-        'https://terminal.twald.in',
-        'http://localhost',
-        'http://localhost:80'
-      ]
-    : ['http://localhost:3000', 'http://localhost:3001'],
+  origin: allowedOrigins,
   credentials: true
 }));
 
 // Configure Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? [
-          'https://twald.in',
-          'https://terminal.twald.in',
-          'http://localhost',
-          'http://localhost:80'
-        ]
-      : ['http://localhost:3000', 'http://localhost:3001'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   },
@@ -40,13 +37,38 @@ const io = socketIo(server, {
 // Initialize session manager
 const sessionManager = new SessionManager();
 
+// Per-IP rate limiting for connections
+const connectionTracker = new Map();
+const MAX_CONNECTIONS_PER_IP = 3;
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  if (!connectionTracker.has(ip)) {
+    connectionTracker.set(ip, []);
+  }
+  const timestamps = connectionTracker.get(ip).filter(t => now - t < RATE_LIMIT_WINDOW);
+  connectionTracker.set(ip, timestamps);
+
+  if (timestamps.length >= MAX_CONNECTIONS_PER_IP) {
+    return false;
+  }
+  timestamps.push(now);
+  return true;
+}
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  const clientIP = socket.handshake.headers['x-real-ip'] || socket.handshake.address;
+  console.log(`Client connected: ${socket.id} from ${clientIP}`);
 
-  // Track client IP for rate limiting
-  const clientIP = socket.handshake.address;
-  console.log(`Client IP: ${clientIP}`);
+  // Rate limit check
+  if (!checkRateLimit(clientIP)) {
+    console.log(`Rate limit exceeded for ${clientIP}`);
+    socket.emit('error', 'Too many connections. Please wait a minute.');
+    socket.disconnect();
+    return;
+  }
 
   // Create new terminal session
   sessionManager.createSession(socket.id, socket)
@@ -59,14 +81,19 @@ io.on('connection', (socket) => {
       socket.disconnect();
     });
 
-  // Handle terminal input
+  // Handle terminal input with validation
   socket.on('input', (data) => {
+    if (typeof data !== 'string' || data.length > 1024) {
+      return;
+    }
     sessionManager.sendInput(socket.id, data);
   });
 
-  // Handle terminal resize
+  // Handle terminal resize with bounds checking
   socket.on('resize', ({ cols, rows }) => {
-    sessionManager.resizeTerminal(socket.id, cols, rows);
+    const safeCols = Math.min(Math.max(Math.floor(cols) || 80, 10), 500);
+    const safeRows = Math.min(Math.max(Math.floor(rows) || 24, 2), 200);
+    sessionManager.resizeTerminal(socket.id, safeCols, safeRows);
   });
 
   // Handle client disconnect
@@ -100,7 +127,12 @@ app.get('/stats', (req, res) => {
   });
 });
 
-// Start server  
+// Periodic orphan cleanup every 60 seconds
+setInterval(() => {
+  sessionManager.cleanupOrphanedContainers();
+}, 60 * 1000);
+
+// Start server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Terminal backend server running on port ${PORT}`);
@@ -116,26 +148,23 @@ async function gracefulShutdown(signal) {
     console.log(`Already shutting down, ignoring ${signal}`);
     return;
   }
-  
+
   isShuttingDown = true;
   console.log(`Received ${signal}, shutting down gracefully...`);
-  
+
   try {
-    // Close all sessions
     await sessionManager.destroyAllSessions();
-    
-    // Close server
+
     server.close(() => {
       console.log('Server closed');
       process.exit(0);
     });
-    
-    // Force exit after 5 seconds if graceful shutdown fails
+
     setTimeout(() => {
       console.log('Force exiting...');
       process.exit(1);
     }, 5000);
-    
+
   } catch (error) {
     console.error('Error during shutdown:', error);
     process.exit(1);

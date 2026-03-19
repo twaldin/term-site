@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,10 +14,10 @@ RUN apt-get update --fix-missing && \
 # Add universe repository and update again
 RUN add-apt-repository universe && apt-get update
 
-# Install curl and wget for downloading packages
+# Install curl and wget for downloading packages (removed later)
 RUN apt-get install -y curl wget
 
-# Install all required packages in one layer (no Node.js needed!)
+# Install all required packages in one layer
 RUN apt-get install -y \
     bash \
     vim \
@@ -41,21 +41,13 @@ RUN apt-get install -y \
     fontconfig \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
-    && ln -s /usr/bin/batcat /usr/bin/bat \
+    && ln -s /usr/bin/batcat /usr/bin/bat 2>/dev/null || true \
     && rm -rf /var/lib/apt/lists/*
-
-# bat is already installed above for markdown rendering with Gruvbox theme
-# No need for glow anymore since bat handles markdown beautifully
-
-# Clone dotfiles repository will be done later after user creation
 
 # Copy all scripts
 COPY scripts/ /home/portfolio/scripts/
 COPY blog/ /home/portfolio/blog/
 COPY DOS_Rebel.flf /usr/share/figlet/DOS_Rebel.flf
-
-# No longer need glow config since we're using bat for markdown
-# bat uses themes directly without config files
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \
@@ -109,16 +101,19 @@ RUN mkdir -p /home/portfolio/.local/share/themes && \
     curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin -t /home/portfolio/.local/share/themes
 
 # Clone dotfiles and project repositories directly into container
+# Note: term-site is private — clone will fail silently, make it public to fix
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
-		ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
+    ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
     mkdir -p /home/portfolio/projects && \
     cd /home/portfolio/projects && \
     git clone https://github.com/twaldin/stm32-games.git && \
-    git clone https://github.com/twaldin/sulfur-recipies.git && \
-    git clone https://github.com/twaldin/term-site.git && \
+    (git clone https://github.com/twaldin/term-site.git || mkdir -p term-site) && \
+    git clone https://github.com/twaldin/trade-up-bot.git && \
+    git clone https://github.com/twaldin/SkyblockQOLmod.git && \
     ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
     ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
-    ln -sf /home/portfolio/scripts/sulfur-recipies.sh /home/portfolio/projects/sulfur-recipies/sulfur-recipies.sh && \
+    ln -sf /home/portfolio/scripts/trade-up-bot.sh /home/portfolio/projects/trade-up-bot/trade-up-bot.sh && \
+    ln -sf /home/portfolio/scripts/skyblock-qol.sh /home/portfolio/projects/SkyblockQOLmod/skyblock-qol.sh && \
     ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh && \
     ln -sf /home/portfolio/.dotfiles /home/portfolio/projects/dotfiles
 
@@ -129,7 +124,8 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.zshrc && \
     echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.zshrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias trade-up-bot='cd ~/projects/trade-up-bot && /home/portfolio/scripts/trade-up-bot.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias skyblock-qol='cd ~/projects/SkyblockQOLmod && /home/portfolio/scripts/skyblock-qol.sh'" >> /home/portfolio/.zshrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
@@ -145,6 +141,11 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
 
 # Switch back to root to continue setup
 USER root
+
+# Remove curl and wget (no longer needed)
+RUN apt-get purge -y curl wget && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create directory structure for portfolio content
 RUN mkdir -p /home/portfolio/portfolio && \
@@ -179,7 +180,8 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.bashrc && \
     echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.bashrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias sulfur-recipies='cd ~/projects/sulfur-recipies && /home/portfolio/scripts/sulfur-recipies.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias trade-up-bot='cd ~/projects/trade-up-bot && /home/portfolio/scripts/trade-up-bot.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias skyblock-qol='cd ~/projects/SkyblockQOLmod && /home/portfolio/scripts/skyblock-qol.sh'" >> /home/portfolio/.bashrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \

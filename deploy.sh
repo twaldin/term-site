@@ -5,51 +5,66 @@ echo "Starting deployment..."
 
 # Stop all containers
 echo "Stopping existing containers..."
-docker-compose down
+docker compose down
 
-# Remove the docker-daemon volumes to force a complete rebuild
-echo "Cleaning docker-daemon volumes to force terminal image rebuild..."
-docker volume rm term-site_docker-data 2>/dev/null || true
+# Build terminal image on host first
+echo "Building terminal container image on host..."
+docker build -t twaldin/terminal-portfolio:latest ./container
 
-# Fix SELinux contexts for nginx configuration
-if command -v selinuxenabled >/dev/null 2>&1 && selinuxenabled; then
-    echo "Fixing SELinux contexts for nginx.conf..."
-    chcon -t container_file_t nginx.conf 2>/dev/null || true
+# Build and start all services
+echo "Building and starting services..."
+docker compose build --no-cache
+docker compose up -d --force-recreate
+
+# Wait for services to initialize
+echo "Waiting for services to initialize..."
+sleep 5
+
+# Verify socket proxy is working
+echo "Verifying socket proxy..."
+if docker exec term-socket-proxy wget -q -O - http://localhost:2375/_ping 2>/dev/null | grep -q "OK"; then
+    echo "Socket proxy is responding"
+else
+    echo "WARNING: Socket proxy may not be ready yet"
 fi
 
-# Build and start all services with no-cache to ensure everything is fresh
-echo "Building and starting services (this will rebuild terminal image inside docker-daemon)..."
-docker-compose build --no-cache docker-daemon
-docker-compose up -d --build --force-recreate
-
-# Wait for Docker daemon to be ready
-echo "Waiting for services to initialize..."
-sleep 10
+# Verify containers endpoint works but networks/volumes are blocked
+echo "Testing socket proxy permissions..."
+if docker exec term-backend wget -q -O /dev/null http://socket-proxy:2375/containers/json 2>/dev/null; then
+    echo "  containers endpoint: allowed"
+fi
 
 # Check if all required services are running
 echo "Checking service health..."
-REQUIRED_SERVICES=("term-frontend" "term-backend" "term-nginx" "term-tunnel" "term-docker-daemon")
+REQUIRED_SERVICES=("term-frontend" "term-backend" "term-nginx" "term-socket-proxy")
 ALL_RUNNING=true
 
 for service in "${REQUIRED_SERVICES[@]}"; do
     if ! docker ps --format "table {{.Names}}" | grep -q "^${service}$"; then
-        echo "Service ${service} is not running!"
+        echo "  Service ${service} is NOT running!"
         ALL_RUNNING=false
     else
-        echo "Service ${service} is running"
+        echo "  Service ${service} is running"
     fi
 done
 
 if [ "$ALL_RUNNING" = false ]; then
-    echo "Some services failed to start. Attempting to restart them..."
-    docker-compose up -d
-    sleep 10
+    echo "Some services failed to start. Check logs with: docker compose logs"
+    exit 1
 fi
 
-
+echo ""
 echo "Deployment complete. Container status:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-docker exec term-docker-daemon docker build --no-cache -t twaldin/terminal-portfolio:latest /terminal-container
+
+# Verify no privileged containers
+echo ""
+echo "Privilege check:"
+for container in $(docker ps --format '{{.Names}}'); do
+    privileged=$(docker inspect --format='{{.HostConfig.Privileged}}' "$container")
+    echo "  ${container}: privileged=${privileged}"
+done
+
 # Final health check
 echo ""
 echo "Testing site connectivity..."

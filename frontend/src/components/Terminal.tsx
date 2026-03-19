@@ -25,6 +25,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const terminalRef = useRef<HTMLDivElement>(null);
     const xtermRef = useRef<import("@xterm/xterm").Terminal | null>(null);
     const fitAddonRef = useRef<import("@xterm/addon-fit").FitAddon | null>(null);
+    const outputBufferRef = useRef<string[]>([]);
     const [, setIsReady] = useState(false);
 
     useEffect(() => {
@@ -81,7 +82,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             if (!terminalRef.current) return;
 
           // Calculate dynamic font size to ensure ASCII art fits
-          const asciiWidth = 139; // Width of ASCII art in characters (tim@waldin.net)
+          const asciiWidth = 80; // Width of ASCII art in characters
           
           // Get more accurate available space measurement
           const viewportWidth = window.innerWidth;
@@ -150,6 +151,15 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           // Store references
           xtermRef.current = xterm;
           fitAddonRef.current = fitAddon;
+
+          // Flush any buffered output that arrived before xterm was ready
+          if (outputBufferRef.current.length > 0) {
+            console.log(`Flushing ${outputBufferRef.current.length} buffered output chunks`);
+            for (const chunk of outputBufferRef.current) {
+              xterm.write(chunk);
+            }
+            outputBufferRef.current = [];
+          }
 
           // Handle terminal input
           const dataDisposable = xterm.onData((data) => {
@@ -321,10 +331,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       };
     }, [onData, onResize]);
 
-    // Method to write data to terminal
+    // Method to write data to terminal (buffers if xterm not ready yet)
     const writeToTerminal = (data: string) => {
       if (xtermRef.current) {
         xtermRef.current.write(data);
+      } else {
+        outputBufferRef.current.push(data);
       }
     };
 
