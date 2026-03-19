@@ -46,7 +46,6 @@ RUN apt-get install -y \
 
 # Copy all scripts
 COPY scripts/ /home/portfolio/scripts/
-COPY blog/ /home/portfolio/blog/
 COPY DOS_Rebel.flf /usr/share/figlet/DOS_Rebel.flf
 
 # Create writable directories for user data
@@ -132,7 +131,6 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.zshrc && \
     echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
@@ -189,7 +187,6 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
     echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.bashrc && \
     echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.bashrc
 
 # Set proper ownership

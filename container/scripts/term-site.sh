@@ -7,7 +7,7 @@ ascii_typewriter "term site" "DOS_Rebel" "${CYAN}"
 
 echo ""
 
-create_box "Description" "My portfolio website that looks like a terminal. Users get an xterm.js frontend that connects to Docker containers where they can explore my projects and blog."
+create_box "Description" "My portfolio website that looks like a terminal. Users get an xterm.js frontend that connects to Docker containers where they can explore my projects."
 
 echo ""
 

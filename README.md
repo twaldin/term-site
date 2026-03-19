@@ -1,6 +1,6 @@
 # Terminal Portfolio
 
-My portfolio website that looks like a terminal. Users get an xterm.js terminal in their browser that connects to isolated Docker containers where they can run commands, explore my projects, read my blog, view my resume, etc.
+My portfolio website that looks like a terminal. Users get an xterm.js terminal in their browser that connects to isolated Docker containers where they can run commands, explore my projects, view my resume, etc.
 
 Live at [tim.waldin.net](https://tim.waldin.net)
 
@@ -49,10 +49,8 @@ term-site/
 │   │   ├── resume.sh      # Resume with clickable link
 │   │   ├── about.sh
 │   │   ├── contact.sh     # OSC 8 hyperlinks for email/socials
-│   │   ├── blog.sh        # Markdown blog viewer (bat)
 │   │   ├── help.sh
 │   │   └── shared-functions.sh  # Colors, typewriter, ASCII art, boxes
-│   └── blog/posts/        # Markdown blog posts
 ├── docker-compose.yml     # Service orchestration
 ├── nginx.conf             # Reverse proxy, SSL, rate limiting
 └── deploy.sh              # Automated deployment script
@@ -78,7 +76,6 @@ Custom portfolio navigation:
 - `about` - About me
 - `contact` - Email and social links
 - `resume` - View my resume
-- `blog` - Read blog posts
 - `help` - Show available commands
 - `stm32-games`, `term-site`, `trade-up-bot`, `skyblock-qol`, `dotfiles` - Jump to project repos
 
