@@ -51,10 +51,16 @@ ascii_typewriter() {
   local text="$1"
   local font="${2:-DOS_Rebel}"
   local color="${3:-${BOLD}${CYAN}}"
+  local wrap_width="${4:-}"  # optional figlet output width (columns) for wrapping long text
 
   local ascii_output
-  # Use DOS_Rebel font from figlet directory (no locale override needed)
-  ascii_output=$(figlet -f DOS_Rebel "$text" 2>/dev/null || figlet "$text")
+  if [ -n "$wrap_width" ]; then
+    # Replace hyphens with spaces so figlet can find word boundaries for wrapping
+    local wrap_text="${text//-/ }"
+    ascii_output=$(figlet -f "$font" -w "$wrap_width" "$wrap_text" 2>/dev/null || figlet -w "$wrap_width" "$wrap_text")
+  else
+    ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
+  fi
 
   # Strip trailing blank lines using a safer method
   ascii_output=$(echo "$ascii_output" | awk '/^[[:space:]]*$/ {emptylines=emptylines"\n"; next} {if(emptylines) printf "%s",emptylines; emptylines=""; print}')

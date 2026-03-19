@@ -133,6 +133,7 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
     echo "export PATH=\"/home/portfolio/.local/bin:\$PATH\"" >> /home/portfolio/.zshrc && \
@@ -188,7 +189,8 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
     echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.bashrc
+    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
