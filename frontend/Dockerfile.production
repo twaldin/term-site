@@ -16,14 +16,21 @@ RUN npm run build
 FROM node:18-alpine
 WORKDIR /app
 
+# Create non-root user
+RUN addgroup -g 1001 -S nextjs && \
+    adduser -S nextjs -u 1001 -G nextjs
+
 # Copy built application
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/next.config.ts ./
 
-# Install only production dependencies
-RUN npm ci --only=production
+# Install production dependencies plus typescript (needed for next.config.ts at startup)
+RUN npm ci && \
+    chown -R nextjs:nextjs /app
+
+USER nextjs
 
 EXPOSE 3000
 

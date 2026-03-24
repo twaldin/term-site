@@ -14,9 +14,13 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - external-net
+      - frontend-net
+      - backend-net
     restart: unless-stopped
 
-  # Next.js frontend
+  # Next.js frontend — isolated network, no internet access
   frontend:
     build:
       context: ./frontend
@@ -26,6 +30,13 @@ services:
       - NEXT_PUBLIC_API_URL=http://backend:3001
     expose:
       - "3000"
+    networks:
+      - frontend-net
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=50m
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   # Docker Socket Proxy (Tecnativa) — no privileged containers needed
@@ -43,7 +54,7 @@ services:
       - NODES=0
       - SWARM=0
       - BUILD=0
-      - EXEC=1
+      - EXEC=0
       - INFO=1
       - PING=1
     volumes:
@@ -68,11 +79,18 @@ services:
     depends_on:
       - socket-proxy
     networks:
-      - default
+      - backend-net
       - docker-net
 
 networks:
-  default:
+  external-net:
     driver: bridge
+  frontend-net:
+    driver: bridge
+    internal: true
+  backend-net:
+    driver: bridge
+    internal: true
   docker-net:
     driver: bridge
+    internal: true
