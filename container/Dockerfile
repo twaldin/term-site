@@ -119,6 +119,9 @@ RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles 
 # Create custom .zshrc with navigation aliases
 RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
+    echo "# Suppress zsh partial-line marker (%)" >> /home/portfolio/.zshrc && \
+    echo "unsetopt PROMPT_CR" >> /home/portfolio/.zshrc && \
+    echo "" >> /home/portfolio/.zshrc && \
     echo "# Portfolio navigation aliases" >> /home/portfolio/.zshrc && \
     echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.zshrc && \
     echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.zshrc && \

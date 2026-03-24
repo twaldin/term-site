@@ -6,7 +6,7 @@ create_box "About Me" "Hi, I'm Tim. I'm 19 and from San Francisco, CA, and
 Currently, I'm a Web Programming and Design student at Purdue University
 and am working on tradeupbot.app (check it out!)
 
-In my spare time like to make side projects, like the one youre reading.
+In my spare time I like to make side projects, like the one you're reading.
 
 type contact to see my contact info
 type projects to see my projects" "$GREEN" 80
