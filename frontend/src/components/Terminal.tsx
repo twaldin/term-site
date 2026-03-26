@@ -8,6 +8,25 @@ import {
 } from "react";
 import { terminalConfig } from "../config/terminal-theme";
 
+const CONTENT_WIDTH = 139; // Max terminal content width in characters
+const CHAR_WIDTH_RATIO = 0.6;
+const SAFETY_MARGIN = 0.95;
+const MIN_FONT_SIZE = 6;
+const MAX_FONT_SIZE = 24;
+
+function calculateFontSize(container: HTMLElement): number {
+  const viewportWidth = window.innerWidth;
+  const documentWidth = document.documentElement.clientWidth;
+  const containerWidth = container.clientWidth;
+  const containerRect = container.getBoundingClientRect();
+  const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
+  const padding = Math.min(10, actualWidth * 0.02);
+  const usableWidth = actualWidth - padding;
+  const theoretical = Math.floor((usableWidth / CONTENT_WIDTH) / CHAR_WIDTH_RATIO);
+  const conservative = Math.floor(theoretical * SAFETY_MARGIN);
+  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, conservative));
+}
+
 interface TerminalProps {
   onData: (data: string) => void;
   onResize: (cols: number, rows: number) => void;
@@ -78,31 +97,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             // Check if component is still mounted
             if (!terminalRef.current) return;
 
-          // Calculate dynamic font size to ensure terminal content fits
-          const asciiWidth = 139; // Max content width in characters
-          
-          // Get more accurate available space measurement
-          const viewportWidth = window.innerWidth;
-          const documentWidth = document.documentElement.clientWidth;
-          const containerWidth = terminalRef.current!.clientWidth;
-          const containerRect = terminalRef.current!.getBoundingClientRect();
-          
-          // Use the most restrictive width (accounting for browser chrome/sidebars)
-          const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
-          
-          // Minimal padding for very tight spaces
-          const padding = Math.min(10, actualWidth * 0.02); // 2% padding or 10px, whichever is smaller
-          const usableWidth = actualWidth - padding;
-          
-          // Calculate font size with more aggressive sizing to fill screen
-          // Use a more accurate ratio for monospace fonts
-          const charWidthRatio = 0.6; // More accurate estimate for character width
-          const safetyMargin = 0.95; // Use 95% of calculated space for better screen utilization
-          const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-          const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
-          const dynamicFontSize = Math.max(6, Math.min(24, conservativeFontSize)); // Increased min/max
-          
-          // Create dynamic config with calculated font size
+          const dynamicFontSize = calculateFontSize(terminalRef.current);
           const dynamicConfig = {
             ...terminalConfig,
             fontSize: dynamicFontSize
@@ -219,27 +214,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
               if (terminalRef.current && xterm && fitAddon) {
-              // Recalculate font size on resize
-              const asciiWidth = 139;
-              const viewportWidth = window.innerWidth;
-              const documentWidth = document.documentElement.clientWidth;
-              const containerWidth = terminalRef.current.clientWidth;
-              const containerRect = terminalRef.current.getBoundingClientRect();
-              const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
-              const padding = Math.min(10, actualWidth * 0.02);
-              const usableWidth = actualWidth - padding;
-              const charWidthRatio = 0.6;
-              const safetyMargin = 0.95;
-              const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-              const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
-              const newFontSize = Math.max(6, Math.min(24, conservativeFontSize));
-              
-              // Update font size if it changed significantly
+              const newFontSize = calculateFontSize(terminalRef.current);
               const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
               if (Math.abs(currentFontSize - newFontSize) > 1) {
                 xterm.options.fontSize = newFontSize;
               }
-              
               fitAddon.fit();
               }
             }, 150); // 150ms debounce
