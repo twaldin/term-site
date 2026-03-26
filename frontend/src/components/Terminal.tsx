@@ -62,7 +62,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           document.fonts.add(nerdFont);
           document.fonts.add(nerdFontBold);
           
-          console.log('Nerd Fonts loaded successfully');
         } catch (error) {
           console.warn('Failed to load Nerd Fonts, falling back to system fonts:', error);
         }
@@ -91,8 +90,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           // Use the most restrictive width (accounting for browser chrome/sidebars)
           const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
           
-          console.log(`Viewport: ${viewportWidth}px, Document: ${documentWidth}px, Container: ${containerWidth}px, Rect: ${containerRect.width}px, Using: ${actualWidth}px`);
-          
           // Minimal padding for very tight spaces
           const padding = Math.min(10, actualWidth * 0.02); // 2% padding or 10px, whichever is smaller
           const usableWidth = actualWidth - padding;
@@ -111,8 +108,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             fontSize: dynamicFontSize
           };
           
-          console.log(`Space: ${actualWidth}px, Usable: ${usableWidth}px, Theoretical: ${theoreticalFontSize}px, Conservative: ${conservativeFontSize}px, Final: ${dynamicFontSize}px`);
-          
           // Initialize xterm.js with dynamic config
           const xterm = new Terminal(dynamicConfig);
 
@@ -121,27 +116,17 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           xterm.loadAddon(fitAddon);
 
           // Custom link handler for OSC 8 hyperlinks and mailto support
-          const linkHandler = {
-            activate: (_event: MouseEvent, text: string) => {
-              console.log(`Opening link: ${text}`);
-              // Remove dangerous link warnings by opening directly
-              window.open(text, '_blank', 'noopener,noreferrer');
-            },
-            hover: () => {
-              // Optional: show link preview
-            },
-            leave: () => {
-              // Optional: hide link preview  
-            },
-            allowNonHttpProtocols: true // Enable mailto: and other protocols
+          const handleLinkActivate = (_event: MouseEvent, text: string) => {
+            window.open(text, '_blank', 'noopener,noreferrer');
           };
 
-          // Initialize web links addon with custom handler for OSC 8 support
-          const webLinksAddon = new WebLinksAddon(linkHandler.activate, linkHandler);
+          const webLinksAddon = new WebLinksAddon(handleLinkActivate);
           xterm.loadAddon(webLinksAddon);
 
-          // Set link handler for OSC 8 hyperlinks
-          xterm.options.linkHandler = linkHandler;
+          xterm.options.linkHandler = {
+            activate: handleLinkActivate,
+            allowNonHttpProtocols: true,
+          };
 
           // Open terminal
           xterm.open(terminalRef.current!);
@@ -152,7 +137,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
           // Flush any buffered output that arrived before xterm was ready
           if (outputBufferRef.current.length > 0) {
-            console.log(`Flushing ${outputBufferRef.current.length} buffered output chunks`);
             for (const chunk of outputBufferRef.current) {
               xterm.write(chunk);
             }
@@ -160,28 +144,17 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           }
 
           // Handle terminal input
-          const dataDisposable = xterm.onData((data) => {
-            console.log(
-              "xterm.js onData received:",
-              JSON.stringify(data),
-              "char codes:",
-              data.split("").map((c) => c.charCodeAt(0)),
-            );
-            onData(data);
-          });
+          const dataDisposable = xterm.onData(onData);
 
           // Handle terminal resize
           const resizeDisposable = xterm.onResize(({ cols, rows }) => {
-            console.log("Terminal resized to:", cols, "x", rows);
             onResize(cols, rows);
           });
 
           // Fit terminal after a short delay to ensure DOM is ready
           setTimeout(() => {
             fitAddon.fit();
-            // Send initial resize to backend
             const { cols, rows } = xterm;
-            console.log("Initial terminal size:", cols, "x", rows);
             onResize(cols, rows);
           }, 100);
 
@@ -265,7 +238,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
               if (Math.abs(currentFontSize - newFontSize) > 1) {
                 xterm.options.fontSize = newFontSize;
-                console.log(`Resized - New font size: ${newFontSize}px`);
               }
               
               fitAddon.fit();
@@ -308,12 +280,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       // Return cleanup function
       return () => {
-        console.log("Terminal component cleanup triggered");
         cleanupFunctions.forEach((cleanup) => {
           try {
             cleanup();
-          } catch (error) {
-            console.error("Error during terminal cleanup:", error);
+          } catch {
+            // Cleanup errors are expected during unmount
           }
         });
         xtermRef.current = null;
