@@ -5,7 +5,6 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
-  useState,
 } from "react";
 import { terminalConfig } from "../config/terminal-theme";
 
@@ -26,7 +25,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const xtermRef = useRef<import("@xterm/xterm").Terminal | null>(null);
     const fitAddonRef = useRef<import("@xterm/addon-fit").FitAddon | null>(null);
     const outputBufferRef = useRef<string[]>([]);
-    const [, setIsReady] = useState(false);
 
     useEffect(() => {
       if (!terminalRef.current || typeof window === "undefined") return;
@@ -222,13 +220,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
           // Add keyboard shortcuts for copy/paste and tab handling
           const handleKeyDown = async (event: KeyboardEvent) => {
-            // Handle tab key for completion
-            if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
-              // Let the tab go through, but we'll handle the response properly
-              // The issue is likely in how the shell responds to tab completion
-              // Don't prevent default here - let normal tab completion work
-            }
-            else if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+            if ((event.ctrlKey || event.metaKey) && event.key === "v") {
               event.preventDefault();
               try {
                 const text = await navigator.clipboard.readText();
@@ -282,7 +274,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           };
 
           window.addEventListener("resize", handleResize);
-          setIsReady(true);
 
           // Additional resize after component is fully ready
           setTimeout(() => {
@@ -327,7 +318,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         });
         xtermRef.current = null;
         fitAddonRef.current = null;
-        setIsReady(false);
       };
     }, [onData, onResize]);
 
