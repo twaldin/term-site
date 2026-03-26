@@ -127,7 +127,7 @@ export function createWebSocketManager(): WebSocketManager {
   };
 
   return {
-    socket,
+    get socket() { return socket; },
     connect,
     disconnect,
     sendInput,

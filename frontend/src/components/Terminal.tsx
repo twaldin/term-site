@@ -81,8 +81,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             // Check if component is still mounted
             if (!terminalRef.current) return;
 
-          // Calculate dynamic font size to ensure ASCII art fits
-          const asciiWidth = 80; // Width of ASCII art in characters
+          // Calculate dynamic font size to ensure terminal content fits
+          const asciiWidth = 139; // Max content width in characters
           
           // Get more accurate available space measurement
           const viewportWidth = window.innerWidth;
