@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "claudecord": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "/Users/twaldin/claudecord/src/shim/index.ts"],
+      "env": {
+        "CLAUDECORD_AGENT_NAME": "coder-termsite",
+        "CLAUDECORD_ROUTER_PORT": "19532"
+      }
+    }
+  }
+}
