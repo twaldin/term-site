@@ -79,7 +79,9 @@ export function createWebSocketManager(): WebSocketManager {
   };
 
   const sendInput = (data: string) => {
-    socket?.connected && socket.emit('input', data);
+    if (socket?.connected) {
+      socket.emit('input', data);
+    }
   };
 
   const onOutput = (callback: (data: string) => void) => {
@@ -99,7 +101,9 @@ export function createWebSocketManager(): WebSocketManager {
   };
 
   const resize = (cols: number, rows: number) => {
-    socket?.connected && socket.emit('resize', { cols, rows });
+    if (socket?.connected) {
+      socket.emit('resize', { cols, rows });
+    }
   };
 
   return {

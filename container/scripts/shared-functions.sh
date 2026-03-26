@@ -100,7 +100,7 @@ create_box() {
   fi
 
   local top_border="${color}┌─ ${BOLD}${title}${RESET}${color} "
-  for ((i=0; i<=dash_count; i++)); do
+  for ((i=0; i<dash_count; i++)); do
     top_border+="─"
   done
   top_border+="┐${RESET}"

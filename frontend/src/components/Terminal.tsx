@@ -86,51 +86,39 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         }
       };
 
-      // Load fonts first, then initialize terminal
-      loadFonts().then(() => {
-        // Dynamic import to avoid SSR issues
-        import("@xterm/xterm").then(({ Terminal }) => {
-          import("@xterm/addon-fit").then(({ FitAddon }) => {
-            import("@xterm/addon-web-links").then(({ WebLinksAddon }) => {
-              // CSS is imported via next.config or global CSS
-
-            // Check if component is still mounted
-            if (!terminalRef.current) return;
+      // Load fonts, then dynamic-import xterm modules (avoids SSR)
+      loadFonts()
+        .then(() =>
+          Promise.all([
+            import("@xterm/xterm"),
+            import("@xterm/addon-fit"),
+            import("@xterm/addon-web-links"),
+          ]),
+        )
+        .then(([{ Terminal }, { FitAddon }, { WebLinksAddon }]) => {
+          if (!terminalRef.current) return;
 
           const dynamicFontSize = calculateFontSize(terminalRef.current);
-          const dynamicConfig = {
-            ...terminalConfig,
-            fontSize: dynamicFontSize
-          };
-          
-          // Initialize xterm.js with dynamic config
-          const xterm = new Terminal(dynamicConfig);
+          const dynamicConfig = { ...terminalConfig, fontSize: dynamicFontSize };
 
-          // Initialize fit addon
+          const xterm = new Terminal(dynamicConfig);
           const fitAddon = new FitAddon();
           xterm.loadAddon(fitAddon);
 
-          // Custom link handler for OSC 8 hyperlinks and mailto support
           const handleLinkActivate = (_event: MouseEvent, text: string) => {
-            window.open(text, '_blank', 'noopener,noreferrer');
+            window.open(text, "_blank", "noopener,noreferrer");
           };
-
-          const webLinksAddon = new WebLinksAddon(handleLinkActivate);
-          xterm.loadAddon(webLinksAddon);
-
+          xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
           xterm.options.linkHandler = {
             activate: handleLinkActivate,
             allowNonHttpProtocols: true,
           };
 
-          // Open terminal
-          xterm.open(terminalRef.current!);
-
-          // Store references
+          xterm.open(terminalRef.current);
           xtermRef.current = xterm;
           fitAddonRef.current = fitAddon;
 
-          // Flush any buffered output that arrived before xterm was ready
+          // Flush buffered output that arrived before xterm was ready
           if (outputBufferRef.current.length > 0) {
             for (const chunk of outputBufferRef.current) {
               xterm.write(chunk);
@@ -138,38 +126,27 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             outputBufferRef.current = [];
           }
 
-          // Handle terminal input
           const dataDisposable = xterm.onData(onData);
-
-          // Handle terminal resize
           const resizeDisposable = xterm.onResize(({ cols, rows }) => {
             onResize(cols, rows);
           });
 
-          // Fit terminal after a short delay to ensure DOM is ready
+          // Fit after DOM is ready
           setTimeout(() => {
             fitAddon.fit();
-            const { cols, rows } = xterm;
-            onResize(cols, rows);
+            onResize(xterm.cols, xterm.rows);
           }, 100);
 
-          // Focus terminal and handle clicks
           xterm.focus();
 
-          // Add click handler to ensure focus
-          const handleClick = () => {
-            xterm.focus();
-          };
-
-          const currentTerminalElement = terminalRef.current!;
+          const handleClick = () => xterm.focus();
+          const currentTerminalElement = terminalRef.current;
           currentTerminalElement.addEventListener("click", handleClick);
 
-          // Add clipboard integration
           const handlePaste = async (event: ClipboardEvent) => {
             event.preventDefault();
             try {
-              const text = await navigator.clipboard.readText();
-              xterm.paste(text);
+              xterm.paste(await navigator.clipboard.readText());
             } catch (err) {
               console.warn("Failed to read clipboard:", err);
             }
@@ -186,13 +163,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             }
           };
 
-          // Add keyboard shortcuts for copy/paste and tab handling
           const handleKeyDown = async (event: KeyboardEvent) => {
             if ((event.ctrlKey || event.metaKey) && event.key === "v") {
               event.preventDefault();
               try {
-                const text = await navigator.clipboard.readText();
-                xterm.paste(text);
+                xterm.paste(await navigator.clipboard.readText());
               } catch (err) {
                 console.warn("Failed to read clipboard:", err);
               }
@@ -208,32 +183,30 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           currentTerminalElement.addEventListener("paste", handlePaste);
           currentTerminalElement.addEventListener("keydown", handleKeyDown);
 
-          // Debounced resize handler to prevent too frequent updates
           let resizeTimeout: NodeJS.Timeout;
           const handleResize = () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
               if (terminalRef.current && xterm && fitAddon) {
-              const newFontSize = calculateFontSize(terminalRef.current);
-              const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
-              if (Math.abs(currentFontSize - newFontSize) > 1) {
-                xterm.options.fontSize = newFontSize;
+                const newFontSize = calculateFontSize(terminalRef.current);
+                const currentFontSize =
+                  xterm.options.fontSize || dynamicConfig.fontSize;
+                if (Math.abs(currentFontSize - newFontSize) > 1) {
+                  xterm.options.fontSize = newFontSize;
+                }
+                fitAddon.fit();
               }
-              fitAddon.fit();
-              }
-            }, 150); // 150ms debounce
+            }, 150);
           };
 
           window.addEventListener("resize", handleResize);
 
-          // Additional resize after component is fully ready
+          // Second fit after component is fully ready
           setTimeout(() => {
             fitAddon.fit();
-            const { cols, rows } = xterm;
-            onResize(cols, rows);
+            onResize(xterm.cols, xterm.rows);
           }, 200);
 
-          // Store cleanup functions
           cleanupFunctions = [
             () => {
               clearTimeout(resizeTimeout);
@@ -252,10 +225,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             () => resizeDisposable.dispose(),
             () => xterm.dispose(),
           ];
-            });
-          });
         });
-      });
 
       // Return cleanup function
       return () => {
