@@ -100,7 +100,7 @@ create_box() {
   fi
 
   local top_border="${color}┌─ ${BOLD}${title}${RESET}${color} "
-  for ((i=0; i<=dash_count; i++)); do
+  for ((i=0; i<dash_count; i++)); do
     top_border+="─"
   done
   top_border+="┐${RESET}"
@@ -167,4 +167,26 @@ email_link() {
   local color="${3:-$CYAN}"
 
   echo -en "${color}\033]8;;mailto:${email}\033\\ ${text}\033]8;;\033\\${RESET}"
+}
+
+git_activity() {
+  local color="${1:-$BLUE}"
+  echo ""
+  typewriter "${color}Recent Git Activity:${RESET}"
+  if [ -d ".git" ]; then
+    local branch
+    branch=$(git branch --show-current 2>/dev/null || echo "main")
+    typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
+    typewriter "   ${BLUE}Recent commits:${RESET}"
+    git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
+      git_typewriter "     $line"
+    done
+    if git status --porcelain | grep -q .; then
+      typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
+    else
+      typewriter "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
+    fi
+  else
+    typewriter "   ${DIM}Not a git repository${RESET}"
+  fi
 }

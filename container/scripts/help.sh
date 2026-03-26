@@ -12,7 +12,7 @@ typewriter "${YELLOW}  trade-up-bot    ${WHITE}CS2 trade-up contract optimizer${
 typewriter "${YELLOW}  skyblock-qol    ${WHITE}hypixel skyblock QOL mod${RESET}"
 typewriter "${YELLOW}  help            ${WHITE}you already used it once...${RESET}"
 typewriter "${YELLOW}  home            ${WHITE}back to the main page!${RESET}"
-echo""
+echo ""
 typewriter "${DIM}you can use most commands you are familiar with inside the terminal like cd, ls, etc.${RESET}"
 typewriter "${DIM}other tools like ${CYAN}nvim${RESET}${DIM}, ${CYAN}git${RESET}${DIM}, ${CYAN}grep${RESET}${DIM}, ${CYAN}figlet${RESET}${DIM} and many more are available!${RESET}"
 echo ""

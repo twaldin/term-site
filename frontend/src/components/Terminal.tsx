@@ -5,9 +5,27 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
-  useState,
 } from "react";
 import { terminalConfig } from "../config/terminal-theme";
+
+const CONTENT_WIDTH = 139; // Max terminal content width in characters
+const CHAR_WIDTH_RATIO = 0.6;
+const SAFETY_MARGIN = 0.95;
+const MIN_FONT_SIZE = 6;
+const MAX_FONT_SIZE = 24;
+
+function calculateFontSize(container: HTMLElement): number {
+  const viewportWidth = window.innerWidth;
+  const documentWidth = document.documentElement.clientWidth;
+  const containerWidth = container.clientWidth;
+  const containerRect = container.getBoundingClientRect();
+  const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
+  const padding = Math.min(10, actualWidth * 0.02);
+  const usableWidth = actualWidth - padding;
+  const theoretical = Math.floor((usableWidth / CONTENT_WIDTH) / CHAR_WIDTH_RATIO);
+  const conservative = Math.floor(theoretical * SAFETY_MARGIN);
+  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, conservative));
+}
 
 interface TerminalProps {
   onData: (data: string) => void;
@@ -26,7 +44,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const xtermRef = useRef<import("@xterm/xterm").Terminal | null>(null);
     const fitAddonRef = useRef<import("@xterm/addon-fit").FitAddon | null>(null);
     const outputBufferRef = useRef<string[]>([]);
-    const [, setIsReady] = useState(false);
 
     useEffect(() => {
       if (!terminalRef.current || typeof window === "undefined") return;
@@ -64,146 +81,72 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           document.fonts.add(nerdFont);
           document.fonts.add(nerdFontBold);
           
-          console.log('Nerd Fonts loaded successfully');
         } catch (error) {
           console.warn('Failed to load Nerd Fonts, falling back to system fonts:', error);
         }
       };
 
-      // Load fonts first, then initialize terminal
-      loadFonts().then(() => {
-        // Dynamic import to avoid SSR issues
-        import("@xterm/xterm").then(({ Terminal }) => {
-          import("@xterm/addon-fit").then(({ FitAddon }) => {
-            import("@xterm/addon-web-links").then(({ WebLinksAddon }) => {
-              // CSS is imported via next.config or global CSS
+      // Load fonts, then dynamic-import xterm modules (avoids SSR)
+      loadFonts()
+        .then(() =>
+          Promise.all([
+            import("@xterm/xterm"),
+            import("@xterm/addon-fit"),
+            import("@xterm/addon-web-links"),
+          ]),
+        )
+        .then(([{ Terminal }, { FitAddon }, { WebLinksAddon }]) => {
+          if (!terminalRef.current) return;
 
-            // Check if component is still mounted
-            if (!terminalRef.current) return;
+          const dynamicFontSize = calculateFontSize(terminalRef.current);
+          const dynamicConfig = { ...terminalConfig, fontSize: dynamicFontSize };
 
-          // Calculate dynamic font size to ensure ASCII art fits
-          const asciiWidth = 80; // Width of ASCII art in characters
-          
-          // Get more accurate available space measurement
-          const viewportWidth = window.innerWidth;
-          const documentWidth = document.documentElement.clientWidth;
-          const containerWidth = terminalRef.current!.clientWidth;
-          const containerRect = terminalRef.current!.getBoundingClientRect();
-          
-          // Use the most restrictive width (accounting for browser chrome/sidebars)
-          const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
-          
-          console.log(`Viewport: ${viewportWidth}px, Document: ${documentWidth}px, Container: ${containerWidth}px, Rect: ${containerRect.width}px, Using: ${actualWidth}px`);
-          
-          // Minimal padding for very tight spaces
-          const padding = Math.min(10, actualWidth * 0.02); // 2% padding or 10px, whichever is smaller
-          const usableWidth = actualWidth - padding;
-          
-          // Calculate font size with more aggressive sizing to fill screen
-          // Use a more accurate ratio for monospace fonts
-          const charWidthRatio = 0.6; // More accurate estimate for character width
-          const safetyMargin = 0.95; // Use 95% of calculated space for better screen utilization
-          const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-          const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
-          const dynamicFontSize = Math.max(6, Math.min(24, conservativeFontSize)); // Increased min/max
-          
-          // Create dynamic config with calculated font size
-          const dynamicConfig = {
-            ...terminalConfig,
-            fontSize: dynamicFontSize
-          };
-          
-          console.log(`Space: ${actualWidth}px, Usable: ${usableWidth}px, Theoretical: ${theoreticalFontSize}px, Conservative: ${conservativeFontSize}px, Final: ${dynamicFontSize}px`);
-          
-          // Initialize xterm.js with dynamic config
           const xterm = new Terminal(dynamicConfig);
-
-          // Initialize fit addon
           const fitAddon = new FitAddon();
           xterm.loadAddon(fitAddon);
 
-          // Custom link handler for OSC 8 hyperlinks and mailto support
-          const linkHandler = {
-            activate: (_event: MouseEvent, text: string) => {
-              console.log(`Opening link: ${text}`);
-              // Remove dangerous link warnings by opening directly
-              window.open(text, '_blank', 'noopener,noreferrer');
-            },
-            hover: () => {
-              // Optional: show link preview
-            },
-            leave: () => {
-              // Optional: hide link preview  
-            },
-            allowNonHttpProtocols: true // Enable mailto: and other protocols
+          const handleLinkActivate = (_event: MouseEvent, text: string) => {
+            window.open(text, "_blank", "noopener,noreferrer");
+          };
+          xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
+          xterm.options.linkHandler = {
+            activate: handleLinkActivate,
+            allowNonHttpProtocols: true,
           };
 
-          // Initialize web links addon with custom handler for OSC 8 support
-          const webLinksAddon = new WebLinksAddon(linkHandler.activate, linkHandler);
-          xterm.loadAddon(webLinksAddon);
-
-          // Set link handler for OSC 8 hyperlinks
-          xterm.options.linkHandler = linkHandler;
-
-          // Open terminal
-          xterm.open(terminalRef.current!);
-
-          // Store references
+          xterm.open(terminalRef.current);
           xtermRef.current = xterm;
           fitAddonRef.current = fitAddon;
 
-          // Flush any buffered output that arrived before xterm was ready
+          // Flush buffered output that arrived before xterm was ready
           if (outputBufferRef.current.length > 0) {
-            console.log(`Flushing ${outputBufferRef.current.length} buffered output chunks`);
             for (const chunk of outputBufferRef.current) {
               xterm.write(chunk);
             }
             outputBufferRef.current = [];
           }
 
-          // Handle terminal input
-          const dataDisposable = xterm.onData((data) => {
-            console.log(
-              "xterm.js onData received:",
-              JSON.stringify(data),
-              "char codes:",
-              data.split("").map((c) => c.charCodeAt(0)),
-            );
-            onData(data);
-          });
-
-          // Handle terminal resize
+          const dataDisposable = xterm.onData(onData);
           const resizeDisposable = xterm.onResize(({ cols, rows }) => {
-            console.log("Terminal resized to:", cols, "x", rows);
             onResize(cols, rows);
           });
 
-          // Fit terminal after a short delay to ensure DOM is ready
+          // Fit after DOM is ready
           setTimeout(() => {
             fitAddon.fit();
-            // Send initial resize to backend
-            const { cols, rows } = xterm;
-            console.log("Initial terminal size:", cols, "x", rows);
-            onResize(cols, rows);
+            onResize(xterm.cols, xterm.rows);
           }, 100);
 
-          // Focus terminal and handle clicks
           xterm.focus();
 
-          // Add click handler to ensure focus
-          const handleClick = () => {
-            xterm.focus();
-          };
-
-          const currentTerminalElement = terminalRef.current!;
+          const handleClick = () => xterm.focus();
+          const currentTerminalElement = terminalRef.current;
           currentTerminalElement.addEventListener("click", handleClick);
 
-          // Add clipboard integration
           const handlePaste = async (event: ClipboardEvent) => {
             event.preventDefault();
             try {
-              const text = await navigator.clipboard.readText();
-              xterm.paste(text);
+              xterm.paste(await navigator.clipboard.readText());
             } catch (err) {
               console.warn("Failed to read clipboard:", err);
             }
@@ -220,19 +163,11 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             }
           };
 
-          // Add keyboard shortcuts for copy/paste and tab handling
           const handleKeyDown = async (event: KeyboardEvent) => {
-            // Handle tab key for completion
-            if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
-              // Let the tab go through, but we'll handle the response properly
-              // The issue is likely in how the shell responds to tab completion
-              // Don't prevent default here - let normal tab completion work
-            }
-            else if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+            if ((event.ctrlKey || event.metaKey) && event.key === "v") {
               event.preventDefault();
               try {
-                const text = await navigator.clipboard.readText();
-                xterm.paste(text);
+                xterm.paste(await navigator.clipboard.readText());
               } catch (err) {
                 console.warn("Failed to read clipboard:", err);
               }
@@ -248,50 +183,30 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           currentTerminalElement.addEventListener("paste", handlePaste);
           currentTerminalElement.addEventListener("keydown", handleKeyDown);
 
-          // Debounced resize handler to prevent too frequent updates
           let resizeTimeout: NodeJS.Timeout;
           const handleResize = () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
               if (terminalRef.current && xterm && fitAddon) {
-              // Recalculate font size on resize
-              const asciiWidth = 139;
-              const viewportWidth = window.innerWidth;
-              const documentWidth = document.documentElement.clientWidth;
-              const containerWidth = terminalRef.current.clientWidth;
-              const containerRect = terminalRef.current.getBoundingClientRect();
-              const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
-              const padding = Math.min(10, actualWidth * 0.02);
-              const usableWidth = actualWidth - padding;
-              const charWidthRatio = 0.6;
-              const safetyMargin = 0.95;
-              const theoreticalFontSize = Math.floor((usableWidth / asciiWidth) / charWidthRatio);
-              const conservativeFontSize = Math.floor(theoreticalFontSize * safetyMargin);
-              const newFontSize = Math.max(6, Math.min(24, conservativeFontSize));
-              
-              // Update font size if it changed significantly
-              const currentFontSize = xterm.options.fontSize || dynamicConfig.fontSize;
-              if (Math.abs(currentFontSize - newFontSize) > 1) {
-                xterm.options.fontSize = newFontSize;
-                console.log(`Resized - New font size: ${newFontSize}px`);
+                const newFontSize = calculateFontSize(terminalRef.current);
+                const currentFontSize =
+                  xterm.options.fontSize || dynamicConfig.fontSize;
+                if (Math.abs(currentFontSize - newFontSize) > 1) {
+                  xterm.options.fontSize = newFontSize;
+                }
+                fitAddon.fit();
               }
-              
-              fitAddon.fit();
-              }
-            }, 150); // 150ms debounce
+            }, 150);
           };
 
           window.addEventListener("resize", handleResize);
-          setIsReady(true);
 
-          // Additional resize after component is fully ready
+          // Second fit after component is fully ready
           setTimeout(() => {
             fitAddon.fit();
-            const { cols, rows } = xterm;
-            onResize(cols, rows);
+            onResize(xterm.cols, xterm.rows);
           }, 200);
 
-          // Store cleanup functions
           cleanupFunctions = [
             () => {
               clearTimeout(resizeTimeout);
@@ -310,24 +225,19 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             () => resizeDisposable.dispose(),
             () => xterm.dispose(),
           ];
-            });
-          });
         });
-      });
 
       // Return cleanup function
       return () => {
-        console.log("Terminal component cleanup triggered");
         cleanupFunctions.forEach((cleanup) => {
           try {
             cleanup();
-          } catch (error) {
-            console.error("Error during terminal cleanup:", error);
+          } catch {
+            // Cleanup errors are expected during unmount
           }
         });
         xtermRef.current = null;
         fitAddonRef.current = null;
-        setIsReady(false);
       };
     }, [onData, onResize]);
 

@@ -151,7 +151,6 @@ RUN apt-get purge -y curl wget && \
 
 # Create directory structure for portfolio content
 RUN mkdir -p /home/portfolio/portfolio && \
-    mkdir -p /home/portfolio/scripts && \
     chown -R portfolio:portfolio /home/portfolio
 
 # Add welcome message and basic portfolio content
@@ -173,24 +172,6 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
 RUN chmod +x /home/portfolio/scripts/*.sh
 
 
-# Create basic directory structure (empty but functional)
-RUN mkdir -p /home/portfolio
-
-# Add PATH for scripts and portfolio aliases
-RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashrc && \
-    echo "# Portfolio navigation aliases" >> /home/portfolio/.bashrc && \
-    echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias trade-up-bot='cd ~/projects/trade-up-bot && /home/portfolio/scripts/trade-up-bot.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias skyblock-qol='cd ~/projects/SkyblockQOLmod && /home/portfolio/scripts/skyblock-qol.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio

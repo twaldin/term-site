@@ -142,12 +142,7 @@ class SessionManager {
       throw new Error('Maximum session limit reached');
     }
 
-    try {
-      return this.createContainerSession(sessionId, socket);
-    } catch (error) {
-      console.error(`Error creating session ${sessionId}:`, error);
-      throw error;
-    }
+    return this.createContainerSession(sessionId, socket);
   }
 
   async createContainerSession(sessionId, socket) {
@@ -269,7 +264,6 @@ class SessionManager {
       this.setSessionTimeout(sessionId);
 
       console.log(`Container session created for ${sessionId}`);
-      return Promise.resolve();
 
     } catch (error) {
       console.error(`Failed to create container for session ${sessionId}:`, error);
@@ -371,10 +365,11 @@ class SessionManager {
 
     session.timeout = setTimeout(() => {
       console.log(`Session ${sessionId} timed out`);
+      const { socket } = session;
       this.destroySession(sessionId);
-      if (session.socket) {
-        session.socket.emit('output', '\r\n[Session timed out]\r\n');
-        session.socket.disconnect();
+      if (socket) {
+        socket.emit('output', '\r\n[Session timed out]\r\n');
+        socket.disconnect();
       }
     }, this.sessionTimeout);
   }

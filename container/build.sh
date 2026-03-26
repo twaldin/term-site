@@ -4,25 +4,17 @@
 
 echo "Building terminal portfolio container..."
 
-# Ensure we're in the right directory (term-site root)
 cd "$(dirname "$0")/.."
 
-# No submodules needed - all repositories are cloned directly in Docker
-
-# Build the Docker image from the root directory
-docker build -f container/Dockerfile -t twaldin/terminal-portfolio:latest .
+docker build -t twaldin/terminal-portfolio:latest ./container
 
 if [ $? -eq 0 ]; then
     echo "Container built successfully!"
     echo "Image: twaldin/terminal-portfolio:latest"
-
-    # Show image info
     docker images twaldin/terminal-portfolio:latest
-
     echo ""
     echo "To test the container locally:"
     echo "docker run -it --rm twaldin/terminal-portfolio:latest"
-    
 else
     echo "Container build failed!"
     exit 1

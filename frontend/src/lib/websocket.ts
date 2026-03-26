@@ -20,70 +20,54 @@ export function createWebSocketManager(): WebSocketManager {
   let outputCallback: ((data: string) => void) | null = null;
 
   const getWebSocketUrl = (): string => {
-    // For self-hosted: If no API URL is set, use same origin (nginx will route)
     if (process.env.NEXT_PUBLIC_API_URL) {
       return process.env.NEXT_PUBLIC_API_URL;
     }
-    // Use same origin for self-hosted deployment
     if (typeof window !== 'undefined') {
       return `${window.location.protocol}//${window.location.host}`;
     }
-    // Fallback for SSR/development
     return 'http://localhost:3001';
   };
 
   const connect = () => {
     if (socket?.connected) return;
 
-    console.log('Creating WebSocket connection to:', getWebSocketUrl());
     socket = io(getWebSocketUrl(), {
-      transports: ['polling', 'websocket'], // Prioritize polling for Cloud Run stability
-      timeout: 10000, // 10 second connection timeout - prevents indefinite hanging
+      transports: ['polling', 'websocket'],
+      timeout: 10000,
       reconnection: true,
-      reconnectionAttempts: 10, // More attempts for better reliability
-      reconnectionDelay: 2000, // Longer delay between attempts
-      reconnectionDelayMax: 10000, // Cap exponential backoff
-      forceNew: true, // Force new connection on reconnect
-      upgrade: true, // Allow transport upgrade
-      rememberUpgrade: false, // Don't remember upgraded transport
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      forceNew: true,
+      upgrade: true,
+      rememberUpgrade: false,
     });
 
-    // Set up event handlers with stored callbacks
     socket.on('connect', () => {
-      console.log('WebSocket connected successfully');
-      if (connectCallback) connectCallback();
+      connectCallback?.();
     });
 
-    socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
-      if (disconnectCallback) disconnectCallback();
+    socket.on('disconnect', () => {
+      disconnectCallback?.();
     });
 
     socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
-      if (errorCallback) errorCallback(error);
-      
-      // Auto-retry with simple backoff on connection errors
+      errorCallback?.(error);
+
       setTimeout(() => {
         if (socket && !socket.connected) {
-          console.log('Retrying connection after error...');
           socket.connect();
         }
-      }, 3000); // Simple 3-second delay for retry
-    });
-
-    socket.on('reconnect_error', (error) => {
-      console.error('WebSocket reconnection error:', error);
+      }, 3000);
     });
 
     socket.on('reconnect_failed', () => {
-      console.error('WebSocket reconnection failed after all attempts');
-      if (errorCallback) errorCallback(new Error('Reconnection failed'));
+      errorCallback?.(new Error('Reconnection failed'));
     });
 
     socket.on('output', (data) => {
-      console.log('WebSocket received output:', JSON.stringify(data));
-      if (outputCallback) outputCallback(data);
+      outputCallback?.(data);
     });
   };
 
@@ -95,12 +79,8 @@ export function createWebSocketManager(): WebSocketManager {
   };
 
   const sendInput = (data: string) => {
-    console.log('WebSocket sendInput called:', JSON.stringify(data));
     if (socket?.connected) {
-      console.log('WebSocket is connected, emitting input event');
       socket.emit('input', data);
-    } else {
-      console.log('WebSocket not connected, cannot send input');
     }
   };
 
@@ -127,7 +107,7 @@ export function createWebSocketManager(): WebSocketManager {
   };
 
   return {
-    socket,
+    get socket() { return socket; },
     connect,
     disconnect,
     sendInput,
