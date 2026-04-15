@@ -105,10 +105,14 @@ RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles 
     ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
     mkdir -p /home/portfolio/projects && \
     cd /home/portfolio/projects && \
+    git clone https://github.com/twaldin/flt.git && \
+    git clone https://github.com/twaldin/agentelo.git && \
     git clone https://github.com/twaldin/stm32-games.git && \
     (git clone https://github.com/twaldin/term-site.git || mkdir -p term-site) && \
     git clone https://github.com/twaldin/trade-up-bot.git && \
     git clone https://github.com/twaldin/SkyblockQOLmod.git && \
+    ln -sf /home/portfolio/scripts/flt.sh /home/portfolio/projects/flt/flt.sh && \
+    ln -sf /home/portfolio/scripts/agentelo.sh /home/portfolio/projects/agentelo/agentelo.sh && \
     ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
     ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
     ln -sf /home/portfolio/scripts/trade-up-bot.sh /home/portfolio/projects/trade-up-bot/trade-up-bot.sh && \
@@ -124,6 +128,8 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Portfolio navigation aliases" >> /home/portfolio/.zshrc && \
     echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias flt='cd ~/projects/flt && /home/portfolio/scripts/flt.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias agentelo='cd ~/projects/agentelo && /home/portfolio/scripts/agentelo.sh'" >> /home/portfolio/.zshrc && \
     echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.zshrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
     echo "alias trade-up-bot='cd ~/projects/trade-up-bot && /home/portfolio/scripts/trade-up-bot.sh'" >> /home/portfolio/.zshrc && \
@@ -172,6 +178,26 @@ RUN echo "Welcome to Terminal Portfolio!" > /home/portfolio/README.md && \
 RUN chmod +x /home/portfolio/scripts/*.sh
 
 
+# Create basic directory structure (empty but functional)
+RUN mkdir -p /home/portfolio
+
+# Add PATH for scripts and portfolio aliases
+RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashrc && \
+    echo "# Portfolio navigation aliases" >> /home/portfolio/.bashrc && \
+    echo "alias projects='cd ~/projects && /home/portfolio/scripts/projects.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias flt='cd ~/projects/flt && /home/portfolio/scripts/flt.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias agentelo='cd ~/projects/agentelo && /home/portfolio/scripts/agentelo.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias stm32-games='cd ~/projects/stm32-games && /home/portfolio/scripts/stm32-games.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias trade-up-bot='cd ~/projects/trade-up-bot && /home/portfolio/scripts/trade-up-bot.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias skyblock-qol='cd ~/projects/SkyblockQOLmod && /home/portfolio/scripts/skyblock-qol.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
