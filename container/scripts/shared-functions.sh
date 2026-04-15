@@ -87,8 +87,10 @@ create_box() {
   local color="${3:-$CYAN}"
   local box_width="${4:-80}"
 
-  if [ -n "$COLUMNS" ]; then
-    box_width=$((COLUMNS > box_width ? box_width : COLUMNS - 2))
+  # Get actual terminal width — $COLUMNS may not be set in Docker containers
+  local term_width="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+  if [ "$term_width" -lt "$box_width" ]; then
+    box_width=$((term_width - 2))
   fi
 
   local title_clean=$(echo "$title" | sed 's/\x1b\[[0-9;]*m//g')
