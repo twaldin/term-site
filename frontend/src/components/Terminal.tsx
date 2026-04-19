@@ -294,21 +294,36 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     }), [onResize]);
 
     return (
+      // Outer wrapper holds the viewport-edge padding so the xterm canvas
+      // never sits flush against the window edges. Inner div is what xterm
+      // mounts into — FitAddon reads ITS clientWidth, so cols/rows auto-adjust
+      // to the padded area without any extra math.
       <div
-        ref={terminalRef}
-        className="w-full h-full"
         style={{
           width: "100vw",
           height: "100vh",
           margin: 0,
-          padding: 0,
+          padding: "6px 14px",
           boxSizing: "border-box",
           backgroundColor: terminalConfig.theme.background,
           position: "absolute",
           top: 0,
           left: 0,
         }}
-      />
+      >
+        <div
+          ref={terminalRef}
+          className="w-full h-full"
+          style={{
+            width: "100%",
+            height: "100%",
+            margin: 0,
+            padding: 0,
+            boxSizing: "border-box",
+            backgroundColor: terminalConfig.theme.background,
+          }}
+        />
+      </div>
     );
   },
 );
