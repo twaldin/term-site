@@ -26,12 +26,16 @@ body_after_frontmatter() {
        !inside' "$1"
 }
 
-# Pretty-render markdown. bat has markdown syntax highlighting; fall back gracefully.
+# Pretty-render markdown. glow is vastly better than bat for prose; prefer it.
 render_markdown() {
-  if command -v bat >/dev/null 2>&1; then
+  local width="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+  (( width > 92 )) && width=92
+  if command -v glow >/dev/null 2>&1; then
+    glow -s dark -w "$width" "$1"
+  elif command -v mdcat >/dev/null 2>&1; then
+    mdcat --columns "$width" "$1"
+  elif command -v bat >/dev/null 2>&1; then
     bat --plain --language=markdown --paging=never --color=always "$1"
-  elif command -v glow >/dev/null 2>&1; then
-    glow -s dark "$1"
   else
     cat "$1"
   fi

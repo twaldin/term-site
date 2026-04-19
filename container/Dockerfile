@@ -28,6 +28,7 @@ RUN apt-get install -y \
     fzf \
     less \
     bat \
+    glow \
     git \
     unzip \
     tree \
