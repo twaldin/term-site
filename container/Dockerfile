@@ -109,6 +109,10 @@ RUN mkdir -p /home/portfolio/.local/share/themes && \
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
     ln -sf /home/portfolio/.dotfiles/nvim /home/portfolio/.config/nvim && \
     ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
+    # Strip typst-preview.nvim from the dotfiles init — it opens a system
+    # browser for its live preview, which can't work inside the sandboxed
+    # session container. Safe to drop without touching Tim's real dotfiles.
+    sed -i '/typst-preview/d' /home/portfolio/.dotfiles/nvim/init.lua && \
     bob install nightly && \
     bob use nightly && \
     mkdir -p /home/portfolio/projects && \
