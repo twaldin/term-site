@@ -26,25 +26,24 @@ body_after_frontmatter() {
        !inside' "$1"
 }
 
-# Pretty-render markdown. glow is vastly better than bat for prose; prefer it.
+# Pretty-render markdown. Prefer mdcat: emits OSC 8 hyperlinks so xterm.js
+# shows clickable link text without a raw URL next to it, and we can skip any
+# pager (glow's -p alt-screen pager caused content-duplication bugs when the
+# browser viewport resized mid-render).
 render_markdown() {
   local cols="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
-  # Use most of the available terminal width — glow adds ~4 cols of left
-  # margin on its own. Cap at 140 so lines stay readable on ultra-wide
-  # windows but let 100-140 col terminals use the room they have.
   local width=$(( cols - 4 ))
   (( width < 60 )) && width=60
   (( width > 140 )) && width=140
-  if command -v glow >/dev/null 2>&1; then
-    # -p opens glow's full-screen pager with arrow-key scroll + q to quit.
-    # Feels native in the xterm and survives long posts.
-    glow -p -s dark -w "$width" "$1"
-  elif command -v mdcat >/dev/null 2>&1; then
-    mdcat --columns "$width" "$1" | less -R
+  clear
+  if command -v mdcat >/dev/null 2>&1; then
+    mdcat --columns "$width" "$1"
+  elif command -v glow >/dev/null 2>&1; then
+    glow -s dark -w "$width" "$1"
   elif command -v bat >/dev/null 2>&1; then
     bat --language=markdown --color=always "$1"
   else
-    cat "$1" | less
+    cat "$1"
   fi
 }
 

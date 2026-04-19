@@ -1,35 +1,31 @@
 ---
-title: i lifted claude haiku 4.5 from 65% to 85% solve rate on unseen github bugs for $1
+title: using gepa to hone claude haiku on github bug fixes (+20pp unseen)
 date: 2026-04-19
 slug: 2026-04-19-hone-haiku-20pp
 ---
 
-$1 in sonnet mutator tokens lifted claude haiku 4.5 from 65% to 85% solve rate on 9 github bugs it had never seen. Same model, same evaluator, same scoring — only the system prompt changed. GEPA ran for ~7 hours on my claude max subscription (so no API spend at all on the executor side; the $1 is what sonnet burned proposing mutations).
+GEPA ran 7 hours against claude haiku 4.5 on 20 github bug-fix challenges and produced a system prompt that moved haiku from 65% to 85% solve rate on 9 held-out bugs. Same model, same evaluator, same scoring — only the system prompt changed. That's +20 absolute percentage points (+30% relative) on bugs GEPA never trained on.
 
-The implication I didn't expect: every "model A beats model B" leaderboard that runs a bare seed prompt is under-specifying its agents. $1 of prompt optimization moves a model 20 percentage points on unseen bugs. If that holds even partially for other weak-to-medium models, the current wave of coding-agent benchmarks is measuring something closer to "how good is the model at guessing what the bare prompt means" than "how good is the model at fixing bugs".
+The system isn't novel. It's three off-the-shelf pieces glued together. [GEPA](https://github.com/dspy-ai/gepa) is the prompt optimizer (pareto-style mutation + selection out of the dspy project). [harness](https://github.com/twaldin/harness) is my python lib that wraps 6 AI coding CLIs — claude code, codex, opencode, gemini, cursor, aider — behind one API so GEPA can drive any of them as the executor. [agentelo](https://github.com/twaldin/agentelo) is my leaderboard / challenge runner; it scores each challenge as `tests_fixed / tests_broken_before` and reports the mean. Hone is the ~300-line coordinator wiring them together: GEPA proposes a system prompt variant, harness runs the executor CLI with that prompt, agentelo grades the resulting diff against the real PR's test suite.
 
-The setup: haiku is the executor (the model actually fixing the bugs), sonnet is the mutator (proposes new prompt variants — this doesn't use any API credits since it shells out to the claude code CLI on my max sub). The grader runs [agentelo](https://github.com/twaldin/agentelo) challenges, scoring `tests_fixed / tests_broken_before` per challenge and reporting the mean. GEPA budget was 20 iterations, which converged after 3 accepted mutations (4th variant tied so it stopped).
+(The mutator here was sonnet via the claude code CLI on my max sub, so no API billing — but the point of hone is that any CLI can drive any other CLI, not that it happened to be free this run.)
 
-## Training set (20 challenges)
+## training trajectory
 
-Mix of repos to avoid single-library overfit: `click` (9 challenges), `marshmallow` (5), `qs` (4), `jinja` (2), `koa` (1). All real PRs from the last 90 days, each with a clean red/green test suite.
+20 training challenges pulled from 5 repos — `click` (9), `marshmallow` (5), `qs` (4), `jinja` (2), `koa` (1) — all real PRs from the last 90 days with clean red/green test suites.
 
-## Phase 1 — training trajectory
+| iter | candidate | full valset (20) | delta vs seed |
+| ---- | --------- | ---------------- | ------------- |
+| 0 | seed (14 words) | 0.5476 | — |
+| 1 | candidate 1 (6-step v1) | 0.8583 | +0.3107 |
+| 2 | candidate 2 (6-step v2) | 0.9176 | +0.3700 |
+| 3 | candidate 3 (tied on full) | 0.9176 | +0.3700 |
 
-| iter | candidate                  | score (20 challenges) | delta vs seed |
-| ---- | -------------------------- | --------------------- | ------------- |
-| 0    | seed (14-word baseline)    | 0.5476                | —             |
-| 1    | candidate 1 (6-step v1)    | 0.8583                | +0.3107       |
-| 2    | candidate 2 (6-step v2)    | 0.9176                | +0.3700       |
-| 3    | candidate 3 (tied)         | 0.9176                | +0.3700       |
+Seed solves 11/20. Candidate 2 solves 18/20. Third candidate climbed on GEPA's subsample eval but tied on the full valset, so GEPA stopped. Budget was 20 iters; actual spend was 4.
 
-Seed scored 11/20. Candidate 2 scored 18/20. The third candidate accepted on subsampling but didn't move the full-valset number, so GEPA stopped.
+## holdout — 9 unseen bugs × 3 samples
 
-Obvious objection: the honed prompt is overfit to those 20 challenges. That's what phase 2 is for.
-
-## Phase 2 — hold-out (9 unseen challenges × 3 samples)
-
-Hold-out set has zero overlap with training: `marshmallow-pr2892, marshmallow-pr2894, marshmallow-pr2901, click-pr3152, requests-pr7205, qs-pr350, qs-pr506, qs-pr335, flask-pr5917` (requests and flask weren't even represented in training). Three independent samples per prompt, so 27 runs per column.
+Holdout has zero overlap with training: `marshmallow-pr2892, marshmallow-pr2894, marshmallow-pr2901, click-pr3152, requests-pr7205, qs-pr350, qs-pr506, qs-pr335, flask-pr5917`. `requests` and `flask` weren't in training at all. Three independent samples per prompt = 27 runs per column.
 
 | sample | seed   | honed  | delta   |
 | ------ | ------ | ------ | ------- |
@@ -38,18 +34,31 @@ Hold-out set has zero overlap with training: `marshmallow-pr2892, marshmallow-pr
 | 3      | 0.5385 | 0.7778 | +0.2393 |
 | mean   | 0.6496 | 0.8462 | +0.1966 |
 
-All three samples improved. No regressions. Seed solves 65% of unseen bugs, honed solves 85%. That's +20 absolute percentage points on bugs GEPA never trained on — roughly half the training-set lift transfers (training gap was +0.37, hold-out is +0.20, which is the expected train/test delta you'd get in any ML setup).
+All three samples improved. No regressions. Training lift was +0.37, holdout lift is +0.20 — about half transfers, which is roughly the train/test gap you'd expect from any ML setup.
 
-## The actual prompts
+## what GEPA actually discovered
 
-Seed (score 0.5476):
+The diff between candidate 1 and candidate 2 is small, but every change points at the same failure mode: haiku fixes the first visible failing test and declares victory.
+
+| area          | 1 → 2                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| test reading  | "read the failing tests" → "read ALL the failing tests" + "note every failing test case". |
+| root cause    | "trace the failure" → "trace each failure". Added multi-failure root-cause check.         |
+| fix           | Added: "if the same logical error appears in multiple places, fix all of them".           |
+| edge cases    | Added concrete examples (encoding, array notation, option flags) + a config-check clause. |
+| verification  | "confirm all tests pass" → "keep iterating until every originally-failing test passes".   |
+| persistence   | "persist" → "persist through partial fixes. partial progress is not success."             |
+
+The honed prompt isn't clever. It's "don't trust the first green, check every test, keep looking for a second bug site". GEPA spent its three accepted mutations localizing exactly that one failure mode — and because that failure mode generalizes across codebases, the fix generalizes too.
+
+Seed (0.5476):
 
 ```
 You are an AI coding agent fixing a bug in an open-source project.
 Approach each task carefully and produce a minimal, correct fix.
 ```
 
-Honed candidate 2 (score 0.9176 train / 0.8462 holdout):
+Candidate 2, the one that shipped (train 0.9176 / holdout 0.8462):
 
 ```
 You are an AI coding agent fixing a bug in an open-source project.
@@ -93,38 +102,21 @@ Keep changes minimal and correct. Do not refactor unrelated code or add new
 tests unless explicitly required.
 ```
 
-## What GEPA learned
+## why haiku and not anything else
 
-Diff between candidate 1 and candidate 2 is small but pointed. Every addition targets the same failure mode: haiku fixes the first visible issue and declares victory.
+Haiku sits in the goldilocks band for this kind of prompt honing. Too weak, and the executor can't actually follow the methodology the mutator writes — adding "check for a second bug site" to the prompt doesn't help if the model couldn't trace to the first bug site reliably. Too strong, and the bare seed prompt already matches what the model does internally, so there's nothing for GEPA to discover.
 
-| change area   | 1 → 2                                                                                    |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| Test reading  | "Read the failing tests" → "Read ALL the failing tests". "note every failing test case". |
-| Root cause    | "Trace the failure" → "Trace each failure". Added multi-failure root-cause check.        |
-| Fix           | Added: "If the same logical error appears in multiple places, fix all of them."          |
-| Edge cases    | Added concrete examples (encoding, array notation, option flags) + config-check clause.  |
-| Verification  | "Confirm all tests pass" → "Keep iterating until every originally-failing test passes".  |
-| Persistence   | "Persist" → "Persist through partial fixes. Partial progress is not success."            |
+I ran overnight seed baselines on four neighbours to find the next goldilocks target. The news was mostly flat:
 
-Every one of those additions pushes against haiku's tendency to stop early. The honed prompt isn't clever — it's basically "don't stop, check everything, don't trust the first fix". That's why it generalizes: the failure mode generalizes.
+- `opencode + gemini-2.5-flash` — seed in the 0.2 range. Followed up a short hone run; no meaningful lift. Executor is too weak to actually execute the 6-step methodology.
+- `codex + gpt-5.2` — saturated at seed (already in the 0.85+ band). GEPA mutations produced no measurable improvement over the already-strong baseline.
+- `codex + gpt-5.4-mini` — saturated at seed.
+- `codex + gpt-5.4-mini-fast` — saturated at seed.
 
-## Prior run I wasted time on
+The earlier gpt-5.4 run sat in the same bucket — bare "minimal correct fix" already matches gpt-5.4's internal behavior, zero movement from GEPA. So the window where prompt honing moves the number is narrower than I'd hoped: somewhere in the 0.5–0.7 seed band. Outside that, either the executor can't use the better prompt (floor) or doesn't need it (ceiling).
 
-My first honing attempt trained on only 3 challenges (`qs-pr335, click-pr2846, marshmallow-pr2901`), lifted seed from 0.6667 → 1.0 on the training set — but the A/B test on 6 unseen challenges regressed from 0.9167 (seed) to 0.8102 (honed). Three training challenges was just too narrow to force a generalizable prompt; GEPA memorized the qs-pr335 specifics and tanked on unrelated bugs. Going to 20 training challenges was the fix. Lesson is probably obvious in hindsight but I didn't catch it until the holdout run came back worse.
+## the 3-challenge run I wasted two days on
 
-The lift isn't universal though — it correlates inversely with how strong the seed model already is. I ran an earlier hone experiment on gpt-5.4 and it stayed at 0.6667, zero movement. The bare seed (`minimal correct fix`) already matches gpt-5.4's internal behavior, so there's nothing for GEPA to discover. Stronger models saturate at seed; weaker models have headroom. Haiku sits in the sweet spot, which is why $1 of mutation moved it 20 percentage points and the same setup moved gpt-5.4 zero.
+First attempt trained on only 3 challenges (`qs-pr335, click-pr2846, marshmallow-pr2901`). Training score hit 1.0 but the A/B on 6 unseen bugs regressed from 0.9167 seed to 0.8102 honed. GEPA had memorized qs-pr335's query-string specifics and tanked on unrelated bugs. Scaling training to 20 challenges across 5 repos was the fix — probably obvious in hindsight (diversity of training distribution matters for generalization) but I only caught it after the holdout came back worse.
 
-## Cost breakdown
-
-- Sonnet mutator (via claude code CLI on my claude max sub): ~$1 in tokens for 3 mutation rounds. Would have been more if GEPA hadn't converged early.
-- Haiku executor (via claude code CLI on the same sub): not billed per API call — claude max caps apply, but this is the most GEPA-efficient path since API usage would have cost real money.
-- Wall clock: ~7 hours across phase 1 (training) + phase 2 (hold-out A/B × 3 samples).
-- Grader overhead: agentelo spins up fresh repo checkouts per challenge, so most of the wall clock is git/docker, not model calls.
-
-GEPA, DSPy, and Arize Prompt Learning all require paid API keys to run. Hone uses your existing CLI subscription (claude code, codex, opencode, gemini) as the mutation engine instead.
-
-## Next experiments (running as I type this)
-
-Ran seed-only passes on `opencode + gpt-5.4-mini` and `opencode + gemini-2.5-flash` on a 6-challenge subset of the training set while drafting this. gpt-5.4-mini came in at 0.78 (4 perfect, 1 failed, 1 at 0.67) — moderate headroom, maybe 10-15pp of room if hone is as effective here as it was on haiku. gemini-2.5-flash came in near 0.2 — classic Goldilocks, big room for lift. Running full hone on both this week.
-
-If you want the hone repo and the full honed prompt text: [github.com/twaldin/hone](https://github.com/twaldin/hone). Run directory with all variants: `~/hone/.hone/run-20260418-175259-e848a1/`. Full writeup with the original training log is at [writeup/2026-04-18-haiku-20train-9holdout.md](https://github.com/twaldin/hone/blob/main/writeup/2026-04-18-haiku-20train-9holdout.md).
+Run directory with every candidate prompt and every grader log: `~/hone/.hone/run-20260418-175259-e848a1/`. Repo: [github.com/twaldin/hone](https://github.com/twaldin/hone). Earlier writeup with the full training log: [writeup/2026-04-18-haiku-20train-9holdout.md](https://github.com/twaldin/hone/blob/main/writeup/2026-04-18-haiku-20train-9holdout.md).
