@@ -38,7 +38,8 @@ render_markdown() {
   local cols="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
   local width=$(( cols - 4 ))
   (( width < 60 )) && width=60
-  (( width > 140 )) && width=140
+  # No upper cap — let mdcat fill whatever width the xterm is actually at.
+  # On a wide monitor xterm is ~160 cols; capping at 140 left ~20% empty.
   clear
   if command -v mdcat >/dev/null 2>&1; then
     mdcat --columns "$width" "$1"
