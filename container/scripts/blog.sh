@@ -28,8 +28,13 @@ body_after_frontmatter() {
 
 # Pretty-render markdown. glow is vastly better than bat for prose; prefer it.
 render_markdown() {
-  local width="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
-  (( width > 92 )) && width=92
+  local cols="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+  # Use most of the available terminal width — glow adds ~4 cols of left
+  # margin on its own. Cap at 140 so lines stay readable on ultra-wide
+  # windows but let 100-140 col terminals use the room they have.
+  local width=$(( cols - 4 ))
+  (( width < 60 )) && width=60
+  (( width > 140 )) && width=140
   if command -v glow >/dev/null 2>&1; then
     # -p opens glow's full-screen pager with arrow-key scroll + q to quit.
     # Feels native in the xterm and survives long posts.
@@ -93,19 +98,21 @@ render_post() {
   local title date
   title="$(frontmatter_get "$file" title)"
   date="$(frontmatter_get "$file" date)"
+  [[ -z "$title" ]] && title="$slug"
 
-  echo ""
-  typewriter "${GREEN}${title}${RESET}"
-  typewriter "${GRAY}${date}${RESET}"
-  animated_separator "-" "${#title}" "$GREEN"
-  echo ""
-
+  # Build a single markdown document with the title/date injected as real
+  # markdown headers so glow renders them inside the pager (styled by the
+  # theme) instead of us printing them separately above the pager.
   local tmp
   tmp="$(mktemp -t blog-XXXXXX.md)"
-  body_after_frontmatter "$file" > "$tmp"
+  {
+    printf '# %s\n' "$title"
+    [[ -n "$date" ]] && printf '_%s_\n' "$date"
+    printf '\n'
+    body_after_frontmatter "$file"
+  } > "$tmp"
   render_markdown "$tmp"
   rm -f "$tmp"
-  echo ""
 }
 
 latest_post() {

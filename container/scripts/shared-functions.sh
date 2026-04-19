@@ -96,7 +96,7 @@ create_box() {
   local title_clean=$(echo "$title" | sed 's/\x1b\[[0-9;]*m//g')
   local title_length=${#title_clean}
 
-  local dash_count=$((box_width - title_length - 6))  # 6 accounts for "┌─ " and " ┐"
+  local dash_count=$((box_width - title_length - 5))  # ┌(1) ─(1) ' '(1) title ' '(1) ┐(1) = 5 fixed
   if [ $dash_count -lt 1 ]; then
     dash_count=1
   fi
