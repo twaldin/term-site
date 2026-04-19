@@ -35,13 +35,17 @@ body_after_frontmatter() {
 # OSC 9998 — the frontend handler calls xterm.scrollToTop() so the viewport
 # always parks at the post title even on long posts.
 render_markdown() {
-  # `tput cols` queries TIOCGWINSZ live, so it's always the real PTY width
-  # even if zsh's cached $COLUMNS is stale (subshell inherited it from an
-  # earlier resize). On a wide monitor this is ~160, on mobile ~60.
-  local cols="$(tput cols 2>/dev/null || echo "${COLUMNS:-80}")"
+  # Width detection is annoyingly flaky inside a docker-mediated PTY: tput
+  # can return a stale value, $COLUMNS can be whatever the env was at spawn,
+  # stty reads from fd 0 which may or may not be a tty depending on how the
+  # script got invoked. Take the max of everything we can query.
+  local cols=0 t
+  t="$(tput cols 2>/dev/null)";                       [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
+  t="$(stty size 2>/dev/null | awk '{print $2}')";    [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
+  [[ "$COLUMNS" =~ ^[0-9]+$ ]]                     && (( COLUMNS > cols )) && cols=$COLUMNS
+  (( cols < 60 )) && cols=100
   local width=$(( cols - 4 ))
   (( width < 60 )) && width=60
-  # No upper cap — let mdcat fill whatever width the xterm is actually at.
   clear
   if command -v mdcat >/dev/null 2>&1; then
     mdcat --columns "$width" "$1"
