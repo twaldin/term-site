@@ -14,7 +14,7 @@ const PROD_ORIGINS = [
   'https://tim.waldin.net'
 ];
 
-const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:3001'];
+const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3100'];
 
 const allowedOrigins = process.env.NODE_ENV === 'production' ? PROD_ORIGINS : DEV_ORIGINS;
 
@@ -70,10 +70,16 @@ io.on('connection', (socket) => {
     return;
   }
 
+  // Extract optional init command from client handshake (URL path → command).
+  // Validated again in sessionManager.autoTypeCommand.
+  const initCommand = typeof socket.handshake.auth?.initCommand === 'string'
+    ? socket.handshake.auth.initCommand
+    : undefined;
+
   // Create new terminal session
-  sessionManager.createSession(socket.id, socket)
+  sessionManager.createSession(socket.id, socket, initCommand)
     .then(() => {
-      console.log(`Session created for ${socket.id}`);
+      console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
     })
     .catch((error) => {
       console.error(`Failed to create session for ${socket.id}:`, error);

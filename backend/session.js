@@ -137,15 +137,15 @@ class SessionManager {
     }
   }
 
-  async createSession(sessionId, socket) {
+  async createSession(sessionId, socket, initCommand) {
     if (this.sessions.size >= this.maxSessions) {
       throw new Error('Maximum session limit reached');
     }
 
-    return this.createContainerSession(sessionId, socket);
+    return this.createContainerSession(sessionId, socket, initCommand);
   }
 
-  async createContainerSession(sessionId, socket) {
+  async createContainerSession(sessionId, socket, initCommand) {
     console.log(`Creating container session for ${sessionId}`);
 
     try {
@@ -233,9 +233,10 @@ class SessionManager {
           // Check if the prompt has appeared and we haven't sent welcome yet
           if (!welcomeSent && output.includes('~ ')) {
             welcomeSent = true;
-            console.log(`Prompt detected for session ${sessionId}, auto-typing welcome...`);
+            const cmd = this.sessions.get(sessionId)?.initCommand || 'welcome';
+            console.log(`Prompt detected for session ${sessionId}, auto-typing '${cmd}'...`);
             setTimeout(() => {
-              this.autoTypeWelcome(sessionId);
+              this.autoTypeCommand(sessionId, cmd);
             }, 200);
           }
         }
@@ -255,7 +256,8 @@ class SessionManager {
         stream: stream,
         socket: socket,
         startTime: Date.now(),
-        lastActivity: Date.now()
+        lastActivity: Date.now(),
+        initCommand: initCommand,
       };
 
       this.sessions.set(sessionId, session);
@@ -271,20 +273,27 @@ class SessionManager {
     }
   }
 
-  autoTypeWelcome(sessionId) {
+  autoTypeCommand(sessionId, command) {
     const session = this.sessions.get(sessionId);
     if (!session) return;
+    if (!command || typeof command !== 'string') command = 'welcome';
+    // Safety: whitelist characters so we never execute arbitrary shell chars via URL.
+    // Any character outside [a-z0-9 _./-] drops us back to plain welcome.
+    if (!/^[a-z0-9 _./-]+$/i.test(command) || command.length > 120) {
+      console.warn(`Rejected initCommand for ${sessionId}: ${command} — falling back to welcome`);
+      command = 'welcome';
+    }
 
-    console.log(`Auto-typing 'welcome' for session ${sessionId}`);
+    console.log(`Auto-typing '${command}' for session ${sessionId}`);
 
-    const letters = ['w', 'e', 'l', 'c', 'o', 'm', 'e'];
+    const chars = command.split('');
     let index = 0;
 
-    const typeNextLetter = () => {
-      if (index < letters.length) {
-        this.sendInput(sessionId, letters[index]);
+    const typeNext = () => {
+      if (index < chars.length) {
+        this.sendInput(sessionId, chars[index]);
         index++;
-        setTimeout(typeNextLetter, 100);
+        setTimeout(typeNext, 60);
       } else {
         setTimeout(() => {
           this.sendInput(sessionId, '\r');
@@ -292,7 +301,7 @@ class SessionManager {
       }
     };
 
-    typeNextLetter();
+    typeNext();
   }
 
   sendInput(sessionId, data) {

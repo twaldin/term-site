@@ -28,7 +28,6 @@ RUN apt-get install -y \
     fzf \
     less \
     bat \
-    glow \
     git \
     unzip \
     tree \
@@ -50,6 +49,14 @@ COPY scripts/ /home/portfolio/scripts/
 # Copy blog posts (read by /home/portfolio/scripts/blog.sh)
 COPY blog/ /home/portfolio/blog/
 COPY DOS_Rebel.flf /usr/share/figlet/DOS_Rebel.flf
+
+# Install glow (markdown renderer) from .deb release — not in Ubuntu 24.04 apt
+RUN ARCH=$(dpkg --print-architecture) && \
+    curl -sL "https://github.com/charmbracelet/glow/releases/download/v2.1.2/glow_2.1.2_${ARCH}.deb" \
+      -o /tmp/glow.deb && \
+    dpkg -i /tmp/glow.deb && \
+    rm /tmp/glow.deb && \
+    glow --version
 
 # Create writable directories for user data
 RUN mkdir -p /home/portfolio/.config && \

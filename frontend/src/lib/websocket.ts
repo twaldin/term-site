@@ -1,5 +1,30 @@
 import { io, Socket } from 'socket.io-client';
 
+// Whitelist of commands any URL path can launch on connect. The backend also
+// re-validates (characters, length) so a tampered client can't break out.
+const ALLOWED_COMMANDS = new Set([
+  'welcome', 'about', 'contact', 'resume', 'projects', 'help',
+  'trade-up-bot', 'agentelo', 'flt', 'skyblock-qol', 'term-site',
+  'stm32-games', 'dotfiles', 'blog',
+]);
+
+function pathToCommand(pathname: string): string | undefined {
+  // Strip basePath-style prefixes and normalize.
+  const clean = pathname.replace(/^\/+|\/+$/g, '');
+  if (!clean) return undefined; // '/' → default welcome
+
+  // Split into head/args: "/blog/<slug>" → head="blog", args=["<slug>"]
+  const [head, ...args] = clean.split('/');
+  if (!ALLOWED_COMMANDS.has(head)) return undefined;
+
+  // Arg sanitization — only slug-safe characters
+  const safeArgs = args
+    .filter(a => /^[A-Za-z0-9._-]+$/.test(a))
+    .slice(0, 2);
+
+  return safeArgs.length ? `${head} ${safeArgs.join(' ')}` : head;
+}
+
 export interface WebSocketManager {
   socket: Socket | null;
   connect: () => void;
@@ -32,6 +57,8 @@ export function createWebSocketManager(): WebSocketManager {
   const connect = () => {
     if (socket?.connected) return;
 
+    const initCommand = typeof window !== 'undefined' ? pathToCommand(window.location.pathname) : undefined;
+
     socket = io(getWebSocketUrl(), {
       transports: ['polling', 'websocket'],
       timeout: 10000,
@@ -42,6 +69,7 @@ export function createWebSocketManager(): WebSocketManager {
       forceNew: true,
       upgrade: true,
       rememberUpgrade: false,
+      auth: initCommand ? { initCommand } : undefined,
     });
 
     socket.on('connect', () => {

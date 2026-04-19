@@ -31,13 +31,15 @@ render_markdown() {
   local width="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
   (( width > 92 )) && width=92
   if command -v glow >/dev/null 2>&1; then
-    glow -s dark -w "$width" "$1"
+    # -p opens glow's full-screen pager with arrow-key scroll + q to quit.
+    # Feels native in the xterm and survives long posts.
+    glow -p -s dark -w "$width" "$1"
   elif command -v mdcat >/dev/null 2>&1; then
-    mdcat --columns "$width" "$1"
+    mdcat --columns "$width" "$1" | less -R
   elif command -v bat >/dev/null 2>&1; then
-    bat --plain --language=markdown --paging=never --color=always "$1"
+    bat --language=markdown --color=always "$1"
   else
-    cat "$1"
+    cat "$1" | less
   fi
 }
 
