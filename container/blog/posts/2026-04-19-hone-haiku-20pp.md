@@ -1,5 +1,5 @@
 ---
-title: using gepa to hone claude haiku on github bug fixes (+20pp unseen)
+title: using gepa to hone claude haiku on github bug fixes (+20% solve on untrained bugs)
 date: 2026-04-19
 slug: 2026-04-19-hone-haiku-20pp
 ---
