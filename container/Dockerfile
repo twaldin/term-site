@@ -46,6 +46,8 @@ RUN apt-get install -y \
 
 # Copy all scripts
 COPY scripts/ /home/portfolio/scripts/
+# Copy blog posts (read by /home/portfolio/scripts/blog.sh)
+COPY blog/ /home/portfolio/blog/
 COPY DOS_Rebel.flf /usr/share/figlet/DOS_Rebel.flf
 
 # Create writable directories for user data
@@ -141,6 +143,7 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
     echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
     echo "export PATH=\"/home/portfolio/.local/bin:\$PATH\"" >> /home/portfolio/.zshrc && \
