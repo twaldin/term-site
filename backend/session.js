@@ -302,7 +302,11 @@ class SessionManager {
     if (!command || typeof command !== 'string') command = 'welcome';
     // Safety: whitelist characters so we never execute arbitrary shell chars via URL.
     // Any character outside [a-z0-9 _./-] drops us back to plain welcome.
-    if (!/^[a-z0-9 _./-]+$/i.test(command) || command.length > 120) {
+    // Char whitelist — matches the frontend's SAFE_CMD_RE. Blocks shell
+    // metachars (; | & > < ` $ ( ) { } [ ] " ' \ * ? etc). The frontend
+    // also enforces BLOCKED_HEADS, so by the time a command reaches here
+    // it's already been through one layer of validation.
+    if (!/^[a-z0-9 ._/+=:,@-]+$/i.test(command) || command.length > 200) {
       console.warn(`Rejected initCommand for ${sessionId}: ${command} — falling back to welcome`);
       command = 'welcome';
     }

@@ -189,40 +189,29 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
-    echo "# preexec — re-emit OSC 9999 URL whenever the user types a known" >> /home/portfolio/.zshrc && \
-    echo "# keyword command. Non-keywords (ls, cat, nvim, git, cd, …) keep" >> /home/portfolio/.zshrc && \
-    echo "# the URL where it was. Fires BEFORE the command runs." >> /home/portfolio/.zshrc && \
+    echo "# preexec — re-emit OSC 9999 URL before every typed command so the" >> /home/portfolio/.zshrc && \
+    echo "# browser URL tracks literally whatever the user typed. The frontend" >> /home/portfolio/.zshrc && \
+    echo "# URL → command mapping uses the same char whitelist + BLOCKED_HEADS," >> /home/portfolio/.zshrc && \
+    echo "# so the two directions stay in sync." >> /home/portfolio/.zshrc && \
     echo "source /home/portfolio/scripts/shared-functions.sh" >> /home/portfolio/.zshrc && \
     echo "preexec() {" >> /home/portfolio/.zshrc && \
-    echo "  local first=\${1%% *}" >> /home/portfolio/.zshrc && \
-    echo "  local rest=\${1#* }" >> /home/portfolio/.zshrc && \
-    echo "  [[ \"\$rest\" == \"\$1\" ]] && rest=\"\"" >> /home/portfolio/.zshrc && \
+    echo "  local cmd=\$1" >> /home/portfolio/.zshrc && \
+    echo "  (( \${#cmd} > 200 )) && return" >> /home/portfolio/.zshrc && \
+    echo "  # Safe char set — matches frontend SAFE_CMD_RE." >> /home/portfolio/.zshrc && \
+    echo "  [[ \"\$cmd\" =~ '^[A-Za-z0-9 ._/+=:,@-]+$' ]] || return" >> /home/portfolio/.zshrc && \
+    echo "  local first=\${cmd%% *}" >> /home/portfolio/.zshrc && \
     echo "  case \"\$first\" in" >> /home/portfolio/.zshrc && \
-    echo "    welcome|home)                                 emit_url \"\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    projects)                                     emit_url \"projects\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    about|contact|resume|help)                    emit_url \"\$first\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    flt|agentelo|hone|harness|term-site|trade-up-bot|stm32-games|dotfiles|skyblock-qol)" >> /home/portfolio/.zshrc && \
-    echo "                                                  emit_url \"projects/\$first\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    blog)" >> /home/portfolio/.zshrc && \
-    echo "      if [[ -z \"\$rest\" || \"\$rest\" == \"list\" ]]; then" >> /home/portfolio/.zshrc && \
-    echo "        emit_url \"blog\"" >> /home/portfolio/.zshrc && \
-    echo "      elif [[ \"\$rest\" == \"latest\" ]]; then" >> /home/portfolio/.zshrc && \
-    echo "        :  # blog.sh latest_post resolves + emits blog/<slug>" >> /home/portfolio/.zshrc && \
-    echo "      else" >> /home/portfolio/.zshrc && \
-    echo "        emit_url \"blog/\${rest%% *}\"" >> /home/portfolio/.zshrc && \
-    echo "      fi" >> /home/portfolio/.zshrc && \
-    echo "      ;;" >> /home/portfolio/.zshrc && \
-    echo "    nvim|vim|cat|less|head|tail|tree|ls|pwd|file|stat|wc|which)" >> /home/portfolio/.zshrc && \
-    echo "      # Read-only file commands → /<cmd>/<path>. Only sync if args" >> /home/portfolio/.zshrc && \
-    echo "      # are a plain path (no flags, no quotes, no metachars)." >> /home/portfolio/.zshrc && \
-    echo "      if [[ -z \"\$rest\" ]]; then" >> /home/portfolio/.zshrc && \
-    echo "        emit_url \"\$first\"" >> /home/portfolio/.zshrc && \
-    echo "      elif [[ \"\$rest\" =~ '^[A-Za-z0-9._/-]+$' ]]; then" >> /home/portfolio/.zshrc && \
-    echo "        emit_url \"\$first/\$rest\"" >> /home/portfolio/.zshrc && \
-    echo "      fi" >> /home/portfolio/.zshrc && \
-    echo "      ;;" >> /home/portfolio/.zshrc && \
-    echo "    *) ;;  # unknown keyword — keep current URL" >> /home/portfolio/.zshrc && \
+    echo "    rm|mv|cp|dd|sudo|su|chmod|chown|kill|pkill|killall|sh|bash|zsh|dash|eval|exec|source|mkfs|mount|umount) return ;;" >> /home/portfolio/.zshrc && \
     echo "  esac" >> /home/portfolio/.zshrc && \
+    echo "  # Keyword shortcuts: map project aliases to the /projects/<name>" >> /home/portfolio/.zshrc && \
+    echo "  # pretty URL instead of the raw alias name." >> /home/portfolio/.zshrc && \
+    echo "  case \"\$cmd\" in" >> /home/portfolio/.zshrc && \
+    echo "    welcome|home)         emit_url \"\"; return ;;" >> /home/portfolio/.zshrc && \
+    echo "    flt|agentelo|hone|harness|term-site|trade-up-bot|stm32-games|dotfiles|skyblock-qol)" >> /home/portfolio/.zshrc && \
+    echo "                          emit_url \"projects/\$cmd\"; return ;;" >> /home/portfolio/.zshrc && \
+    echo "  esac" >> /home/portfolio/.zshrc && \
+    echo "  # Universal: url-encode spaces, leave everything else literal." >> /home/portfolio/.zshrc && \
+    echo "  emit_url \"\${cmd// /%20}\"" >> /home/portfolio/.zshrc && \
     echo "}" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
