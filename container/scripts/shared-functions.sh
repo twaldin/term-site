@@ -105,13 +105,23 @@ create_box() {
   local title="$1"
   local content="$2"
   local color="${3:-$CYAN}"
-  local box_width="${4:-80}"
+  local box_width="${4:-auto}"
 
-  # Get actual terminal width — $COLUMNS may not be set in Docker containers
-  local term_width="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
-  if [ "$term_width" -lt "$box_width" ]; then
+  # Live PTY width via tput first (query TIOCGWINSZ — doesn't get stale in
+  # subshells). Fall back to stty, then $COLUMNS, then 80.
+  local term_width
+  term_width="$(tput cols 2>/dev/null)"
+  [[ -z "$term_width" ]] && term_width="$(stty size 2>/dev/null | awk '{print $2}')"
+  [[ -z "$term_width" ]] && term_width="${COLUMNS:-80}"
+
+  if [[ "$box_width" == "auto" ]]; then
+    # Default: fill terminal width (minus 2 cols of margin). Looks right on
+    # both 80-col mobile and 160-col wide monitors.
+    box_width=$((term_width - 2))
+  elif [ "$term_width" -lt "$box_width" ]; then
     box_width=$((term_width - 2))
   fi
+  (( box_width < 40 )) && box_width=40
 
   local title_clean=$(echo "$title" | sed 's/\x1b\[[0-9;]*m//g')
   local title_length=${#title_clean}
