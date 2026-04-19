@@ -212,6 +212,15 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "        emit_url \"blog/\${rest%% *}\"" >> /home/portfolio/.zshrc && \
     echo "      fi" >> /home/portfolio/.zshrc && \
     echo "      ;;" >> /home/portfolio/.zshrc && \
+    echo "    nvim|vim|cat|less|head|tail|tree|ls|pwd|file|stat|wc|which)" >> /home/portfolio/.zshrc && \
+    echo "      # Read-only file commands → /<cmd>/<path>. Only sync if args" >> /home/portfolio/.zshrc && \
+    echo "      # are a plain path (no flags, no quotes, no metachars)." >> /home/portfolio/.zshrc && \
+    echo "      if [[ -z \"\$rest\" ]]; then" >> /home/portfolio/.zshrc && \
+    echo "        emit_url \"\$first\"" >> /home/portfolio/.zshrc && \
+    echo "      elif [[ \"\$rest\" =~ '^[A-Za-z0-9._/-]+$' ]]; then" >> /home/portfolio/.zshrc && \
+    echo "        emit_url \"\$first/\$rest\"" >> /home/portfolio/.zshrc && \
+    echo "      fi" >> /home/portfolio/.zshrc && \
+    echo "      ;;" >> /home/portfolio/.zshrc && \
     echo "    *) ;;  # unknown keyword — keep current URL" >> /home/portfolio/.zshrc && \
     echo "  esac" >> /home/portfolio/.zshrc && \
     echo "}" >> /home/portfolio/.zshrc && \
