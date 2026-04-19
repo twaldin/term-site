@@ -189,23 +189,30 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
-    echo "# chpwd — re-emit OSC 9999 URL whenever directory changes, so the" >> /home/portfolio/.zshrc && \
-    echo "# browser URL stops reflecting a project once the user cd's away." >> /home/portfolio/.zshrc && \
+    echo "# preexec — re-emit OSC 9999 URL whenever the user types a known" >> /home/portfolio/.zshrc && \
+    echo "# keyword command. Non-keywords (ls, cat, nvim, git, cd, …) keep" >> /home/portfolio/.zshrc && \
+    echo "# the URL where it was. Fires BEFORE the command runs." >> /home/portfolio/.zshrc && \
     echo "source /home/portfolio/scripts/shared-functions.sh" >> /home/portfolio/.zshrc && \
-    echo "chpwd() {" >> /home/portfolio/.zshrc && \
-    echo "  case \"\$PWD\" in" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME\")                      emit_url \"\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects\")             emit_url \"projects\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/flt\")         emit_url \"projects/flt\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/agentelo\")    emit_url \"projects/agentelo\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/hone\")        emit_url \"projects/hone\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/harness\")     emit_url \"projects/harness\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/term-site\")   emit_url \"projects/term-site\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/trade-up-bot\") emit_url \"projects/trade-up-bot\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/stm32-games\") emit_url \"projects/stm32-games\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/projects/SkyblockQOLmod\"|\"\$HOME/projects/skyblock-qol\") emit_url \"projects/skyblock-qol\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    \"\$HOME/.dotfiles\"|\"\$HOME/projects/dotfiles\") emit_url \"projects/dotfiles\" ;;" >> /home/portfolio/.zshrc && \
-    echo "    *)                            emit_url \"\" ;;" >> /home/portfolio/.zshrc && \
+    echo "preexec() {" >> /home/portfolio/.zshrc && \
+    echo "  local first=\${1%% *}" >> /home/portfolio/.zshrc && \
+    echo "  local rest=\${1#* }" >> /home/portfolio/.zshrc && \
+    echo "  [[ \"\$rest\" == \"\$1\" ]] && rest=\"\"" >> /home/portfolio/.zshrc && \
+    echo "  case \"\$first\" in" >> /home/portfolio/.zshrc && \
+    echo "    welcome|home)                                 emit_url \"\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    projects)                                     emit_url \"projects\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    about|contact|resume|help)                    emit_url \"\$first\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    flt|agentelo|hone|harness|term-site|trade-up-bot|stm32-games|dotfiles|skyblock-qol)" >> /home/portfolio/.zshrc && \
+    echo "                                                  emit_url \"projects/\$first\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    blog)" >> /home/portfolio/.zshrc && \
+    echo "      if [[ -z \"\$rest\" || \"\$rest\" == \"list\" ]]; then" >> /home/portfolio/.zshrc && \
+    echo "        emit_url \"blog\"" >> /home/portfolio/.zshrc && \
+    echo "      elif [[ \"\$rest\" == \"latest\" ]]; then" >> /home/portfolio/.zshrc && \
+    echo "        :  # blog.sh latest_post resolves + emits blog/<slug>" >> /home/portfolio/.zshrc && \
+    echo "      else" >> /home/portfolio/.zshrc && \
+    echo "        emit_url \"blog/\${rest%% *}\"" >> /home/portfolio/.zshrc && \
+    echo "      fi" >> /home/portfolio/.zshrc && \
+    echo "      ;;" >> /home/portfolio/.zshrc && \
+    echo "    *) ;;  # unknown keyword — keep current URL" >> /home/portfolio/.zshrc && \
     echo "  esac" >> /home/portfolio/.zshrc && \
     echo "}" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
