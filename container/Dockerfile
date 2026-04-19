@@ -189,6 +189,26 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
+    echo "# chpwd — re-emit OSC 9999 URL whenever directory changes, so the" >> /home/portfolio/.zshrc && \
+    echo "# browser URL stops reflecting a project once the user cd's away." >> /home/portfolio/.zshrc && \
+    echo "source /home/portfolio/scripts/shared-functions.sh" >> /home/portfolio/.zshrc && \
+    echo "chpwd() {" >> /home/portfolio/.zshrc && \
+    echo "  case \"\$PWD\" in" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME\")                      emit_url \"\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects\")             emit_url \"projects\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/flt\")         emit_url \"projects/flt\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/agentelo\")    emit_url \"projects/agentelo\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/hone\")        emit_url \"projects/hone\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/harness\")     emit_url \"projects/harness\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/term-site\")   emit_url \"projects/term-site\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/trade-up-bot\") emit_url \"projects/trade-up-bot\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/stm32-games\") emit_url \"projects/stm32-games\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/projects/SkyblockQOLmod\"|\"\$HOME/projects/skyblock-qol\") emit_url \"projects/skyblock-qol\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    \"\$HOME/.dotfiles\"|\"\$HOME/projects/dotfiles\") emit_url \"projects/dotfiles\" ;;" >> /home/portfolio/.zshrc && \
+    echo "    *)                            emit_url \"\" ;;" >> /home/portfolio/.zshrc && \
+    echo "  esac" >> /home/portfolio/.zshrc && \
+    echo "}" >> /home/portfolio/.zshrc && \
+    echo "" >> /home/portfolio/.zshrc && \
     echo "# Oh My Posh configuration - override dotfiles config" >> /home/portfolio/.zshrc && \
     echo "export PATH=\"/home/portfolio/.local/bin:\$PATH\"" >> /home/portfolio/.zshrc && \
     echo "eval \"\$(/home/portfolio/.local/bin/oh-my-posh init zsh --config /home/portfolio/.dotfiles/zsh/pure-modified.omp.json)\"" >> /home/portfolio/.zshrc && \

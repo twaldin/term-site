@@ -18,9 +18,11 @@ DIM='\033[2m'
 # Emits OSC 9999 — frontend Terminal.tsx intercepts via
 # xterm.parser.registerOscHandler(9999), strips the sequence, and calls
 # history.pushState so the browser URL tracks the active command.
-# Usage: emit_url "blog/2026-04-19-hone-haiku-20pp"
+# Usage:
+#   emit_url "blog/2026-04-19-hone-haiku-20pp"
+#   emit_url ""           # map to "/" — the home page
 emit_url() {
-  [[ -n "$1" ]] && printf '\033]9999;%s\033\\' "$1"
+  printf '\033]9999;%s\033\\' "${1-}"
 }
 
 # emit_scroll_top
