@@ -1,24 +1,38 @@
 import { io, Socket } from 'socket.io-client';
 
-// Whitelist of commands any URL path can launch on connect. The backend also
-// re-validates (characters, length) so a tampered client can't break out.
+// Whitelist of top-level commands any URL path can launch on connect. The
+// backend also re-validates (characters, length) as a second line of defense.
 const ALLOWED_COMMANDS = new Set([
   'welcome', 'about', 'contact', 'resume', 'projects', 'help',
   'trade-up-bot', 'agentelo', 'flt', 'skyblock-qol', 'term-site',
-  'stm32-games', 'dotfiles', 'blog',
+  'stm32-games', 'dotfiles', 'blog', 'home',
+]);
+
+// Project aliases that each correspond to a standalone script of the same
+// name — lets /projects/flt jump directly to the flt project rather than
+// just running the projects-list script.
+const PROJECT_ALIASES = new Set([
+  'flt', 'agentelo', 'trade-up-bot', 'skyblock-qol',
+  'term-site', 'stm32-games', 'dotfiles',
 ]);
 
 function pathToCommand(pathname: string): string | undefined {
-  // Strip basePath-style prefixes and normalize.
   const clean = pathname.replace(/^\/+|\/+$/g, '');
   if (!clean) return undefined; // '/' → default welcome
 
-  // Split into head/args: "/blog/<slug>" → head="blog", args=["<slug>"]
-  const [head, ...args] = clean.split('/');
+  const [head, ...rest] = clean.split('/');
+
+  // /projects/<name> → run <name> directly so it drops the user into that
+  // project's dir instead of the projects listing.
+  if (head === 'projects' && rest[0] && PROJECT_ALIASES.has(rest[0])) {
+    return rest[0];
+  }
+
   if (!ALLOWED_COMMANDS.has(head)) return undefined;
 
-  // Arg sanitization — only slug-safe characters
-  const safeArgs = args
+  // Everything else: head is the command, remaining path segments become
+  // slug-safe args. /blog/<slug> → `blog <slug>`, /about → `about`, etc.
+  const safeArgs = rest
     .filter(a => /^[A-Za-z0-9._-]+$/.test(a))
     .slice(0, 2);
 
@@ -43,6 +57,11 @@ export function createWebSocketManager(): WebSocketManager {
   let disconnectCallback: (() => void) | null = null;
   let errorCallback: ((error: Error) => void) | null = null;
   let outputCallback: ((data: string) => void) | null = null;
+  // Buffer the most recent resize so we can re-emit it once the socket connects.
+  // Without this, the xterm fit on mount (at 100/200ms) fires before socket is
+  // ready, we drop the emit, and the PTY stays at default 80x24 until the user
+  // triggers another browser-side resize (zoom, window resize).
+  let lastResize: { cols: number; rows: number } | null = null;
 
   const getWebSocketUrl = (): string => {
     if (process.env.NEXT_PUBLIC_API_URL) {
@@ -73,6 +92,10 @@ export function createWebSocketManager(): WebSocketManager {
     });
 
     socket.on('connect', () => {
+      // Flush any resize that was emitted before the socket became ready so
+      // the container PTY gets sized correctly on first render (not just
+      // after a browser zoom/resize).
+      if (lastResize) socket?.emit('resize', lastResize);
       connectCallback?.();
     });
 
@@ -129,8 +152,9 @@ export function createWebSocketManager(): WebSocketManager {
   };
 
   const resize = (cols: number, rows: number) => {
+    lastResize = { cols, rows };
     if (socket?.connected) {
-      socket.emit('resize', { cols, rows });
+      socket.emit('resize', lastResize);
     }
   };
 

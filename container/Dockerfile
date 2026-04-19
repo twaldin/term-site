@@ -59,33 +59,28 @@ RUN ARCH=$(dpkg --print-architecture) && \
     glow --version
 
 # Create writable directories for user data
+# NOTE: /home/portfolio/.config/nvim is NOT pre-created; it becomes a symlink
+# to /home/portfolio/.dotfiles/nvim once the dotfiles repo is cloned below.
 RUN mkdir -p /home/portfolio/.config && \
     mkdir -p /home/portfolio/.local/share && \
     mkdir -p /home/portfolio/.local/state && \
     mkdir -p /home/portfolio/.local/bin && \
     mkdir -p /home/portfolio/.cache && \
-    mkdir -p /home/portfolio/.config/nvim && \
     mkdir -p /home/portfolio/workspace && \
     mkdir -p /home/portfolio/tmp
 
-# Create simple nvim config with Gruvbox colors
-RUN echo 'set number' > /home/portfolio/.config/nvim/init.vim && \
-    echo 'set relativenumber' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'set tabstop=2' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'set shiftwidth=2' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'set expandtab' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'syntax enable' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'set background=dark' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Normal guifg=#fbf1c7 guibg=#1d2021 ctermfg=15 ctermbg=0' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Comment guifg=#928374 ctermfg=8' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight String guifg=#b8bb26 ctermfg=10' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Keyword guifg=#458588 ctermfg=12' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Function guifg=#8ec07c ctermfg=14' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight Type guifg=#b16286 ctermfg=13' >> /home/portfolio/.config/nvim/init.vim && \
-    echo 'highlight LineNr guifg=#928374 ctermfg=8' >> /home/portfolio/.config/nvim/init.vim
-
-# Create basic .vimrc with same config
-RUN ln -sf /home/portfolio/.config/nvim/init.vim /home/portfolio/.vimrc
+# Install bob (neovim version manager) — needed because the dotfiles nvim
+# config uses nightly features (vim.pack, etc.) that aren't in Ubuntu's
+# stable neovim package.
+RUN ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in amd64) BARCH="x86_64" ;; arm64) BARCH="arm" ;; *) BARCH="$ARCH" ;; esac && \
+    curl -sL "https://github.com/MordechaiHadad/bob/releases/download/v4.1.6/bob-linux-${BARCH}.zip" \
+      -o /tmp/bob.zip && \
+    unzip -q /tmp/bob.zip -d /tmp/bob && \
+    mv /tmp/bob/bob-linux-${BARCH}/bob /usr/local/bin/bob && \
+    chmod +x /usr/local/bin/bob && \
+    rm -rf /tmp/bob /tmp/bob.zip && \
+    bob --version
 
 # Set proper ownership for all user directories
 RUN chown -R portfolio:portfolio /home/portfolio/.config && \
@@ -112,7 +107,10 @@ RUN mkdir -p /home/portfolio/.local/share/themes && \
 # Clone dotfiles and project repositories directly into container
 # Note: term-site is private — clone will fail silently, make it public to fix
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
+    ln -sf /home/portfolio/.dotfiles/nvim /home/portfolio/.config/nvim && \
     ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
+    bob install nightly && \
+    bob use nightly && \
     mkdir -p /home/portfolio/projects && \
     cd /home/portfolio/projects && \
     git clone https://github.com/twaldin/flt.git && \
@@ -129,6 +127,16 @@ RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles 
     ln -sf /home/portfolio/scripts/skyblock-qol.sh /home/portfolio/projects/SkyblockQOLmod/skyblock-qol.sh && \
     ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh && \
     ln -sf /home/portfolio/.dotfiles /home/portfolio/projects/dotfiles
+
+# Pre-install nvim plugins declared in dotfiles/nvim/init.lua (vim.pack.add).
+# Container has no internet at runtime, so plugins must be baked into the
+# image. Uses bob's nightly nvim directly (PATH tricks don't apply here —
+# .zshrc isn't installed at this build step yet). `yes A` auto-accepts
+# vim.pack's confirmation prompt. mason's LSP-server fetches will fail
+# (curl not installed in its runtime path) — harmless, plugins themselves
+# get cloned via git, so we mask the nonzero exit with || true.
+RUN yes A | timeout 300 /home/portfolio/.local/share/bob/nvim-bin/nvim --headless +qa || true
+RUN ls /home/portfolio/.local/share/nvim/site/pack/core/opt | head -20
 
 # Create custom .zshrc with navigation aliases
 RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
@@ -161,8 +169,10 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
 # Switch back to root to continue setup
 USER root
 
-# Remove curl and wget (no longer needed)
-RUN apt-get purge -y curl wget && \
+# Remove wget (no longer needed). Keep curl — mason.nvim spawns curl at
+# startup to refresh LSP server registry; without it nvim pops a
+# "Press ENTER or type command to continue" prompt on every launch.
+RUN apt-get purge -y wget && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
