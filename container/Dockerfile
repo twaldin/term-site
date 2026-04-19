@@ -141,12 +141,16 @@ RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles 
     (git clone https://github.com/twaldin/term-site.git || mkdir -p term-site) && \
     git clone https://github.com/twaldin/trade-up-bot.git && \
     git clone https://github.com/twaldin/SkyblockQOLmod.git && \
+    git clone https://github.com/twaldin/hone.git && \
+    git clone https://github.com/twaldin/harness.git && \
     ln -sf /home/portfolio/scripts/flt.sh /home/portfolio/projects/flt/flt.sh && \
     ln -sf /home/portfolio/scripts/agentelo.sh /home/portfolio/projects/agentelo/agentelo.sh && \
     ln -sf /home/portfolio/scripts/stm32-games.sh /home/portfolio/projects/stm32-games/stm32-games.sh && \
     ln -sf /home/portfolio/scripts/term-site.sh /home/portfolio/projects/term-site/term-site.sh && \
     ln -sf /home/portfolio/scripts/trade-up-bot.sh /home/portfolio/projects/trade-up-bot/trade-up-bot.sh && \
     ln -sf /home/portfolio/scripts/skyblock-qol.sh /home/portfolio/projects/SkyblockQOLmod/skyblock-qol.sh && \
+    ln -sf /home/portfolio/scripts/hone.sh /home/portfolio/projects/hone/hone.sh && \
+    ln -sf /home/portfolio/scripts/harness.sh /home/portfolio/projects/harness/harness.sh && \
     ln -sf /home/portfolio/scripts/dotfiles.sh /home/portfolio/.dotfiles/dotfiles.sh && \
     ln -sf /home/portfolio/.dotfiles /home/portfolio/projects/dotfiles
 
@@ -174,6 +178,8 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias term-site='cd ~/projects/term-site && /home/portfolio/scripts/term-site.sh'" >> /home/portfolio/.zshrc && \
     echo "alias trade-up-bot='cd ~/projects/trade-up-bot && /home/portfolio/scripts/trade-up-bot.sh'" >> /home/portfolio/.zshrc && \
     echo "alias skyblock-qol='cd ~/projects/SkyblockQOLmod && /home/portfolio/scripts/skyblock-qol.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias hone='cd ~/projects/hone && /home/portfolio/scripts/hone.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias harness='cd ~/projects/harness && /home/portfolio/scripts/harness.sh'" >> /home/portfolio/.zshrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \

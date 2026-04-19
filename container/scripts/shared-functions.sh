@@ -14,6 +14,24 @@ RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
 
+# emit_url <path>
+# Emits OSC 9999 — frontend Terminal.tsx intercepts via
+# xterm.parser.registerOscHandler(9999), strips the sequence, and calls
+# history.pushState so the browser URL tracks the active command.
+# Usage: emit_url "blog/2026-04-19-hone-haiku-20pp"
+emit_url() {
+  [[ -n "$1" ]] && printf '\033]9999;%s\033\\' "$1"
+}
+
+# emit_scroll_top
+# Emits OSC 9998 — frontend handler calls xterm.scrollToTop() so the viewport
+# parks at the first line of the most recent output. Use after long renders
+# (blog posts, help pages) where the default xterm auto-scroll-to-cursor
+# leaves the user staring at the bottom.
+emit_scroll_top() {
+  printf '\033]9998;\033\\'
+}
+
 typewriter() {
   local text="$1"
   local batch_size=1

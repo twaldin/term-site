@@ -27,14 +27,13 @@ body_after_frontmatter() {
 }
 
 # Pretty-render markdown. Prefer mdcat: emits OSC 8 hyperlinks so xterm.js
-# shows clickable link text without a raw URL next to it. Pipe through
-# `less -RFX`:
-#   -R  preserve ANSI color + OSC 8 hyperlink escapes
-#   -F  quit immediately if content fits on one screen (short posts → just print)
-#   -X  no init/deinit strings → skip alt-screen buffer switch (alt-screen was
-#       glow's -p default and caused the resize-duplication bug)
-# less default start position is the TOP, so every `blog <slug>` reliably shows
-# the post title first instead of xterm auto-scrolling to the cursor at EOF.
+# shows clickable link text without a raw URL next to it.
+#
+# No pager. Content goes straight to stdout so xterm's native scrollback
+# handles paging (wheel / j / k / arrows work throughout, not only after
+# you've paged to the end of a `less` buffer). After content, we emit
+# OSC 9998 — the frontend handler calls xterm.scrollToTop() so the viewport
+# always parks at the post title even on long posts.
 render_markdown() {
   local cols="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
   local width=$(( cols - 4 ))
@@ -42,14 +41,15 @@ render_markdown() {
   (( width > 140 )) && width=140
   clear
   if command -v mdcat >/dev/null 2>&1; then
-    mdcat --columns "$width" "$1" | less -RFX
+    mdcat --columns "$width" "$1"
   elif command -v glow >/dev/null 2>&1; then
-    glow -s dark -w "$width" "$1" | less -RFX
+    glow -s dark -w "$width" "$1"
   elif command -v bat >/dev/null 2>&1; then
-    bat --language=markdown --color=always "$1" | less -RFX
+    bat --language=markdown --color=always "$1"
   else
-    less -RFX "$1"
+    cat "$1"
   fi
+  emit_scroll_top
 }
 
 list_posts() {

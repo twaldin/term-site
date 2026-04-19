@@ -1,5 +1,6 @@
 #!/bin/bash
 source "$(dirname "$0")/shared-functions.sh"
+emit_url "contact"
 
 links_line="${RED}󰇮$(email_link "timothy@waldin.net" "timothy@waldin.net" "$RED")${RESET}    "
 links_line+="${YELLOW}$(hyperlink "github" "https://github.com/twaldin" "$YELLOW")${RESET}    "

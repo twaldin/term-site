@@ -1,5 +1,6 @@
 #!/bin/bash
 source "$(dirname "$0")/shared-functions.sh"
+emit_url "projects"
 
 clear
 echo ""
@@ -38,7 +39,25 @@ typewriter "   ${YELLOW}tech stack:${RESET} C, stm32, st7789 lcd screen, libopen
 typewriter "   ${DIM}type ${BOLD}\"stm32-games\" to view info and navigate${RESET}"
 echo ""
 
-typewriter "${GREEN}6. dotfiles${RESET}"
+typewriter "${GREEN}6. hone${RESET}"
+typewriter "   ${WHITE}GEPA prompt optimizer for coding CLIs — +20pp solve-rate lift on unseen bugs${RESET}"
+typewriter "   ${YELLOW}tech stack:${RESET} Python, GEPA/dspy, harness, agentelo"
+typewriter "   ${DIM}type ${BOLD}\"hone\" to view info and navigate${RESET}"
+echo ""
+
+typewriter "${GREEN}7. harness${RESET}"
+typewriter "   ${WHITE}unified python interface wrapping 6 AI coding CLIs behind one API${RESET}"
+typewriter "   ${YELLOW}tech stack:${RESET} Python, subprocess + per-CLI adapters"
+typewriter "   ${DIM}type ${BOLD}\"harness\" to view info and navigate${RESET}"
+echo ""
+
+typewriter "${GREEN}8. skyblock-qol${RESET}"
+typewriter "   ${WHITE}Hypixel Skyblock quality-of-life Minecraft mod${RESET}"
+typewriter "   ${YELLOW}tech stack:${RESET} Java, Forge, Minecraft modding"
+typewriter "   ${DIM}type ${BOLD}\"skyblock-qol\" to view info and navigate${RESET}"
+echo ""
+
+typewriter "${GREEN}9. dotfiles${RESET}"
 typewriter "   ${WHITE}development environment configuration files${RESET}"
 typewriter "   ${YELLOW}tools:${RESET} zsh, lazyvim, tmux, ghostty, etc"
 typewriter "   ${DIM}type ${BOLD}\"dotfiles\" to view info and navigate${RESET}"

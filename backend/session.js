@@ -181,8 +181,16 @@ class SessionManager {
         Env: [
           'TERM=xterm-256color',
           'PS1=portfolio@twaldin:$ ',
-          'COLUMNS=120',
-          'LINES=30'
+          // UTF-8 locale so less / cat / pagers treat multi-byte sequences
+          // (em-dash, box-drawing chars, nerd-font glyphs) as text rather
+          // than printing them as `<E2><80><94>` binary-escapes.
+          'LANG=C.UTF-8',
+          'LC_ALL=C.UTF-8'
+          // NOTE: COLUMNS / LINES intentionally NOT set here. Scripts that
+          // read them at startup would render at the wrong size until the
+          // first client resize lands (the "tiny nvim until you zoom once"
+          // bug). Size comes from the PTY via TIOCGWINSZ once we've applied
+          // the first resize from the client — see firstResizeApplied gate.
         ],
         WorkingDir: '/home/portfolio',
         User: 'portfolio',
@@ -221,23 +229,21 @@ class SessionManager {
         hijack: true
       });
 
-      // Track if we've sent the welcome command
-      let welcomeSent = false;
-
-      // Handle container output
+      // Handle container output. The initCommand (welcome / projects / etc)
+      // must not fire until BOTH (a) the shell prompt has appeared AND (b) the
+      // first resize has been applied to the PTY. Otherwise scripts render
+      // figlet boxes / nvim / blog output at the default 80x24 TTY size and
+      // the whole screen looks "small until you zoom once". The resizeTerminal
+      // handler below flips firstResizeApplied and also drives this gate.
       stream.on('data', (data) => {
         const output = data.toString();
         if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
           socket.emit('output', output);
 
-          // Check if the prompt has appeared and we haven't sent welcome yet
-          if (!welcomeSent && output.includes('~ ')) {
-            welcomeSent = true;
-            const cmd = this.sessions.get(sessionId)?.initCommand || 'welcome';
-            console.log(`Prompt detected for session ${sessionId}, auto-typing '${cmd}'...`);
-            setTimeout(() => {
-              this.autoTypeCommand(sessionId, cmd);
-            }, 200);
+          const session = this.sessions.get(sessionId);
+          if (session && !session.promptSeen && output.includes('~ ')) {
+            session.promptSeen = true;
+            this.maybeRunInitCommand(sessionId);
           }
         }
       });
@@ -258,9 +264,26 @@ class SessionManager {
         startTime: Date.now(),
         lastActivity: Date.now(),
         initCommand: initCommand,
+        // Gates for running the initCommand: both must be true before we
+        // auto-type anything. See stream.on('data') + resizeTerminal.
+        promptSeen: false,
+        firstResizeApplied: false,
+        initCommandRun: false,
       };
 
       this.sessions.set(sessionId, session);
+
+      // Safety net: if the client never sends a resize (shouldn't happen, but
+      // a half-broken client shouldn't deadlock the welcome screen), force
+      // the gate open after 2s so the user at least sees something.
+      setTimeout(() => {
+        const s = this.sessions.get(sessionId);
+        if (s && !s.firstResizeApplied) {
+          console.warn(`Session ${sessionId}: no resize within 2s, releasing initCommand gate`);
+          s.firstResizeApplied = true;
+          this.maybeRunInitCommand(sessionId);
+        }
+      }, 2000);
 
       // Set session timeout
       this.setSessionTimeout(sessionId);
@@ -320,9 +343,30 @@ class SessionManager {
     session.container.resize({
       h: rows,
       w: cols
+    }).then(() => {
+      if (!session.firstResizeApplied) {
+        session.firstResizeApplied = true;
+        this.maybeRunInitCommand(sessionId);
+      }
     }).catch((error) => {
       console.error(`Failed to resize container terminal for ${sessionId}:`, error);
     });
+  }
+
+  // Run the initCommand only once both the shell prompt has appeared AND the
+  // first client resize has been applied to the PTY. This avoids rendering
+  // welcome / nvim / blog at the default TTY size before the real viewport
+  // dimensions are known.
+  maybeRunInitCommand(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+    if (session.initCommandRun) return;
+    if (!session.promptSeen || !session.firstResizeApplied) return;
+
+    session.initCommandRun = true;
+    const cmd = session.initCommand || 'welcome';
+    console.log(`Session ${sessionId}: prompt+resize ready, auto-typing '${cmd}'`);
+    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 200);
   }
 
   async destroySession(sessionId) {

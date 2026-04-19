@@ -5,7 +5,7 @@ import { io, Socket } from 'socket.io-client';
 const ALLOWED_COMMANDS = new Set([
   'welcome', 'about', 'contact', 'resume', 'projects', 'help',
   'trade-up-bot', 'agentelo', 'flt', 'skyblock-qol', 'term-site',
-  'stm32-games', 'dotfiles', 'blog', 'home',
+  'stm32-games', 'dotfiles', 'hone', 'harness', 'blog', 'home',
 ]);
 
 // Project aliases that each correspond to a standalone script of the same
@@ -13,7 +13,7 @@ const ALLOWED_COMMANDS = new Set([
 // just running the projects-list script.
 const PROJECT_ALIASES = new Set([
   'flt', 'agentelo', 'trade-up-bot', 'skyblock-qol',
-  'term-site', 'stm32-games', 'dotfiles',
+  'term-site', 'stm32-games', 'dotfiles', 'hone', 'harness',
 ]);
 
 function pathToCommand(pathname: string): string | undefined {

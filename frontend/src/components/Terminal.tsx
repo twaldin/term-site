@@ -118,6 +118,26 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           xtermRef.current = xterm;
           fitAddonRef.current = fitAddon;
 
+          // OSC 9999 — shell scripts emit `\e]9999;<path>\e\\` on entry so the
+          // browser URL tracks the active command (bidirectional deep links).
+          const oscUrlDisposable = xterm.parser.registerOscHandler(9999, (data) => {
+            try {
+              const path = '/' + data.replace(/^\/+/, '');
+              if (typeof window !== 'undefined' && window.location.pathname !== path) {
+                window.history.pushState(null, '', path);
+              }
+            } catch { /* malformed — swallow, xterm still strips the seq */ }
+            return true;
+          });
+
+          // OSC 9998 — emitted by scripts after long renders (blog posts etc).
+          // Scrolls xterm viewport to top so the user starts at the first line
+          // instead of the cursor position at EOF.
+          const oscScrollTopDisposable = xterm.parser.registerOscHandler(9998, () => {
+            try { xterm.scrollToTop(); } catch { /* best-effort */ }
+            return true;
+          });
+
           // Flush buffered output that arrived before xterm was ready
           if (outputBufferRef.current.length > 0) {
             for (const chunk of outputBufferRef.current) {
@@ -223,6 +243,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               ),
             () => dataDisposable.dispose(),
             () => resizeDisposable.dispose(),
+            () => oscUrlDisposable.dispose(),
+            () => oscScrollTopDisposable.dispose(),
             () => xterm.dispose(),
           ];
         });

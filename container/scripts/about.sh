@@ -1,5 +1,6 @@
 #!/bin/bash
 source "$(dirname "$0")/shared-functions.sh"
+emit_url "about"
 
 echo ""
 create_box "About Me" "Hi, I'm Tim. I'm 19 and from San Francisco, CA, and
