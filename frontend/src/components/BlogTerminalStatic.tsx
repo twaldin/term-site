@@ -106,9 +106,10 @@ export default function BlogTerminalStatic({ slug, ansi, ansiMobile }: Props) {
       // The outer wrapper handles scroll position; don't let the capture's
       // OSC 9998 "scroll to top" reset our scroll, and silence OSC 9999
       // URL-sync since the cold page doesn't track it.
-      cleanups.push(xterm.parser.registerOscHandler(9998, () => true).dispose ? () => {} : () => {});
-      xterm.parser.registerOscHandler(9998, () => true);
-      xterm.parser.registerOscHandler(9999, () => true);
+      const oscScrollTop = xterm.parser.registerOscHandler(9998, () => true);
+      const oscUrlSync = xterm.parser.registerOscHandler(9999, () => true);
+      cleanups.push(() => oscScrollTop.dispose());
+      cleanups.push(() => oscUrlSync.dispose());
 
       // --- Playback: prompt + typewriter + captured ansi + final prompt ---
       xterm.write(PROMPT);
