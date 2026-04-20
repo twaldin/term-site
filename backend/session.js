@@ -382,6 +382,15 @@ class SessionManager {
     if (session.initCommandRun) return;
     if (!session.promptSeen || !session.firstResizeApplied) return;
 
+    // Empty-string initCommand is a deliberate "no-op" sentinel used by the
+    // blog cold page when it hands over to a live session — the page already
+    // shows blog content + user has typed, so we don't want to overwrite
+    // their input with a canned welcome/command run.
+    if (session.initCommand === '') {
+      session.initCommandRun = true;
+      return;
+    }
+
     session.initCommandRun = true;
     const cmd = session.initCommand || 'welcome';
     console.log(`Session ${sessionId}: prompt+resize ready, auto-typing '${cmd}'`);

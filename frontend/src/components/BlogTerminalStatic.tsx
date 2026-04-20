@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { terminalConfig } from "../config/terminal-theme";
 
 // Match the live Terminal's sizing math so captured-at-140-cols content fits.
@@ -10,6 +9,14 @@ const CHAR_WIDTH_RATIO = 0.6;
 const SAFETY_MARGIN = 0.95;
 const MIN_FONT_SIZE = 6;
 const MAX_FONT_SIZE = 24;
+
+// ANSI rendition of the zsh / oh-my-posh pure-modified prompt:
+//   red "portfolio"  light "~ "  \n  red "❯ "
+// Colors lifted from dotfiles/zsh/pure-modified.omp.json.
+const RED = "\x1b[38;2;204;36;29m";
+const LFG = "\x1b[38;2;251;241;199m";
+const RESET = "\x1b[0m";
+const PROMPT = `${RED}portfolio ${LFG}~ \r\n${RED}❯ ${RESET}`;
 
 function calculateFontSize(container: HTMLElement): number {
   const viewportWidth = window.innerWidth;
@@ -51,27 +58,28 @@ interface Props {
 
 export default function BlogTerminalStatic({ slug, ansi }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     if (!hostRef.current) return;
     let disposed = false;
     const cleanups: Array<() => void> = [];
 
-    // Parallelize font + xterm imports so we don't serialize the two big downloads.
+    // Parallelize font + xterm + socket.io downloads.
     Promise.all([
       loadNerdFont(),
       import("@xterm/xterm"),
       import("@xterm/addon-fit"),
       import("@xterm/addon-web-links"),
-    ]).then(([, xtermMod, fitMod, linksMod]) => {
+      import("socket.io-client"),
+    ]).then(([, xtermMod, fitMod, linksMod, ioMod]) => {
       if (disposed || !hostRef.current) return;
       const { Terminal } = xtermMod;
       const { FitAddon } = fitMod;
       const { WebLinksAddon } = linksMod;
+      const { io } = ioMod;
 
       const fontSize = calculateFontSize(hostRef.current);
-      const xterm = new Terminal({ ...terminalConfig, fontSize, disableStdin: false });
+      const xterm = new Terminal({ ...terminalConfig, fontSize });
       const fit = new FitAddon();
       xterm.loadAddon(fit);
 
@@ -82,25 +90,24 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
 
       xterm.open(hostRef.current);
 
-      // OSC 9998 scroll-to-top (same as live Terminal.tsx) — captured ANSI includes this.
+      // OSC 9998 scroll-to-top — captured ANSI emits this after the post body renders.
       const oscScrollTop = xterm.parser.registerOscHandler(9998, () => {
         try { xterm.scrollToTop(); } catch { /* best-effort */ }
         return true;
       });
       cleanups.push(() => oscScrollTop.dispose());
 
-      // Strip OSC 9999 (URL sync) — the live terminal pushes history; static doesn't need to.
+      // Strip OSC 9999 — URL sync belongs to the live terminal, not the cold page.
       const oscNoop = xterm.parser.registerOscHandler(9999, () => true);
       cleanups.push(() => oscNoop.dispose());
 
-      // Fit to viewport after DOM settles.
+      // Fit to viewport after layout settles.
       setTimeout(() => fit.fit(), 50);
       setTimeout(() => fit.fit(), 200);
 
-      // Fake prompt + typewriter "blog <slug>" + replay captured output.
-      const prompt = "\x1b[1;32m❯\x1b[0m ";
+      // --- Playback: real prompt + typewriter command + captured blog ANSI + real prompt.
       const cmd = `blog ${slug}`;
-      xterm.write(prompt);
+      xterm.write(PROMPT);
 
       let i = 0;
       const typeNext = () => {
@@ -111,26 +118,88 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
           setTimeout(typeNext, 60);
         } else {
           xterm.write("\r\n");
-          // Small beat so the "Enter" feels real, then dump the captured ANSI.
           setTimeout(() => {
             if (disposed) return;
             xterm.write(ansi);
-            setTimeout(() => xterm.write(`\r\n${prompt}`), 80);
+            // Backend's captured output includes the blog body; end with a
+            // fresh prompt so the idle state matches a live terminal.
+            setTimeout(() => xterm.write(`\r\n${PROMPT}`), 80);
           }, 120);
         }
       };
       setTimeout(typeNext, 300);
 
-      // Any key → hand off to the live terminal.
-      const dataDisposable = xterm.onData(() => {
-        router.push(`/t/blog/${encodeURIComponent(slug)}`);
+      // --- Seamless handover: first keystroke opens a WebSocket in place.
+      // We explicitly pass initCommand: '' so the backend does NOT auto-type
+      // welcome over the top of the blog content the user is looking at.
+      type SocketShape = {
+        connected: boolean;
+        on: (ev: string, cb: (...a: unknown[]) => void) => unknown;
+        emit: (ev: string, ...a: unknown[]) => unknown;
+        disconnect: () => unknown;
+      };
+      let socket: SocketShape | null = null;
+      let liveActive = false;
+      const inputBuf: string[] = [];
+
+      const startLive = () => {
+        if (liveActive) return;
+        liveActive = true;
+        const url =
+          typeof window !== "undefined"
+            ? `${window.location.protocol}//${window.location.host}`
+            : "";
+
+        socket = io(url, {
+          transports: ["websocket", "polling"],
+          timeout: 10000,
+          reconnection: true,
+          upgrade: true,
+          rememberUpgrade: true,
+          auth: { initCommand: "" },
+        }) as unknown as SocketShape;
+
+        socket.on("connect", () => {
+          // Send current terminal size so the backend PTY sizes correctly.
+          socket?.emit("resize", { cols: xterm.cols, rows: xterm.rows });
+        });
+        socket.on("output", (data) => {
+          if (typeof data === "string") xterm.write(data);
+        });
+        socket.on("disconnect", () => { liveActive = false; });
+
+        // Hand over previously-buffered keystrokes once the socket is open.
+        const flush = () => {
+          if (!socket?.connected) return setTimeout(flush, 30);
+          for (const ch of inputBuf.splice(0)) socket.emit("input", ch);
+        };
+        setTimeout(flush, 50);
+      };
+
+      const dataDisposable = xterm.onData((data) => {
+        if (liveActive && socket?.connected) {
+          socket.emit("input", data);
+        } else {
+          inputBuf.push(data);
+          startLive();
+        }
       });
       cleanups.push(() => dataDisposable.dispose());
+      cleanups.push(() => {
+        try { socket?.disconnect(); } catch { /* ignore */ }
+      });
 
-      // Click to focus (xterm needs focus for scrolling/selection).
+      // Forward future resizes too, once the live session is attached.
+      const resizeDisposable = xterm.onResize(({ cols, rows }) => {
+        if (liveActive && socket?.connected) socket.emit("resize", { cols, rows });
+      });
+      cleanups.push(() => resizeDisposable.dispose());
+
+      // Click to focus.
       const onClick = () => xterm.focus();
-      hostRef.current.addEventListener("click", onClick);
-      cleanups.push(() => hostRef.current?.removeEventListener("click", onClick));
+      const host = hostRef.current;
+      host.addEventListener("click", onClick);
+      cleanups.push(() => host.removeEventListener("click", onClick));
 
       // Responsive re-fit.
       let resizeT: ReturnType<typeof setTimeout>;
@@ -158,7 +227,7 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       disposed = true;
       for (const fn of cleanups) { try { fn(); } catch { /* ignore */ } }
     };
-  }, [slug, ansi, router]);
+  }, [slug, ansi]);
 
   return (
     <div
