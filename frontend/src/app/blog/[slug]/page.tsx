@@ -37,19 +37,12 @@ export default async function BlogPage({ params }: { params: Promise<{ slug: str
   if (!existsSync(filePath)) notFound();
   const { meta, body } = parseFrontmatter(readFileSync(filePath, 'utf-8'));
 
-  const allSlugs = existsSync(POSTS_DIR)
-    ? readdirSync(POSTS_DIR)
-        .filter(f => f.endsWith('.md'))
-        .map(f => f.slice(0, -3))
-    : [];
-
   return (
     <BlogUnifiedPage
       slug={slug}
       title={meta.title || slug}
       date={meta.date}
       body={body}
-      allSlugs={allSlugs}
     />
   );
 }
