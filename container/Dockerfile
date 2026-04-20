@@ -127,6 +127,11 @@ RUN mkdir -p /home/portfolio/.local/share/themes && \
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
     ln -sf /home/portfolio/.dotfiles/nvim /home/portfolio/.config/nvim && \
     ln -sf /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
+    # The OMP template renders `{{ .UserName }} {{ .Path }}` — replace the
+    # session-segment UserName with a literal "tim.waldin.net" so the prompt
+    # reads "tim.waldin.net ~" instead of "portfolio ~". We only touch the
+    # template string in the session segment, leaving everything else alone.
+    sed -i 's|{{ .UserName }}|tim.waldin.net|g' /home/portfolio/.dotfiles/zsh/pure-modified.omp.json && \
     # Strip typst-preview.nvim from the dotfiles init — it opens a system
     # browser for its live preview, which can't work inside the sandboxed
     # session container. Safe to drop without touching Tim's real dotfiles.

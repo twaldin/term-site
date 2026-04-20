@@ -45,7 +45,7 @@ class SessionManager {
       AttachStdin: true,
       Env: [
         'TERM=xterm-256color',
-        'PS1=portfolio@twaldin:$ ',
+        'PS1=tim.waldin.net:$ ',
         'LANG=C.UTF-8',
         'LC_ALL=C.UTF-8',
       ],
@@ -366,7 +366,7 @@ class SessionManager {
         AttachStdin: true,
         Env: [
           'TERM=xterm-256color',
-          'PS1=portfolio@twaldin:$ ',
+          'PS1=tim.waldin.net:$ ',
           // UTF-8 locale so less / cat / pagers treat multi-byte sequences
           // (em-dash, box-drawing chars, nerd-font glyphs) as text rather
           // than printing them as `<E2><80><94>` binary-escapes.

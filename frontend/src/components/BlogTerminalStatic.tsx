@@ -31,7 +31,7 @@ function pickRender(): { cols: number; fontSize: number } {
 const RED = "\x1b[38;2;204;36;29m";
 const LFG = "\x1b[38;2;251;241;199m";
 const RESET = "\x1b[0m";
-const PROMPT = `${RED}portfolio ${LFG}~ \r\n${RED}❯ ${RESET}`;
+const PROMPT = `${RED}tim.waldin.net ${LFG}~ \r\n${RED}❯ ${RESET}`;
 
 async function loadNerdFont(): Promise<void> {
   try {

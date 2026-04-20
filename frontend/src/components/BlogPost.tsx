@@ -143,7 +143,7 @@ export default function BlogPost({ slug, title, date, body }: Props) {
       <div style={{ maxWidth: '768px', margin: '0 auto', padding: '24px 14px' }}>
         {/* zsh / oh-my-posh pure-modified prompt — red user, light path, newline, red ❯ */}
         <div style={{ fontSize: '0.9rem', marginBottom: '1.25rem', userSelect: 'none' }}>
-          <span style={{ color: RED }}>portfolio </span>
+          <span style={{ color: RED }}>tim.waldin.net </span>
           <span style={{ color: '#fbf1c7' }}>~ </span>
           <br />
           <span style={{ color: RED }}>❯ </span>
@@ -192,7 +192,7 @@ export default function BlogPost({ slug, title, date, body }: Props) {
 
         {/* Idle prompt line — blinking cursor below the content */}
         <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', userSelect: 'none' }}>
-          <span style={{ color: RED }}>portfolio </span>
+          <span style={{ color: RED }}>tim.waldin.net </span>
           <span style={{ color: '#fbf1c7' }}>~ </span>
           <br />
           <span style={{ color: RED }}>❯ </span>
