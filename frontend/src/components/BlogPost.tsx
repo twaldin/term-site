@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
@@ -78,17 +79,17 @@ export default function BlogPost({ slug, title, date, body }: Props) {
         <div className="border-t border-gray-900 pt-6 text-sm text-gray-600">
           <div className="mb-3">
             <span className="text-gray-700">navigation — </span>
-            <a href="/" className="text-cyan-700 hover:text-cyan-500 mr-4">welcome</a>
-            <a href="/t/blog" className="text-cyan-700 hover:text-cyan-500 mr-4">blog</a>
-            <a href="/t/projects" className="text-cyan-700 hover:text-cyan-500 mr-4">projects</a>
-            <a href="/t/resume" className="text-cyan-700 hover:text-cyan-500">resume</a>
+            <Link href="/" className="text-cyan-700 hover:text-cyan-500 mr-4">welcome</Link>
+            <Link href="/t/blog" className="text-cyan-700 hover:text-cyan-500 mr-4">blog</Link>
+            <Link href="/t/projects" className="text-cyan-700 hover:text-cyan-500 mr-4">projects</Link>
+            <Link href="/t/resume" className="text-cyan-700 hover:text-cyan-500">resume</Link>
           </div>
-          <a
+          <Link
             href={`/t/blog/${terminalSlug}`}
             className="inline-block mt-2 text-green-700 hover:text-green-500 border border-green-900 hover:border-green-700 px-3 py-1 text-xs transition-colors"
           >
             ▸ open in terminal
-          </a>
+          </Link>
         </div>
 
         {/* idle prompt */}
