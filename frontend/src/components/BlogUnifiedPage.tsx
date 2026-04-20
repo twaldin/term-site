@@ -131,7 +131,8 @@ export default function BlogUnifiedPage({ slug, title, date, body }: Props) {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: '100%',
+        flex: 1,
         background: BG,
         color: FG,
         fontFamily:
@@ -154,7 +155,7 @@ export default function BlogUnifiedPage({ slug, title, date, body }: Props) {
           <strong style={{ color: FG, fontWeight: 'bold' }}>navigation</strong>
           <span> — </span>
           <Link href="/" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>
-            welcome
+            home
           </Link>
           <Link href="/t/blog" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>
             blog

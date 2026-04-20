@@ -198,7 +198,7 @@ render_post() {
     # Footer nav so readers always have an obvious way back. Rendered inside
     # the same mdcat pass so styling matches the post body.
     printf '\n\n---\n\n'
-    printf '**navigation** — `blog` all posts · `projects` project list · `welcome` home · `help` full command list\n'
+    printf '**navigation** — `blog` all posts · `projects` project list · `home` welcome screen · `help` full command list\n'
   } > "$tmp"
   render_markdown "$tmp"
   rm -f "$tmp"

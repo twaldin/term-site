@@ -40,7 +40,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="w-full h-screen bg-black overflow-hidden">
+    <div className="w-full flex-1 bg-black overflow-hidden" style={{ minHeight: 0 }}>
       <Terminal
         ref={terminalRef}
         onData={handleTerminalData}
