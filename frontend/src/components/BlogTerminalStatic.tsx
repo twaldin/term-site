@@ -129,9 +129,9 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       };
       setTimeout(typeNext, 300);
 
-      // --- Seamless handover: first keystroke opens a WebSocket in place.
-      // We explicitly pass initCommand: '' so the backend does NOT auto-type
-      // welcome over the top of the blog content the user is looking at.
+      // --- Seamless handover: first interaction opens a WebSocket in place.
+      // We pass initCommand: '' so the backend does NOT auto-type welcome over
+      // the top of the blog content the user is reading.
       type SocketShape = {
         connected: boolean;
         on: (ev: string, cb: (...a: unknown[]) => void) => unknown;
@@ -139,12 +139,21 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
         disconnect: () => unknown;
       };
       let socket: SocketShape | null = null;
-      let liveActive = false;
+      let warmed = false;            // socket requested (may still be connecting)
+      let handedOver = false;        // fake-prompt erased; live output may now render
       const inputBuf: string[] = [];
 
+      // Erase our 2-line fake prompt right before the backend's real output arrives,
+      // otherwise the reader sees two prompts stacked. PROMPT = "portfolio ~ \r\n❯ ".
+      const eraseFakePrompt = () => {
+        if (handedOver) return;
+        handedOver = true;
+        xterm.write("\r\x1b[2K\x1b[A\r\x1b[2K");
+      };
+
       const startLive = () => {
-        if (liveActive) return;
-        liveActive = true;
+        if (warmed) return;
+        warmed = true;
         const url =
           typeof window !== "undefined"
             ? `${window.location.protocol}//${window.location.host}`
@@ -160,15 +169,19 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
         }) as unknown as SocketShape;
 
         socket.on("connect", () => {
-          // Send current terminal size so the backend PTY sizes correctly.
           socket?.emit("resize", { cols: xterm.cols, rows: xterm.rows });
         });
         socket.on("output", (data) => {
-          if (typeof data === "string") xterm.write(data);
+          if (typeof data !== "string") return;
+          // First real output from the backend → erase our fake prompt so
+          // only the live prompt is visible.
+          eraseFakePrompt();
+          xterm.write(data);
         });
-        socket.on("disconnect", () => { liveActive = false; });
+        socket.on("disconnect", () => { warmed = false; });
 
-        // Hand over previously-buffered keystrokes once the socket is open.
+        // Once connected, flush anything the user typed before the socket
+        // finished opening.
         const flush = () => {
           if (!socket?.connected) return setTimeout(flush, 30);
           for (const ch of inputBuf.splice(0)) socket.emit("input", ch);
@@ -177,11 +190,11 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       };
 
       const dataDisposable = xterm.onData((data) => {
-        if (liveActive && socket?.connected) {
+        if (socket?.connected) {
           socket.emit("input", data);
         } else {
           inputBuf.push(data);
-          startLive();
+          startLive(); // in case warmup didn't trigger
         }
       });
       cleanups.push(() => dataDisposable.dispose());
@@ -189,17 +202,25 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
         try { socket?.disconnect(); } catch { /* ignore */ }
       });
 
-      // Forward future resizes too, once the live session is attached.
+      // Forward future resizes once live.
       const resizeDisposable = xterm.onResize(({ cols, rows }) => {
-        if (liveActive && socket?.connected) socket.emit("resize", { cols, rows });
+        if (socket?.connected) socket.emit("resize", { cols, rows });
       });
       cleanups.push(() => resizeDisposable.dispose());
 
-      // Click to focus.
-      const onClick = () => xterm.focus();
+      // Click is our deliberate-engagement signal: most passive blog readers
+      // never click the terminal, so we don't spin up a container for them.
+      // Users who DO click get the container warming up while they decide
+      // what to type — by the time a keystroke arrives, the backend prompt
+      // has usually already landed. (mouseenter/hover was too aggressive:
+      // it fires on every cursor sweep over the page.)
       const host = hostRef.current;
-      host.addEventListener("click", onClick);
-      cleanups.push(() => host.removeEventListener("click", onClick));
+      const onFirstTouch = () => {
+        xterm.focus();
+        startLive();
+      };
+      host.addEventListener("click", onFirstTouch);
+      cleanups.push(() => host.removeEventListener("click", onFirstTouch));
 
       // Responsive re-fit.
       let resizeT: ReturnType<typeof setTimeout>;
