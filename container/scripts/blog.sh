@@ -43,9 +43,11 @@ render_markdown() {
   t="$(tput cols 2>/dev/null)";                       [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
   t="$(stty size 2>/dev/null | awk '{print $2}')";    [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
   [[ "$COLUMNS" =~ ^[0-9]+$ ]]                     && (( COLUMNS > cols )) && cols=$COLUMNS
-  (( cols < 60 )) && cols=100
+  # Allow narrow renders for mobile captures (< 60 cols). Only fall back to
+  # the default when we truly couldn't determine a width.
+  (( cols < 20 )) && cols=100
   local width=$(( cols - 4 ))
-  (( width < 60 )) && width=60
+  (( width < 20 )) && width=20
   clear
   if command -v mdcat >/dev/null 2>&1; then
     mdcat --columns "$width" "$1"

@@ -2,41 +2,36 @@
 
 import { useEffect, useRef } from "react";
 import { terminalConfig } from "../config/terminal-theme";
-import { attachTouchScroll } from "../lib/xterm-touch";
 
-// Desktop fits 139 cols comfortably. On mobile viewports (< 768px), target
-// fewer cols so the font stays readable — lines wider than the viewport
-// simply wrap (xterm soft-wraps automatically), which is way better than
-// rendering the whole post at 6pt that nobody can read.
-const DESKTOP_CONTENT_WIDTH = 139;
-const MOBILE_CONTENT_WIDTH = 72;
+// Desktop + mobile captures live at two different widths so mobile blog
+// pages don't need horizontal scroll. Frontend chooses at runtime based on
+// viewport — the selected cols value MUST match the capture cols so mdcat's
+// tables / code blocks / lists land exactly as captured (no xterm rewrap).
+const DESKTOP_COLS = 140;
+const MOBILE_COLS = 48;
 const MOBILE_BREAKPOINT = 768;
-const CHAR_WIDTH_RATIO = 0.6;
-const SAFETY_MARGIN = 0.95;
-const MIN_FONT_SIZE = 10;
-const MAX_FONT_SIZE = 24;
 
-// ANSI rendition of the zsh / oh-my-posh pure-modified prompt:
-//   red "portfolio"  light "~ "  \n  red "❯ "
-// Colors lifted from dotfiles/zsh/pure-modified.omp.json.
+// Desktop: a fixed readable size. Mobile: computed so the whole 48-col
+// render fits exactly in the viewport width (no horizontal scroll).
+const DESKTOP_FONT_SIZE = 14;
+const CHAR_WIDTH_RATIO = 0.6;
+
+function pickRender(): { cols: number; fontSize: number } {
+  if (typeof window === "undefined") return { cols: DESKTOP_COLS, fontSize: DESKTOP_FONT_SIZE };
+  if (window.innerWidth >= MOBILE_BREAKPOINT) {
+    return { cols: DESKTOP_COLS, fontSize: DESKTOP_FONT_SIZE };
+  }
+  // Mobile: target whole-render-fits-viewport. Small safety padding.
+  const usable = Math.max(200, window.innerWidth - 16);
+  const fontSize = Math.max(11, Math.min(18, Math.floor(usable / MOBILE_COLS / CHAR_WIDTH_RATIO)));
+  return { cols: MOBILE_COLS, fontSize };
+}
+
+// ANSI rendition of the zsh / oh-my-posh pure-modified prompt.
 const RED = "\x1b[38;2;204;36;29m";
 const LFG = "\x1b[38;2;251;241;199m";
 const RESET = "\x1b[0m";
 const PROMPT = `${RED}portfolio ${LFG}~ \r\n${RED}❯ ${RESET}`;
-
-function calculateFontSize(container: HTMLElement): number {
-  const viewportWidth = window.innerWidth;
-  const documentWidth = document.documentElement.clientWidth;
-  const containerWidth = container.clientWidth;
-  const containerRect = container.getBoundingClientRect();
-  const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
-  const padding = Math.min(10, actualWidth * 0.02);
-  const usableWidth = actualWidth - padding;
-  const targetCols = viewportWidth < MOBILE_BREAKPOINT ? MOBILE_CONTENT_WIDTH : DESKTOP_CONTENT_WIDTH;
-  const theoretical = Math.floor((usableWidth / targetCols) / CHAR_WIDTH_RATIO);
-  const conservative = Math.floor(theoretical * SAFETY_MARGIN);
-  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, conservative));
-}
 
 async function loadNerdFont(): Promise<void> {
   try {
@@ -61,9 +56,10 @@ async function loadNerdFont(): Promise<void> {
 interface Props {
   slug: string;
   ansi: string;
+  ansiMobile: string;
 }
 
-export default function BlogTerminalStatic({ slug, ansi }: Props) {
+export default function BlogTerminalStatic({ slug, ansi, ansiMobile }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,24 +67,34 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
     let disposed = false;
     const cleanups: Array<() => void> = [];
 
-    // Parallelize font + xterm + socket.io downloads.
     Promise.all([
       loadNerdFont(),
       import("@xterm/xterm"),
-      import("@xterm/addon-fit"),
       import("@xterm/addon-web-links"),
       import("socket.io-client"),
-    ]).then(([, xtermMod, fitMod, linksMod, ioMod]) => {
+    ]).then(([, xtermMod, linksMod, ioMod]) => {
       if (disposed || !hostRef.current) return;
       const { Terminal } = xtermMod;
-      const { FitAddon } = fitMod;
       const { WebLinksAddon } = linksMod;
       const { io } = ioMod;
 
-      const fontSize = calculateFontSize(hostRef.current);
-      const xterm = new Terminal({ ...terminalConfig, fontSize });
-      const fit = new FitAddon();
-      xterm.loadAddon(fit);
+      const { cols, fontSize } = pickRender();
+      const activeAnsi = cols === MOBILE_COLS ? ansiMobile : ansi;
+
+      // Conservative upper bound for rows: captured ANSI line count + the
+      // typewriter / prompt lines. We resize down to actual used rows once
+      // the content finishes landing.
+      const estimatedLines = (activeAnsi.match(/\r?\n/g) || []).length + 20;
+      const initialRows = Math.max(80, estimatedLines);
+
+      const xterm = new Terminal({
+        ...terminalConfig,
+        cols,
+        rows: initialRows,
+        fontSize,
+        scrollback: 0,            // outer <div overflow:auto> owns scrolling
+        disableStdin: false,      // keystrokes still trigger live handover
+      });
 
       const openLink = (_e: MouseEvent, href: string) =>
         window.open(href, "_blank", "noopener,noreferrer");
@@ -97,28 +103,16 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
 
       xterm.open(hostRef.current);
 
-      // OSC 9998 scroll-to-top — captured ANSI emits this after the post body renders.
-      const oscScrollTop = xterm.parser.registerOscHandler(9998, () => {
-        try { xterm.scrollToTop(); } catch { /* best-effort */ }
-        return true;
-      });
-      cleanups.push(() => oscScrollTop.dispose());
+      // The outer wrapper handles scroll position; don't let the capture's
+      // OSC 9998 "scroll to top" reset our scroll, and silence OSC 9999
+      // URL-sync since the cold page doesn't track it.
+      cleanups.push(xterm.parser.registerOscHandler(9998, () => true).dispose ? () => {} : () => {});
+      xterm.parser.registerOscHandler(9998, () => true);
+      xterm.parser.registerOscHandler(9999, () => true);
 
-      // Strip OSC 9999 — URL sync belongs to the live terminal, not the cold page.
-      const oscNoop = xterm.parser.registerOscHandler(9999, () => true);
-      cleanups.push(() => oscNoop.dispose());
-
-      // Fit to viewport after layout settles.
-      setTimeout(() => fit.fit(), 50);
-      setTimeout(() => fit.fit(), 200);
-
-      // Mobile touch scroll (1:1 finger tracking + momentum).
-      cleanups.push(attachTouchScroll(xterm, hostRef.current));
-
-      // --- Playback: real prompt + typewriter command + captured blog ANSI + real prompt.
-      const cmd = `blog ${slug}`;
+      // --- Playback: prompt + typewriter + captured ansi + final prompt ---
       xterm.write(PROMPT);
-
+      const cmd = `blog ${slug}`;
       let i = 0;
       const typeNext = () => {
         if (disposed) return;
@@ -130,18 +124,26 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
           xterm.write("\r\n");
           setTimeout(() => {
             if (disposed) return;
-            xterm.write(ansi);
-            // Backend's captured output includes the blog body; end with a
-            // fresh prompt so the idle state matches a live terminal.
-            setTimeout(() => xterm.write(`\r\n${PROMPT}`), 80);
+            xterm.write(activeAnsi);
+            setTimeout(() => {
+              if (disposed) return;
+              xterm.write(`\r\n${PROMPT}`);
+              // After content lands, shrink rows to match actual used height
+              // so there's no giant empty area below the prompt.
+              setTimeout(() => {
+                if (disposed) return;
+                const used = xterm.buffer.active.cursorY + xterm.buffer.active.baseY + 2;
+                if (used > 5 && used < initialRows) {
+                  xterm.resize(cols, used);
+                }
+              }, 120);
+            }, 80);
           }, 120);
         }
       };
       setTimeout(typeNext, 300);
 
-      // --- Seamless handover: first interaction opens a WebSocket in place.
-      // We pass initCommand: '' so the backend does NOT auto-type welcome over
-      // the top of the blog content the user is reading.
+      // --- Seamless live handover on first keystroke (unchanged). ---
       type SocketShape = {
         connected: boolean;
         on: (ev: string, cb: (...a: unknown[]) => void) => unknown;
@@ -149,12 +151,10 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
         disconnect: () => unknown;
       };
       let socket: SocketShape | null = null;
-      let warmed = false;            // socket requested (may still be connecting)
-      let handedOver = false;        // fake-prompt erased; live output may now render
+      let warmed = false;
+      let handedOver = false;
       const inputBuf: string[] = [];
 
-      // Erase our 2-line fake prompt right before the backend's real output arrives,
-      // otherwise the reader sees two prompts stacked. PROMPT = "portfolio ~ \r\n❯ ".
       const eraseFakePrompt = () => {
         if (handedOver) return;
         handedOver = true;
@@ -164,11 +164,9 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       const startLive = () => {
         if (warmed) return;
         warmed = true;
-        const url =
-          typeof window !== "undefined"
-            ? `${window.location.protocol}//${window.location.host}`
-            : "";
-
+        const url = typeof window !== "undefined"
+          ? `${window.location.protocol}//${window.location.host}`
+          : "";
         socket = io(url, {
           transports: ["websocket", "polling"],
           timeout: 10000,
@@ -184,14 +182,8 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
         socket.on("output", (data) => {
           if (typeof data !== "string") return;
           const wasFirst = !handedOver;
-          // First real output from the backend → erase our fake prompt so
-          // only the live prompt is visible.
           eraseFakePrompt();
           xterm.write(data);
-          // Flush buffered keystrokes AFTER the backend prompt has been
-          // rendered, not on a timer. Guarantees the user's pre-connect
-          // keystrokes land in the live shell and aren't dropped during
-          // the prompt-replay window.
           if (wasFirst && inputBuf.length > 0 && socket?.connected) {
             for (const ch of inputBuf.splice(0)) socket.emit("input", ch);
           }
@@ -200,51 +192,11 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       };
 
       const dataDisposable = xterm.onData((data) => {
-        if (socket?.connected) {
-          socket.emit("input", data);
-        } else {
-          inputBuf.push(data);
-          startLive(); // in case warmup didn't trigger
-        }
+        if (socket?.connected) socket.emit("input", data);
+        else { inputBuf.push(data); startLive(); }
       });
       cleanups.push(() => dataDisposable.dispose());
-      cleanups.push(() => {
-        try { socket?.disconnect(); } catch { /* ignore */ }
-      });
-
-      // Forward future resizes once live.
-      const resizeDisposable = xterm.onResize(({ cols, rows }) => {
-        if (socket?.connected) socket.emit("resize", { cols, rows });
-      });
-      cleanups.push(() => resizeDisposable.dispose());
-
-      // Trigger is strictly the first keystroke — click is too noisy (tap to
-      // scroll on mobile, accidental clicks, etc.). With the backend pre-warmed
-      // pool, container assignment is effectively instant, so waiting for a
-      // real typing intent gives us clean signal without a UX cost.
-      const host = hostRef.current;
-      const onFocus = () => xterm.focus();
-      host.addEventListener("click", onFocus);
-      cleanups.push(() => host.removeEventListener("click", onFocus));
-
-      // Responsive re-fit.
-      let resizeT: ReturnType<typeof setTimeout>;
-      const onResize = () => {
-        clearTimeout(resizeT);
-        resizeT = setTimeout(() => {
-          if (!hostRef.current) return;
-          const next = calculateFontSize(hostRef.current);
-          if (Math.abs((xterm.options.fontSize || fontSize) - next) > 1) {
-            xterm.options.fontSize = next;
-          }
-          fit.fit();
-        }, 150);
-      };
-      window.addEventListener("resize", onResize);
-      cleanups.push(() => {
-        clearTimeout(resizeT);
-        window.removeEventListener("resize", onResize);
-      });
+      cleanups.push(() => { try { socket?.disconnect(); } catch { /* ignore */ } });
 
       cleanups.push(() => xterm.dispose());
     });
@@ -256,28 +208,31 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
   }, [slug, ansi]);
 
   return (
+    // Outer scroll wrapper — native browser scroll gives us butter-smooth
+    // iOS momentum, proper pinch-to-zoom, and no custom touch handler to
+    // maintain. Scroll is constrained to this area (not the page body).
     <div
       style={{
         width: "100vw",
         height: "100vh",
-        margin: 0,
-        padding: "6px 14px",
-        boxSizing: "border-box",
+        overflow: "auto",
+        WebkitOverflowScrolling: "touch",
         backgroundColor: terminalConfig.theme.background,
-        position: "absolute",
+        position: "fixed",
         top: 0,
         left: 0,
       }}
     >
+      {/* xterm mounts at its natural 140-cols-wide canvas size. The inline-
+          block shrink-wrap lets the wrapper's overflow:auto correctly
+          compute horizontal scroll. */}
       <div
         ref={hostRef}
         style={{
-          width: "100%",
-          height: "100%",
-          margin: 0,
-          padding: 0,
+          display: "inline-block",
+          padding: "8px 12px",
+          minWidth: "100%",
           boxSizing: "border-box",
-          backgroundColor: terminalConfig.theme.background,
         }}
       />
     </div>

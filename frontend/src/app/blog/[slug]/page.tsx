@@ -36,14 +36,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  // Preferred: terminal-aesthetic xterm with pre-captured ANSI output.
-  const snapshotPath = join(SNAPSHOTS_DIR, `${slug}.ansi`);
-  if (existsSync(snapshotPath)) {
-    const ansi = readFileSync(snapshotPath, 'utf-8');
-    return <BlogTerminalStatic slug={slug} ansi={ansi} />;
+  // Preferred: xterm with pre-captured ANSI — two widths (desktop 140 cols,
+  // mobile 48 cols) so narrow screens don't suffer horizontal scroll and
+  // don't wrap-artifact tables. Frontend picks at runtime based on viewport.
+  const desktopPath = join(SNAPSHOTS_DIR, `${slug}.ansi`);
+  const mobilePath = join(SNAPSHOTS_DIR, `${slug}.mobile.ansi`);
+  if (existsSync(desktopPath)) {
+    const ansi = readFileSync(desktopPath, 'utf-8');
+    const ansiMobile = existsSync(mobilePath) ? readFileSync(mobilePath, 'utf-8') : ansi;
+    return <BlogTerminalStatic slug={slug} ansi={ansi} ansiMobile={ansiMobile} />;
   }
 
-  // Fallback: markdown-as-HTML (for posts without a captured snapshot).
+  // Fallback: markdown-as-HTML (for posts without any captured snapshot).
   const filePath = join(POSTS_DIR, `${slug}.md`);
   if (!existsSync(filePath)) notFound();
   const { meta, body } = parseFrontmatter(readFileSync(filePath, 'utf-8'));

@@ -15,7 +15,11 @@ set -euo pipefail
 
 VPS="${VPS:-root@tim.waldin.net}"
 IMAGE="${IMAGE:-twaldin/terminal-portfolio:latest}"
-COLS="${COLS:-140}"
+# Two widths — desktop keeps the full 140-col render (tables fit comfortably),
+# mobile renders narrower so blog pages don't need horizontal scroll on
+# phones. Frontend picks at runtime based on viewport.
+DESKTOP_COLS="${DESKTOP_COLS:-140}"
+MOBILE_COLS="${MOBILE_COLS:-48}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="$ROOT/frontend/public/blog-snapshots"
@@ -33,28 +37,38 @@ else
   done
 fi
 
-for slug in "${slugs[@]}"; do
-  echo "Capturing: $slug"
+capture_one() {
+  local slug="$1" cols="$2" out="$3"
+  local tmp
   tmp=$(mktemp)
   if ssh "$VPS" "docker run --rm -t \
-    -e COLUMNS=$COLS \
+    -e COLUMNS=$cols \
     -e LINES=40 \
     -e TERM=xterm-256color \
     --entrypoint /home/portfolio/scripts/blog.sh \
     $IMAGE \
     $slug" > "$tmp" 2>/dev/null; then
+    local size
     size=$(wc -c < "$tmp")
     if [ "$size" -gt 100 ] && ! grep -q "no post with slug" "$tmp" 2>/dev/null; then
-      mv "$tmp" "$OUT_DIR/$slug.ansi"
-      echo "  → $OUT_DIR/$slug.ansi ($size bytes)"
-    else
-      rm -f "$tmp"
-      echo "  skipped: post not in container image (rebuild needed)"
+      mv "$tmp" "$out"
+      echo "  → $out ($size bytes, ${cols} cols)"
+      return 0
     fi
-  else
-    rm -f "$tmp"
-    echo "  failed"
   fi
+  rm -f "$tmp"
+  return 1
+}
+
+for slug in "${slugs[@]}"; do
+  echo "Capturing: $slug"
+
+  if ! capture_one "$slug" "$DESKTOP_COLS" "$OUT_DIR/$slug.ansi"; then
+    echo "  desktop capture failed (post not in image?) — skipping"
+    continue
+  fi
+  capture_one "$slug" "$MOBILE_COLS" "$OUT_DIR/$slug.mobile.ansi" \
+    || echo "  (mobile capture failed — frontend will fall back to desktop ansi)"
 done
 
 echo ""
