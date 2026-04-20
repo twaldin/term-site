@@ -49,5 +49,7 @@ dist/
 build/
 
 # Docker
-.dockerignore.playwright-mcp/
+.dockerignore
+.playwright-mcp/
 mobile-blog-*.png
+state.md

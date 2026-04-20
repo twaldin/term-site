@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { notFound } from 'next/navigation';
 import BlogPost from '@/components/BlogPost';
-import BlogTerminalStatic from '@/components/BlogTerminalStatic';
+import BlogRouter from '@/components/BlogRouter';
 
 const POSTS_DIR = join(process.cwd(), 'blog-posts');
 const SNAPSHOTS_DIR = join(process.cwd(), 'public', 'blog-snapshots');
@@ -36,27 +36,40 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  // Preferred: xterm with pre-captured ANSI — two widths (desktop 140 cols,
-  // mobile 48 cols) so narrow screens don't suffer horizontal scroll and
-  // don't wrap-artifact tables. Frontend picks at runtime based on viewport.
-  const desktopPath = join(SNAPSHOTS_DIR, `${slug}.ansi`);
-  const mobilePath = join(SNAPSHOTS_DIR, `${slug}.mobile.ansi`);
-  if (existsSync(desktopPath)) {
-    const ansi = readFileSync(desktopPath, 'utf-8');
-    const ansiMobile = existsSync(mobilePath) ? readFileSync(mobilePath, 'utf-8') : ansi;
-    return <BlogTerminalStatic slug={slug} ansi={ansi} ansiMobile={ansiMobile} />;
-  }
-
-  // Fallback: markdown-as-HTML (for posts without any captured snapshot).
+  // Load the raw markdown (mobile renders it with react-markdown — proper
+  // word-wrap, real HTML tables, styled code blocks) + both ANSI captures
+  // (desktop uses the 140-col terminal xterm playback). BlogRouter picks at
+  // runtime based on window.innerWidth.
   const filePath = join(POSTS_DIR, `${slug}.md`);
   if (!existsSync(filePath)) notFound();
   const { meta, body } = parseFrontmatter(readFileSync(filePath, 'utf-8'));
+
+  const desktopPath = join(SNAPSHOTS_DIR, `${slug}.ansi`);
+  const mobilePath = join(SNAPSHOTS_DIR, `${slug}.mobile.ansi`);
+
+  // No desktop snapshot yet → markdown-as-HTML for everyone until captures land.
+  if (!existsSync(desktopPath)) {
+    return (
+      <BlogPost
+        slug={slug}
+        title={meta.title || slug}
+        date={meta.date}
+        body={body}
+      />
+    );
+  }
+
+  const ansi = readFileSync(desktopPath, 'utf-8');
+  const ansiMobile = existsSync(mobilePath) ? readFileSync(mobilePath, 'utf-8') : ansi;
+
   return (
-    <BlogPost
+    <BlogRouter
       slug={slug}
       title={meta.title || slug}
       date={meta.date}
       body={body}
+      ansi={ansi}
+      ansiMobile={ansiMobile}
     />
   );
 }
