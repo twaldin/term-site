@@ -63,13 +63,13 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           // Create font face objects for the fonts we need
           const nerdFont = new FontFace(
             'JetBrainsMono Nerd Font Mono',
-            'url(/fonts/JetBrainsMonoNerdFontMono-Regular.ttf)',
+            'url(/fonts/JetBrainsMonoNerdFontMono-Regular.woff2) format("woff2"), url(/fonts/JetBrainsMonoNerdFontMono-Regular.ttf) format("truetype")',
             { weight: 'normal', style: 'normal' }
           );
-          
+
           const nerdFontBold = new FontFace(
             'JetBrainsMono Nerd Font Mono',
-            'url(/fonts/JetBrainsMonoNerdFontMono-Bold.ttf)',
+            'url(/fonts/JetBrainsMonoNerdFontMono-Bold.woff2) format("woff2"), url(/fonts/JetBrainsMonoNerdFontMono-Bold.ttf) format("truetype")',
             { weight: 'bold', style: 'normal' }
           );
 

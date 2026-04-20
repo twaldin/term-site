@@ -21,7 +21,8 @@
 /* Monospace Variant (all glyphs same width) */
 @font-face {
   font-family: 'JetBrainsMono Nerd Font Mono';
-  src: url('./JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
+  src: url('./JetBrainsMonoNerdFontMono-Regular.woff2') format('woff2'),
+       url('./JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -29,7 +30,8 @@
 
 @font-face {
   font-family: 'JetBrainsMono Nerd Font Mono';
-  src: url('./JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
+  src: url('./JetBrainsMonoNerdFontMono-Bold.woff2') format('woff2'),
+       url('./JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
