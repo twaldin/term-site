@@ -14,7 +14,8 @@ _t="$(stty size 2>/dev/null | awk '{print $2}')"; [[ "$_t" =~ ^[0-9]+$ ]] && (( 
 [[ "$COLUMNS" =~ ^[0-9]+$ ]]                  && (( COLUMNS > _cols )) && _cols=$COLUMNS
 (( _cols < 10 )) && _cols=80
 
-if (( _cols >= 55 )); then
+# DOS_Rebel "twaldin" is 70 chars wide — need ≥ 75 cols to avoid wrap.
+if (( _cols >= 75 )); then
   ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
 else
   typewriter "${BOLD}${RED}twaldin${RESET}"
