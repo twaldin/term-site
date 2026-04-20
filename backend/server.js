@@ -3,6 +3,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const SessionManager = require('./session');
+const logger = require('./logger');
+const adminRouter = require('./admin');
 
 const app = express();
 const server = http.createServer(app);
@@ -36,6 +38,9 @@ const io = socketIo(server, {
 
 // Initialize session manager
 const sessionManager = new SessionManager();
+
+// Per-socket command buffer for audit logging (raw chars → full commands)
+const cmdBufs = new Map();
 
 // Per-IP rate limiting for connections
 const connectionTracker = new Map();
@@ -76,6 +81,16 @@ io.on('connection', (socket) => {
     ? socket.handshake.auth.initCommand
     : undefined;
 
+  logger.append({
+    type: 'session_start',
+    id: socket.id,
+    ip: clientIP,
+    ua: socket.handshake.headers['user-agent'] || '',
+    referrer: socket.handshake.headers['referer'] || socket.handshake.headers['referrer'] || '',
+    initCommand: initCommand || '',
+  });
+  cmdBufs.set(socket.id, '');
+
   // Create new terminal session
   sessionManager.createSession(socket.id, socket, initCommand)
     .then(() => {
@@ -92,6 +107,20 @@ io.on('connection', (socket) => {
     if (typeof data !== 'string' || data.length > 1024) {
       return;
     }
+    // Buffer printable chars; emit completed command on Enter
+    let buf = cmdBufs.get(socket.id) || '';
+    for (const ch of data) {
+      if (ch === '\r' || ch === '\n') {
+        const cmd = buf.trim();
+        if (cmd) logger.append({ type: 'command', id: socket.id, cmd });
+        buf = '';
+      } else if (ch === '\x7f' || ch === '\x08') {
+        buf = buf.slice(0, -1);
+      } else if (ch >= ' ' && ch <= '~') {
+        buf += ch;
+      }
+    }
+    cmdBufs.set(socket.id, buf);
     sessionManager.sendInput(socket.id, data);
   });
 
@@ -105,6 +134,8 @@ io.on('connection', (socket) => {
   // Handle client disconnect
   socket.on('disconnect', (reason) => {
     console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+    logger.append({ type: 'session_end', id: socket.id, reason });
+    cmdBufs.delete(socket.id);
     sessionManager.destroySession(socket.id);
   });
 
@@ -132,6 +163,9 @@ app.get('/stats', (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// Admin panel
+app.use('/admin', adminRouter);
 
 // Periodic orphan cleanup every 60 seconds
 setInterval(() => {

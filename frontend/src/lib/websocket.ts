@@ -23,8 +23,10 @@ const BLOCKED_HEADS = new Set([
 const SAFE_CMD_RE = /^[A-Za-z0-9 ._/+=:,@-]+$/;
 
 function pathToCommand(pathname: string): string | undefined {
-  const clean = pathname.replace(/^\/+|\/+$/g, '');
+  let clean = pathname.replace(/^\/+|\/+$/g, '');
   if (!clean) return undefined; // '/' → default welcome
+  // /t/<command> prefix forces live terminal (used by static blog pages)
+  if (clean.startsWith('t/')) clean = clean.slice(2);
 
   // Legacy pretty URL: /projects/<alias> → just <alias>. Lets old links
   // keep working after we switched to universal command sync.

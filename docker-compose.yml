@@ -21,8 +21,8 @@ services:
   # Next.js frontend — isolated network, no internet access
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.production
+      context: .
+      dockerfile: frontend/Dockerfile.production
     container_name: term-frontend
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:3001
@@ -71,6 +71,10 @@ services:
       - NODE_ENV=production
       - FRONTEND_URL=http://frontend:3000
       - DOCKER_HOST=tcp://socket-proxy:2375
+      - ADMIN_EMAIL=timothy@waldin.net
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      - backend_data:/app/data
     expose:
       - "3001"
     restart: unless-stopped
@@ -92,3 +96,6 @@ networks:
   docker-net:
     driver: bridge
     internal: true
+
+volumes:
+  backend_data:

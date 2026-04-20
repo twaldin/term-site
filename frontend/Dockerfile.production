@@ -2,12 +2,13 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files (build context is repo root)
+COPY frontend/package*.json ./
 RUN npm ci
 
-# Copy source code
-COPY . .
+# Copy frontend source + blog posts for static generation
+COPY frontend/ .
+COPY container/blog/posts/ ./blog-posts/
 
 # Build the Next.js app
 RUN npm run build
