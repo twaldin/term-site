@@ -2,12 +2,18 @@
 
 import { useEffect, useRef } from "react";
 import { terminalConfig } from "../config/terminal-theme";
+import { attachTouchScroll } from "../lib/xterm-touch";
 
-// Match the live Terminal's sizing math so captured-at-140-cols content fits.
-const CONTENT_WIDTH = 139;
+// Desktop fits 139 cols comfortably. On mobile viewports (< 768px), target
+// fewer cols so the font stays readable — lines wider than the viewport
+// simply wrap (xterm soft-wraps automatically), which is way better than
+// rendering the whole post at 6pt that nobody can read.
+const DESKTOP_CONTENT_WIDTH = 139;
+const MOBILE_CONTENT_WIDTH = 72;
+const MOBILE_BREAKPOINT = 768;
 const CHAR_WIDTH_RATIO = 0.6;
 const SAFETY_MARGIN = 0.95;
-const MIN_FONT_SIZE = 6;
+const MIN_FONT_SIZE = 10;
 const MAX_FONT_SIZE = 24;
 
 // ANSI rendition of the zsh / oh-my-posh pure-modified prompt:
@@ -26,7 +32,8 @@ function calculateFontSize(container: HTMLElement): number {
   const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
   const padding = Math.min(10, actualWidth * 0.02);
   const usableWidth = actualWidth - padding;
-  const theoretical = Math.floor((usableWidth / CONTENT_WIDTH) / CHAR_WIDTH_RATIO);
+  const targetCols = viewportWidth < MOBILE_BREAKPOINT ? MOBILE_CONTENT_WIDTH : DESKTOP_CONTENT_WIDTH;
+  const theoretical = Math.floor((usableWidth / targetCols) / CHAR_WIDTH_RATIO);
   const conservative = Math.floor(theoretical * SAFETY_MARGIN);
   return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, conservative));
 }
@@ -104,6 +111,9 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       // Fit to viewport after layout settles.
       setTimeout(() => fit.fit(), 50);
       setTimeout(() => fit.fit(), 200);
+
+      // Mobile touch scroll (1:1 finger tracking + momentum).
+      cleanups.push(attachTouchScroll(xterm, hostRef.current));
 
       // --- Playback: real prompt + typewriter command + captured blog ANSI + real prompt.
       const cmd = `blog ${slug}`;

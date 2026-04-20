@@ -7,11 +7,17 @@ import {
   useRef,
 } from "react";
 import { terminalConfig } from "../config/terminal-theme";
+import { attachTouchScroll } from "../lib/xterm-touch";
 
-const CONTENT_WIDTH = 139; // Max terminal content width in characters
+// Desktop fits 139 cols. On mobile viewports (< 768px), target fewer cols
+// so the font stays readable — lines longer than the viewport wrap, which
+// is far better than rendering everything at 6pt.
+const DESKTOP_CONTENT_WIDTH = 139;
+const MOBILE_CONTENT_WIDTH = 72;
+const MOBILE_BREAKPOINT = 768;
 const CHAR_WIDTH_RATIO = 0.6;
 const SAFETY_MARGIN = 0.95;
-const MIN_FONT_SIZE = 6;
+const MIN_FONT_SIZE = 10;
 const MAX_FONT_SIZE = 24;
 
 function calculateFontSize(container: HTMLElement): number {
@@ -22,7 +28,8 @@ function calculateFontSize(container: HTMLElement): number {
   const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
   const padding = Math.min(10, actualWidth * 0.02);
   const usableWidth = actualWidth - padding;
-  const theoretical = Math.floor((usableWidth / CONTENT_WIDTH) / CHAR_WIDTH_RATIO);
+  const targetCols = viewportWidth < MOBILE_BREAKPOINT ? MOBILE_CONTENT_WIDTH : DESKTOP_CONTENT_WIDTH;
+  const theoretical = Math.floor((usableWidth / targetCols) / CHAR_WIDTH_RATIO);
   const conservative = Math.floor(theoretical * SAFETY_MARGIN);
   return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, conservative));
 }
@@ -162,6 +169,9 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           const currentTerminalElement = terminalRef.current;
           currentTerminalElement.addEventListener("click", handleClick);
 
+          // Mobile touch scroll (1:1 finger tracking + momentum).
+          const detachTouch = attachTouchScroll(xterm, currentTerminalElement);
+
           const handlePaste = async (event: ClipboardEvent) => {
             event.preventDefault();
             try {
@@ -227,6 +237,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           }, 200);
 
           cleanupFunctions = [
+            detachTouch,
             () => {
               clearTimeout(resizeTimeout);
               window.removeEventListener("resize", handleResize);
