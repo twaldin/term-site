@@ -56,7 +56,6 @@ export function attachTouchScroll(xterm: Terminal, host: HTMLElement): () => voi
     lastMoveY = touchStartY;
     lastMoveTime = performance.now();
     velocity = 0;
-    accumLines = 0;
     isDragging = false;
   };
 
