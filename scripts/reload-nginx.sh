@@ -18,7 +18,7 @@ require_vps_reachable
 
 log_step "reload nginx on ${VPS}"
 ensure_deploy_owned
-on_vps_deploy 'git pull --rebase 2>&1 | tail -5'
+on_vps_deploy "sudo -u ${DEPLOY_USER} git pull --rebase 2>&1 | tail -5"
 
 log_info "nginx -t (syntax check)..."
 if ! on_vps 'docker exec term-nginx nginx -t 2>&1'; then

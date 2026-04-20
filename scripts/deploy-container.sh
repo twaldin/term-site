@@ -23,7 +23,7 @@ done
 
 log_step "rebuilding portfolio container: ${IMAGE}"
 ensure_deploy_owned
-on_vps_deploy 'git pull --rebase 2>&1 | tail -5'
+on_vps_deploy "sudo -u ${DEPLOY_USER} git pull --rebase 2>&1 | tail -5"
 
 if (( PULL_BASE )); then
   log_info "pulling base image..."

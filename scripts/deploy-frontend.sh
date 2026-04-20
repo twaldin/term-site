@@ -35,7 +35,10 @@ log_step "deploying frontend to ${VPS}"
 ensure_deploy_owned
 
 log_info "pulling latest..."
-on_vps_deploy 'git pull --rebase 2>&1 | tail -5'
+# Run git as the deploy user: when the SSH session is root, git refuses to
+# touch a repo owned by deploy ("unsafe directory"), silently bailing and
+# leaving the VPS stuck at an older commit.
+on_vps_deploy "sudo -u ${DEPLOY_USER} git pull --rebase 2>&1 | tail -5"
 
 log_info "rebuilding frontend container (Next.js build runs here)..."
 on_vps_deploy 'docker compose up -d --no-deps --build frontend 2>&1 | tail -10'

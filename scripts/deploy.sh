@@ -76,7 +76,8 @@ log_info "ensuring ${DEPLOY_PATH} is owned by ${DEPLOY_USER}..."
 maybe_run "ensure_deploy_owned"
 
 log_info "pulling latest on VPS..."
-maybe_run "on_vps_deploy 'git pull --rebase 2>&1 | tail -5'"
+# sudo to DEPLOY_USER — root trips git's "unsafe directory" check.
+maybe_run "on_vps_deploy \"sudo -u ${DEPLOY_USER} git pull --rebase 2>&1 | tail -5\""
 
 # ---- Detect what changed -----------------------------------------------------
 
