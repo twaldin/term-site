@@ -3,40 +3,118 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 
+// Gruvbox Dark — exact hex values that xterm's terminalTheme uses so the
+// mobile HTML view is visually identical to the desktop xterm view.
+const BG = '#1d2021';
+const FG = '#ebdbb2';
+const DIM = '#928374';
+const RED = '#cc241d';
+const BRIGHT_RED = '#fb4934';
+const BRIGHT_GREEN = '#b8bb26';
+const BRIGHT_YELLOW = '#fabd2f';
+const BRIGHT_BLUE = '#83a598';
+const BRIGHT_CYAN = '#8ec07c';
+const YELLOW = '#d79921';
+const CODE_BG = '#282828';      // Gruvbox "soft" background, subtle contrast to hard BG
+const CODE_BORDER = '#3c3836';
+
 const components: Components = {
-  h1: ({ children }) => <h1 className="text-green-400 text-xl font-bold mt-6 mb-3">{children}</h1>,
-  h2: ({ children }) => <h2 className="text-green-400 text-lg font-bold mt-5 mb-2 border-b border-gray-800 pb-1">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-green-300 font-bold mt-4 mb-2">{children}</h3>,
-  p: ({ children }) => <p className="text-gray-300 mb-4 leading-relaxed">{children}</p>,
+  // Headings match mdcat's bold blue for h1 and slightly dimmer hues for h2/h3.
+  h1: ({ children }) => (
+    <h1 style={{ color: BRIGHT_BLUE, fontWeight: 'bold', fontSize: '1.5rem', lineHeight: 1.25, marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 style={{ color: BRIGHT_YELLOW, fontWeight: 'bold', fontSize: '1.125rem', marginTop: '1.5rem', marginBottom: '0.5rem' }}>{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 style={{ color: BRIGHT_GREEN, fontWeight: 'bold', fontSize: '1rem', marginTop: '1rem', marginBottom: '0.5rem' }}>{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p style={{ color: FG, marginBottom: '1rem', lineHeight: 1.55 }}>{children}</p>
+  ),
   a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: BRIGHT_CYAN, textDecoration: 'underline', textUnderlineOffset: 2 }}
+    >
       {children}
     </a>
   ),
   code: ({ children, className }) => {
     const isBlock = className?.startsWith('language-');
-    return isBlock
-      ? <code className="block bg-gray-900 text-cyan-300 rounded px-4 py-3 overflow-x-auto text-sm whitespace-pre">{children}</code>
-      : <code className="bg-gray-900 text-cyan-300 rounded px-1.5 py-0.5 text-sm">{children}</code>;
+    if (isBlock) {
+      // NOTE: whitespace-pre-wrap instead of pre — lines wrap on mobile so
+      // the block never pushes the page wider than the viewport. overflow-
+      // wrap:anywhere lets very long tokens (URLs, slugs) break as needed.
+      return (
+        <code
+          style={{
+            display: 'block',
+            background: CODE_BG,
+            color: BRIGHT_YELLOW,
+            border: `1px solid ${CODE_BORDER}`,
+            borderRadius: 4,
+            padding: '12px 14px',
+            fontSize: '0.85rem',
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+          }}
+        >
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code
+        style={{
+          background: CODE_BG,
+          color: BRIGHT_YELLOW,
+          padding: '1px 6px',
+          borderRadius: 3,
+          fontSize: '0.9em',
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word',
+        }}
+      >
+        {children}
+      </code>
+    );
   },
-  pre: ({ children }) => <pre className="mb-4">{children}</pre>,
+  pre: ({ children }) => <pre style={{ marginBottom: '1rem' }}>{children}</pre>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-green-700 pl-4 text-gray-400 italic my-4">{children}</blockquote>
+    <blockquote
+      style={{
+        borderLeft: `2px solid ${DIM}`,
+        paddingLeft: '1rem',
+        color: DIM,
+        fontStyle: 'italic',
+        margin: '1rem 0',
+      }}
+    >
+      {children}
+    </blockquote>
   ),
-  ul: ({ children }) => <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1 ml-2">{children}</ul>,
-  ol: ({ children }) => <ol className="list-decimal list-inside text-gray-300 mb-4 space-y-1 ml-2">{children}</ol>,
-  li: ({ children }) => <li className="text-gray-300">{children}</li>,
-  hr: () => <hr className="border-gray-800 my-6" />,
+  ul: ({ children }) => <ul style={{ listStyle: 'disc', listStylePosition: 'outside', marginBottom: '1rem', paddingLeft: '1.5rem', color: FG }}>{children}</ul>,
+  ol: ({ children }) => <ol style={{ listStyle: 'decimal', listStylePosition: 'outside', marginBottom: '1rem', paddingLeft: '1.5rem', color: FG }}>{children}</ol>,
+  li: ({ children }) => <li style={{ color: FG, marginBottom: '0.25rem' }}>{children}</li>,
+  hr: () => <hr style={{ border: 'none', borderTop: `1px solid ${CODE_BORDER}`, margin: '1.5rem 0' }} />,
   table: ({ children }) => (
-    <div className="overflow-x-auto mb-4">
-      <table className="w-full border-collapse text-sm">{children}</table>
+    <div style={{ overflowX: 'auto', marginBottom: '1rem', WebkitOverflowScrolling: 'touch' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="border-b border-gray-700">{children}</thead>,
-  th: ({ children }) => <th className="text-left text-green-400 px-3 py-2 font-medium">{children}</th>,
-  td: ({ children }) => <td className="text-gray-300 px-3 py-2 border-b border-gray-900">{children}</td>,
-  strong: ({ children }) => <strong className="text-gray-100 font-semibold">{children}</strong>,
-  em: ({ children }) => <em className="text-gray-400 italic">{children}</em>,
+  thead: ({ children }) => <thead style={{ borderBottom: `1px solid ${DIM}` }}>{children}</thead>,
+  th: ({ children }) => (
+    <th style={{ textAlign: 'left', color: BRIGHT_YELLOW, padding: '8px 12px', fontWeight: 'bold' }}>{children}</th>
+  ),
+  td: ({ children }) => (
+    <td style={{ color: FG, padding: '8px 12px', borderBottom: `1px solid ${CODE_BORDER}` }}>{children}</td>
+  ),
+  strong: ({ children }) => <strong style={{ color: '#fbf1c7', fontWeight: 'bold' }}>{children}</strong>,
+  em: ({ children }) => <em style={{ color: DIM, fontStyle: 'italic' }}>{children}</em>,
 };
 
 interface Props {
@@ -50,56 +128,82 @@ export default function BlogPost({ slug, title, date, body }: Props) {
   const terminalSlug = slug.replace(/ /g, '%20');
 
   return (
-    <div className="min-h-screen bg-black text-gray-300 font-mono">
-      <div className="max-w-3xl mx-auto px-6 py-8">
-
-        {/* fake prompt header */}
-        <div className="text-gray-600 text-sm mb-6 select-none">
-          <span className="text-green-600">portfolio@twaldin</span>
-          <span className="text-gray-600">:</span>
-          <span className="text-blue-500">~</span>
-          <span className="text-gray-600"> $ </span>
-          <span className="text-white">blog {slug}</span>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: BG,
+        color: FG,
+        fontFamily: '"JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace',
+      }}
+    >
+      <div style={{ maxWidth: '768px', margin: '0 auto', padding: '24px 14px' }}>
+        {/* zsh / oh-my-posh pure-modified prompt — red user, light path, newline, red ❯ */}
+        <div style={{ fontSize: '0.9rem', marginBottom: '1.25rem', userSelect: 'none' }}>
+          <span style={{ color: RED }}>portfolio </span>
+          <span style={{ color: '#fbf1c7' }}>~ </span>
+          <br />
+          <span style={{ color: RED }}>❯ </span>
+          <span style={{ color: FG }}>blog {slug}</span>
         </div>
 
-        {/* post header */}
-        <div className="mb-8">
-          <h1 className="text-green-400 text-2xl font-bold leading-tight mb-2">{title}</h1>
-          {date && <div className="text-gray-600 text-sm">{date}</div>}
+        {/* Post header — matches mdcat's styling (big blue title, dim date) */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h1 style={{ color: BRIGHT_BLUE, fontWeight: 'bold', fontSize: '1.5rem', lineHeight: 1.25, marginBottom: '0.25rem' }}>
+            {title}
+          </h1>
+          {date && <div style={{ color: DIM, fontStyle: 'italic', fontSize: '0.9rem' }}>{date}</div>}
         </div>
 
-        {/* content */}
-        <div className="mb-12">
+        {/* Rendered content */}
+        <div style={{ marginBottom: '2rem' }}>
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
             {body}
           </ReactMarkdown>
         </div>
 
-        {/* footer nav */}
-        <div className="border-t border-gray-900 pt-6 text-sm text-gray-600">
-          <div className="mb-3">
-            <span className="text-gray-700">navigation — </span>
-            <Link href="/" className="text-cyan-700 hover:text-cyan-500 mr-4">welcome</Link>
-            <Link href="/t/blog" className="text-cyan-700 hover:text-cyan-500 mr-4">blog</Link>
-            <Link href="/t/projects" className="text-cyan-700 hover:text-cyan-500 mr-4">projects</Link>
-            <Link href="/t/resume" className="text-cyan-700 hover:text-cyan-500">resume</Link>
+        {/* Footer — mdcat's navigation line at the bottom of a rendered post */}
+        <div style={{ borderTop: `1px solid ${CODE_BORDER}`, paddingTop: '1rem', marginTop: '1.5rem', fontSize: '0.85rem', color: DIM }}>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <strong style={{ color: FG, fontWeight: 'bold' }}>navigation</strong>
+            <span> — </span>
+            <Link href="/" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>welcome</Link>
+            <Link href="/t/blog" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>blog</Link>
+            <Link href="/t/projects" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>projects</Link>
+            <Link href="/t/resume" style={{ color: BRIGHT_CYAN, textDecoration: 'underline' }}>resume</Link>
           </div>
           <Link
             href={`/t/blog/${terminalSlug}`}
-            className="inline-block mt-2 text-green-700 hover:text-green-500 border border-green-900 hover:border-green-700 px-3 py-1 text-xs transition-colors"
+            style={{
+              display: 'inline-block',
+              color: BRIGHT_GREEN,
+              border: `1px solid ${BRIGHT_GREEN}`,
+              padding: '4px 10px',
+              fontSize: '0.8rem',
+              marginTop: '0.5rem',
+            }}
           >
             ▸ open in terminal
           </Link>
         </div>
 
-        {/* idle prompt */}
-        <div className="mt-8 text-gray-700 text-sm select-none">
-          <span className="text-green-800">portfolio@twaldin</span>
-          <span className="text-gray-800">:</span>
-          <span className="text-blue-900">~</span>
-          <span className="text-gray-800"> $ </span>
-          <span className="animate-pulse">▌</span>
+        {/* Idle prompt line — blinking cursor below the content */}
+        <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', userSelect: 'none' }}>
+          <span style={{ color: RED }}>portfolio </span>
+          <span style={{ color: '#fbf1c7' }}>~ </span>
+          <br />
+          <span style={{ color: RED }}>❯ </span>
+          <span
+            style={{
+              display: 'inline-block',
+              width: '0.6em',
+              height: '1em',
+              background: FG,
+              verticalAlign: 'text-bottom',
+              animation: 'blogCursor 1s steps(1) infinite',
+            }}
+          />
         </div>
+        <style>{`@keyframes blogCursor { 0%,50% { opacity: 1 } 51%,100% { opacity: 0 } }`}</style>
       </div>
     </div>
   );
