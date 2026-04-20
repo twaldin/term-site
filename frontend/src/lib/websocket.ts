@@ -42,6 +42,12 @@ function pathToCommand(pathname: string): string | undefined {
   } catch { return undefined; }
   if (cmd.length > 200) return undefined;
   if (!SAFE_CMD_RE.test(cmd)) return undefined;
+  // If the URL was typed as `/blog/<slug>` (no space), convert the first
+  // `/` to a space so it runs as `blog <slug>` — people share URLs with
+  // `/` separators, not %20.
+  if (!/\s/.test(cmd) && cmd.includes('/')) {
+    cmd = cmd.replace('/', ' ');
+  }
   const head = cmd.split(/\s+/)[0];
   if (BLOCKED_HEADS.has(head)) return undefined;
   return cmd;
