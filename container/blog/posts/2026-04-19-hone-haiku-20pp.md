@@ -119,4 +119,4 @@ The earlier gpt-5.4 run sat in the same bucket — bare "minimal correct fix" al
 
 First attempt trained on only 3 challenges (`qs-pr335, click-pr2846, marshmallow-pr2901`). Training score hit 1.0 but the A/B on 6 unseen bugs regressed from 0.9167 seed to 0.8102 honed. GEPA had memorized qs-pr335's query-string specifics and tanked on unrelated bugs. Scaling training to 20 challenges across 5 repos was the fix — probably obvious in hindsight (diversity of training distribution matters for generalization) but I only caught it after the holdout came back worse.
 
-Run directory with every candidate prompt and every grader log: `~/hone/.hone/run-20260418-175259-e848a1/`. Repo: [github.com/twaldin/hone](https://github.com/twaldin/hone). Earlier writeup with the full training log: [writeup/2026-04-18-haiku-20train-9holdout.md](https://github.com/twaldin/hone/blob/main/writeup/2026-04-18-haiku-20train-9holdout.md).
+Repo: [github.com/twaldin/hone](https://github.com/twaldin/hone). Earlier writeup with the full training log: [writeup/2026-04-18-haiku-20train-9holdout.md](https://github.com/twaldin/hone/blob/main/writeup/2026-04-18-haiku-20train-9holdout.md).
