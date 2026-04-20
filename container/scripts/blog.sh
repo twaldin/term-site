@@ -89,11 +89,25 @@ list_posts() {
 
   # OSC 8 hyperlinks so the slug is clickable — xterm.js + WebLinksAddon
   # renders the visible text as a link that navigates to the blog page.
+  #
+  # We can't route this line through typewriter()'s `echo -e` pass: the OSC 8
+  # terminator (ESC \) ends with a literal `\` byte, and when it's immediately
+  # followed by ${RESET}="\033[0m" in the string, `echo -e` collapses the two
+  # backslashes into one and strips the leading \ off the reset sequence —
+  # which then renders as literal "033[0m" text next to the slug.
+  # Solution: resolve all escapes up-front with $'...' (so the string holds
+  # real ESC/`\` bytes) and write with `echo` (no `-e` reinterpretation).
+  local esc_reset=$'\033[0m'
+  local esc_dim=$'\033[2m'
+  local esc_gray=$'\033[38;2;146;131;116m'
+  local esc_yellow=$'\033[38;2;250;189;47m'
+  local esc_white=$'\033[38;2;235;219;178m'
+  local osc_open=$'\033]8;;'
+  local osc_close=$'\033\\'
+
   local idx=1
   printf '%s\n' "${rows[@]}" | sort -r | while IFS='|' read -r d s t; do
-    local link="\033]8;;https://tim.waldin.net/blog/${s}\033\\"
-    local link_end="\033]8;;\033\\"
-    typewriter "  ${DIM}${idx}${RESET}  ${GRAY}${d}${RESET}  ${YELLOW}${link}${s}${link_end}${RESET}  ${WHITE}${t}${RESET}"
+    echo "  ${esc_dim}${idx}${esc_reset}  ${esc_gray}${d}${esc_reset}  ${esc_yellow}${osc_open}https://tim.waldin.net/blog/${s}${osc_close}${s}${osc_open}${osc_close}${esc_reset}  ${esc_white}${t}${esc_reset}"
     idx=$((idx + 1))
   done
 
