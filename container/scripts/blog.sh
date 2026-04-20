@@ -87,20 +87,78 @@ list_posts() {
     rows+=("${date}|${slug}|${title}")
   done
 
+  # OSC 8 hyperlinks so the slug is clickable — xterm.js + WebLinksAddon
+  # renders the visible text as a link that navigates to the blog page.
+  local idx=1
   printf '%s\n' "${rows[@]}" | sort -r | while IFS='|' read -r d s t; do
-    typewriter "  ${GRAY}${d}${RESET}  ${YELLOW}${s}${RESET}  ${WHITE}${t}${RESET}"
+    local link="\033]8;;https://tim.waldin.net/blog/${s}\033\\"
+    local link_end="\033]8;;\033\\"
+    typewriter "  ${DIM}${idx}${RESET}  ${GRAY}${d}${RESET}  ${YELLOW}${link}${s}${link_end}${RESET}  ${WHITE}${t}${RESET}"
+    idx=$((idx + 1))
   done
 
   echo ""
-  typewriter "${DIM}read a post:  ${CYAN}blog <slug>${RESET}${DIM}  —  read newest:  ${CYAN}blog latest${RESET}"
+  typewriter "${DIM}read:  ${CYAN}blog <N>${RESET}${DIM}  ${CYAN}blog <slug>${RESET}${DIM}  ${CYAN}blog latest${RESET}${DIM}   (fuzzy match: ${CYAN}blog haiku${RESET}${DIM} works too)${RESET}"
   echo ""
 }
 
 render_post() {
   local slug="$1"
   local file="$BLOG_DIR/${slug}.md"
+
+  # Numeric shortcut: `blog 1` → newest, `blog 2` → second newest, ...
+  if [[ ! -f "$file" ]] && [[ "$slug" =~ ^[0-9]+$ ]]; then
+    local idx="$slug"
+    local sorted=()
+    shopt -s nullglob
+    local pf
+    for pf in "$BLOG_DIR"/*.md; do
+      local s d
+      s="$(basename "$pf" .md)"
+      d="$(frontmatter_get "$pf" date)"
+      [[ -z "$d" ]] && d="0000-00-00"
+      sorted+=("${d}|${s}")
+    done
+    shopt -u nullglob
+    # shellcheck disable=SC2207
+    sorted=($(printf '%s\n' "${sorted[@]}" | sort -r | cut -d'|' -f2))
+    if (( idx >= 1 )) && (( idx <= ${#sorted[@]} )); then
+      slug="${sorted[$((idx - 1))]}"
+      file="$BLOG_DIR/${slug}.md"
+    fi
+  fi
+
+  # Fuzzy match: any substring of a slug matches
   if [[ ! -f "$file" ]]; then
-    typewriter "${RED}no post with slug '${slug}'${RESET}"
+    local matches=()
+    shopt -s nullglob
+    local pf
+    for pf in "$BLOG_DIR"/*.md; do
+      local s
+      s="$(basename "$pf" .md)"
+      # case-insensitive substring match
+      if [[ "${s,,}" == *"${slug,,}"* ]]; then
+        matches+=("$s")
+      fi
+    done
+    shopt -u nullglob
+    if (( ${#matches[@]} == 1 )); then
+      slug="${matches[0]}"
+      file="$BLOG_DIR/${slug}.md"
+    elif (( ${#matches[@]} > 1 )); then
+      typewriter "${YELLOW}multiple matches for '${slug}':${RESET}"
+      local m
+      for m in "${matches[@]}"; do
+        typewriter "  ${CYAN}${m}${RESET}"
+      done
+      echo ""
+      typewriter "${DIM}be more specific, or use ${CYAN}blog <N>${RESET}"
+      return 1
+    fi
+  fi
+
+  if [[ ! -f "$file" ]]; then
+    typewriter "${RED}no post matching '${slug}'${RESET}"
     echo ""
     typewriter "${DIM}list all:  ${CYAN}blog${RESET}"
     return 1

@@ -6,11 +6,15 @@ clear
 echo ""
 ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
 echo ""
-create_box "portfolio terminal" "Type 'contact' for contact info.
+create_box "portfolio terminal" "  about       learn about me
 
-Type 'about' for info about me.
+  contact     email + socials
 
-Type 'resume' to view my resume.
+  resume      view my resume
 
-Type 'help' for all available commands." "${RED}"
+  projects    explore my projects
+
+  blog        posts i've written
+
+  help        all available commands" "${RED}"
 echo ""

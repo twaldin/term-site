@@ -18,21 +18,146 @@ class SessionManager {
     this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
     this.imagePreloaded = false;
 
-    // Preload the image on startup
-    this.preloadImage();
+    // Container pre-warm pool: always keep `poolSize` containers ready-to-go
+    // so new connections skip the 1-2s createContainer latency. On assign,
+    // we replenish the pool in the background.
+    this.pool = [];
+    this.poolSize = 3;
+    this.poolWarming = 0;
+
+    // Preload the image on startup, then fill the pool.
+    this.preloadImage().then(() => {
+      if (this.imagePreloaded) this.fillPool();
+    });
+  }
+
+  // Spec shared by pool-warm and fresh-create so both end up with identical
+  // containers. Hardened security settings + UTF-8 locale + no network.
+  _containerSpec(sessionId) {
+    return {
+      Image: 'twaldin/terminal-portfolio:latest',
+      Hostname: 'twaldin',
+      Tty: true,
+      OpenStdin: true,
+      StdinOnce: false,
+      AttachStdout: true,
+      AttachStderr: true,
+      AttachStdin: true,
+      Env: [
+        'TERM=xterm-256color',
+        'PS1=portfolio@twaldin:$ ',
+        'LANG=C.UTF-8',
+        'LC_ALL=C.UTF-8',
+      ],
+      WorkingDir: '/home/portfolio',
+      User: 'portfolio',
+      Labels: {
+        'app': 'terminal-portfolio',
+        'session': sessionId || 'pool',
+      },
+      HostConfig: {
+        Memory: 512 * 1024 * 1024,
+        CpuQuota: 50000,
+        PidsLimit: 100,
+        ReadonlyRootfs: false,
+        NetworkMode: 'none',
+        SecurityOpt: ['no-new-privileges:true'],
+        CapDrop: ['ALL'],
+        CapAdd: [],
+        Tmpfs: { '/tmp': 'rw,noexec,nosuid,size=100m' },
+      },
+    };
+  }
+
+  fillPool() {
+    if (!this.imagePreloaded) return;
+    while (this.pool.length + this.poolWarming < this.poolSize) {
+      this.poolWarming++;
+      this.warmOne()
+        .catch((err) => console.error('warmOne failed:', err.message))
+        .finally(() => { this.poolWarming--; });
+    }
+  }
+
+  async warmOne() {
+    const container = await this.docker.createContainer(this._containerSpec('pool'));
+    await container.start();
+    try {
+      await container.resize({ h: 40, w: 140 });
+    } catch { /* pre-resize best-effort */ }
+
+    const stream = await container.attach({
+      stream: true, stdin: true, stdout: true, stderr: true, hijack: true,
+    });
+
+    const item = {
+      container,
+      stream,
+      buffer: [],
+      promptSeen: false,
+      alive: true,
+      _onData: null,
+      _onClose: null,
+    };
+
+    item._onData = (data) => {
+      if (!item.alive) return;
+      const str = data.toString();
+      // Filter out Docker's attach preamble noise (same check as the live handler).
+      if (str.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) return;
+      item.buffer.push(str);
+      if (!item.promptSeen && str.includes('~ ')) item.promptSeen = true;
+    };
+    item._onClose = () => {
+      item.alive = false;
+      this.pool = this.pool.filter((p) => p !== item);
+    };
+    stream.on('data', item._onData);
+    stream.on('close', item._onClose);
+
+    // Wait up to 10s for the zsh prompt to render into our buffer.
+    const start = Date.now();
+    while (item.alive && !item.promptSeen && Date.now() - start < 10000) {
+      await new Promise((r) => setTimeout(r, 50));
+    }
+
+    if (!item.alive || !item.promptSeen) {
+      // Something went wrong — tear the container down so it isn't leaked.
+      item.alive = false;
+      try { stream.off('data', item._onData); } catch { /* ignore */ }
+      try { stream.off('close', item._onClose); } catch { /* ignore */ }
+      try { await container.kill(); } catch { /* ignore */ }
+      try { await container.remove({ force: true }); } catch { /* ignore */ }
+      throw new Error('pool container did not produce prompt');
+    }
+
+    this.pool.push(item);
+    console.log(`Pool: warmed container (${this.pool.length}/${this.poolSize} ready, ${this.poolWarming - 1} still warming)`);
+  }
+
+  _grabFromPool() {
+    while (this.pool.length) {
+      const item = this.pool.shift();
+      if (item.alive) return item;
+    }
+    return null;
   }
 
   async cleanupDockerSmart() {
     console.log('Smart Docker cleanup - keeping only recent images...');
     try {
-      // Remove all stopped containers first
+      // Remove stopped containers AND leftover running portfolio containers from
+      // a previous backend run (they'd otherwise linger for 60s until orphan
+      // cleanup, plus any unclaimed pool containers from before a restart).
       const containers = await this.docker.listContainers({ all: true });
       for (const containerInfo of containers) {
-        if (containerInfo.State !== 'running') {
+        const isPortfolioLabel = (containerInfo.Labels || {})['app'] === 'terminal-portfolio';
+        const shouldRemove = containerInfo.State !== 'running' || isPortfolioLabel;
+        if (shouldRemove) {
           try {
             const container = this.docker.getContainer(containerInfo.Id);
             await container.remove({ force: true });
-            console.log(`Removed stopped container: ${containerInfo.Id}`);
+            console.log(`Removed ${containerInfo.State} container: ${containerInfo.Id}`);
           } catch (err) {
             console.log(`Could not remove container ${containerInfo.Id}:`, err.message);
           }
@@ -142,7 +267,68 @@ class SessionManager {
       throw new Error('Maximum session limit reached');
     }
 
+    const pooled = this._grabFromPool();
+    if (pooled) {
+      // Replenish in the background so subsequent connections stay fast.
+      this.fillPool();
+      return this.attachPooledSession(sessionId, socket, initCommand, pooled);
+    }
     return this.createContainerSession(sessionId, socket, initCommand);
+  }
+
+  async attachPooledSession(sessionId, socket, initCommand, pooled) {
+    console.log(`Assigning pooled container to session ${sessionId}`);
+
+    const { container, stream, buffer } = pooled;
+
+    // Stop the pool-warming handlers; they'd keep appending to .buffer otherwise.
+    try { stream.off('data', pooled._onData); } catch { /* ignore */ }
+    try { stream.off('close', pooled._onClose); } catch { /* ignore */ }
+
+    // Store the session first so the prompt/output handlers below can reach it.
+    const session = {
+      id: sessionId,
+      type: 'container',
+      container,
+      stream,
+      socket,
+      startTime: Date.now(),
+      lastActivity: Date.now(),
+      initCommand,
+      // Prompt already rendered during warming — skip straight to the resize gate.
+      promptSeen: true,
+      firstResizeApplied: false,
+      initCommandRun: false,
+    };
+    this.sessions.set(sessionId, session);
+
+    // Replay the buffered prompt output to the client so they see their shell.
+    for (const chunk of buffer) socket.emit('output', chunk);
+
+    stream.on('data', (data) => {
+      const output = data.toString();
+      if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
+        socket.emit('output', output);
+      }
+    });
+    stream.on('close', () => {
+      console.log(`Container stream closed for session ${sessionId}`);
+      this.destroySession(sessionId);
+    });
+
+    // Same 6s fallback as fresh sessions — if the client never sends a resize,
+    // unblock initCommand so the session doesn't deadlock.
+    setTimeout(() => {
+      const s = this.sessions.get(sessionId);
+      if (s && !s.firstResizeApplied) {
+        console.warn(`Session ${sessionId}: no resize within 6s, releasing initCommand gate`);
+        s.firstResizeApplied = true;
+        this.maybeRunInitCommand(sessionId);
+      }
+    }, 6000);
+
+    this.setSessionTimeout(sessionId);
+    console.log(`Session ${sessionId} attached from pool`);
   }
 
   async createContainerSession(sessionId, socket, initCommand) {
@@ -479,8 +665,9 @@ class SessionManager {
         const isActive = Array.from(this.sessions.values()).some(
           session => session.container && session.container.id === containerInfo.Id
         );
+        const isPooled = this.pool.some((p) => p.container.id === containerInfo.Id);
 
-        if (!isActive) {
+        if (!isActive && !isPooled) {
           console.log(`Cleaning up orphaned container: ${containerInfo.Id}`);
           await container.kill().catch(() => {});
           await container.remove({ force: true }).catch(() => {});

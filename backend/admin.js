@@ -97,25 +97,56 @@ router.get('/', (req, res) => {
   const todayCount = sessions.filter(s => new Date(s.at).toISOString().startsWith(today)).length;
   const totalCmds = events.filter(e => e.type === 'command').length;
 
-  const rows = sessions.map((s, i) => {
+  // Group sessions by IP, sort groups by session count desc (Tim's own IP
+  // likely tops the list and can be collapsed to filter it out).
+  const byIp = new Map();
+  for (const s of sessions) {
+    const ip = s.ip || 'unknown';
+    if (!byIp.has(ip)) byIp.set(ip, []);
+    byIp.get(ip).push(s);
+  }
+  const ipGroups = [...byIp.entries()]
+    .map(([ip, list]) => ({ ip, sessions: list }))
+    .sort((a, b) => b.sessions.length - a.sessions.length);
+
+  let cmdBlockIdx = 0;
+  const renderSession = (s) => {
     const dur = s.endedAt ? fmtDuration(s.endedAt - s.at) : '…live';
+    const bid = `b${cmdBlockIdx++}`;
     const cmdRows = s.commands.map(c =>
       `<div class="cmd-row"><span class="t">${fmtTime(c.at)}</span><span class="cmd">$ ${esc(c.cmd)}</span></div>`
     ).join('');
     const cmdBlock = s.commands.length
-      ? `<tr class="cmd-block" id="b${i}"><td colspan="7"><div class="cmds">${cmdRows || '<span class="dim">no commands logged</span>'}</div></td></tr>`
+      ? `<tr class="cmd-block" id="${bid}"><td colspan="6"><div class="cmds">${cmdRows}</div></td></tr>`
       : '';
-
     return `
-      <tr class="row" onclick="toggle(${i})">
+      <tr class="row" data-ip="${esc(s.ip)}" onclick="toggle('${bid}')">
         <td class="t">${fmtTime(s.at)}</td>
-        <td class="ip">${esc(s.ip)}</td>
         <td>${refBadge(s.referrer)} <span class="dim">${esc(shortRef(s.referrer))}</span></td>
         <td class="cmd">${s.initCommand ? esc(s.initCommand) : '<span class="dim">welcome</span>'}</td>
         <td>${esc(shortUA(s.ua))}</td>
         <td class="dur">${dur}</td>
         <td class="cnt">${s.commands.length}</td>
       </tr>${cmdBlock}`;
+  };
+
+  const rows = ipGroups.map((g, gi) => {
+    const groupCmds = g.sessions.reduce((sum, s) => sum + s.commands.length, 0);
+    const latest = Math.max(...g.sessions.map(s => s.at));
+    const headerId = `g${gi}`;
+    // Each IP header row toggles the visibility of its group's sessions.
+    return `
+      <tbody class="ip-group" id="${headerId}-body">
+        <tr class="ip-header" onclick="toggleGroup('${headerId}')">
+          <td colspan="6">
+            <span class="caret" id="${headerId}-caret">▾</span>
+            <span class="ip">${esc(g.ip)}</span>
+            <span class="dim"> · ${g.sessions.length} session${g.sessions.length === 1 ? '' : 's'} · ${groupCmds} command${groupCmds === 1 ? '' : 's'} · last ${fmtTime(latest)}</span>
+          </td>
+        </tr>
+        ${g.sessions.map(renderSession).join('')}
+      </tbody>
+    `;
   }).join('');
 
   res.send(`<!DOCTYPE html>
@@ -141,6 +172,12 @@ td{padding:5px 8px;border-bottom:1px solid #161b22;vertical-align:middle;white-s
 tr.cmd-block{display:none}tr.cmd-block.open{display:table-row}
 .cmds{padding:10px 16px;background:#0d1117;border-left:3px solid #21262d}
 .cmd-row{padding:2px 0}.cmd-row .t{margin-right:10px}
+tr.ip-header{cursor:pointer;background:#161b22}
+tr.ip-header:hover td{background:#1f2631}
+tr.ip-header td{padding:8px 10px;border-top:1px solid #30363d;border-bottom:1px solid #30363d}
+.caret{color:#8b949e;margin-right:8px;display:inline-block;width:10px;transition:transform 0.1s}
+.caret.collapsed{transform:rotate(-90deg)}
+tbody.ip-group.collapsed tr.row,tbody.ip-group.collapsed tr.cmd-block{display:none}
 .badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:bold;margin-right:4px}
 .tw{background:#1d9bf020;color:#1d9bf0;border:1px solid #1d9bf040}
 .li{background:#0a66c220;color:#70b5f9;border:1px solid #0a66c240}
@@ -162,22 +199,32 @@ tr.cmd-block{display:none}tr.cmd-block.open{display:table-row}
 <input type="text" id="q" placeholder="filter by IP, referrer, command…" oninput="filter()">
 <table>
 <thead><tr>
-  <th>time (UTC)</th><th>IP</th><th>referrer</th><th>init command</th><th>device</th><th>duration</th><th>#cmds</th>
+  <th>time (UTC)</th><th>referrer</th><th>init command</th><th>device</th><th>duration</th><th>#cmds</th>
 </tr></thead>
-<tbody id="body">${rows}</tbody>
+${rows}
 </table>
 <script>
-function toggle(i){
-  var b=document.getElementById('b'+i);
+function toggle(id){
+  event.stopPropagation();
+  var b=document.getElementById(id);
   if(b)b.classList.toggle('open');
+}
+function toggleGroup(gid){
+  var body=document.getElementById(gid+'-body');
+  var caret=document.getElementById(gid+'-caret');
+  if(body)body.classList.toggle('collapsed');
+  if(caret)caret.classList.toggle('collapsed');
 }
 function filter(){
   var q=document.getElementById('q').value.toLowerCase();
-  document.querySelectorAll('tr.row').forEach(function(r,i){
-    var show=!q||r.textContent.toLowerCase().includes(q);
-    r.style.display=show?'':'none';
-    var b=document.getElementById('b'+i);
-    if(b)b.style.display=show&&b.classList.contains('open')?'table-row':'none';
+  document.querySelectorAll('tbody.ip-group').forEach(function(g){
+    var anyVisible=false;
+    g.querySelectorAll('tr.row').forEach(function(r){
+      var show=!q||r.textContent.toLowerCase().includes(q)||g.querySelector('tr.ip-header').textContent.toLowerCase().includes(q);
+      r.style.display=show?'':'none';
+      if(show)anyVisible=true;
+    });
+    g.querySelector('tr.ip-header').style.display=(q&&!anyVisible)?'none':'';
   });
 }
 </script>

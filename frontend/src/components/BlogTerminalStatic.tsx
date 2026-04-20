@@ -173,20 +173,20 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
         });
         socket.on("output", (data) => {
           if (typeof data !== "string") return;
+          const wasFirst = !handedOver;
           // First real output from the backend → erase our fake prompt so
           // only the live prompt is visible.
           eraseFakePrompt();
           xterm.write(data);
+          // Flush buffered keystrokes AFTER the backend prompt has been
+          // rendered, not on a timer. Guarantees the user's pre-connect
+          // keystrokes land in the live shell and aren't dropped during
+          // the prompt-replay window.
+          if (wasFirst && inputBuf.length > 0 && socket?.connected) {
+            for (const ch of inputBuf.splice(0)) socket.emit("input", ch);
+          }
         });
         socket.on("disconnect", () => { warmed = false; });
-
-        // Once connected, flush anything the user typed before the socket
-        // finished opening.
-        const flush = () => {
-          if (!socket?.connected) return setTimeout(flush, 30);
-          for (const ch of inputBuf.splice(0)) socket.emit("input", ch);
-        };
-        setTimeout(flush, 50);
       };
 
       const dataDisposable = xterm.onData((data) => {
@@ -208,19 +208,14 @@ export default function BlogTerminalStatic({ slug, ansi }: Props) {
       });
       cleanups.push(() => resizeDisposable.dispose());
 
-      // Click is our deliberate-engagement signal: most passive blog readers
-      // never click the terminal, so we don't spin up a container for them.
-      // Users who DO click get the container warming up while they decide
-      // what to type — by the time a keystroke arrives, the backend prompt
-      // has usually already landed. (mouseenter/hover was too aggressive:
-      // it fires on every cursor sweep over the page.)
+      // Trigger is strictly the first keystroke — click is too noisy (tap to
+      // scroll on mobile, accidental clicks, etc.). With the backend pre-warmed
+      // pool, container assignment is effectively instant, so waiting for a
+      // real typing intent gives us clean signal without a UX cost.
       const host = hostRef.current;
-      const onFirstTouch = () => {
-        xterm.focus();
-        startLive();
-      };
-      host.addEventListener("click", onFirstTouch);
-      cleanups.push(() => host.removeEventListener("click", onFirstTouch));
+      const onFocus = () => xterm.focus();
+      host.addEventListener("click", onFocus);
+      cleanups.push(() => host.removeEventListener("click", onFocus));
 
       // Responsive re-fit.
       let resizeT: ReturnType<typeof setTimeout>;
