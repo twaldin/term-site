@@ -43,7 +43,11 @@ const components: Components = {
     </a>
   ),
   code: ({ children, className }) => {
-    const isBlock = className?.startsWith('language-');
+    // Fenced code with no language specifier has no `language-` className,
+    // so detect block mode by content (multi-line) too. Otherwise a `````
+    // prompt with no lang tag gets inline styling and never wraps.
+    const content = String(children ?? '');
+    const isBlock = className?.startsWith('language-') || content.includes('\n');
     if (isBlock) {
       // NOTE: whitespace-pre-wrap instead of pre — lines wrap on mobile so
       // the block never pushes the page wider than the viewport. overflow-
