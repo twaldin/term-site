@@ -324,15 +324,13 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       // to the padded area without any extra math.
       <div
         style={{
-          width: "100vw",
-          height: "100vh",
+          width: "100%",
+          height: "100%",
           margin: 0,
           padding: "6px 14px",
           boxSizing: "border-box",
           backgroundColor: terminalConfig.theme.background,
-          position: "absolute",
-          top: 0,
-          left: 0,
+          position: "relative",
         }}
       >
         <div
