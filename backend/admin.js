@@ -13,7 +13,11 @@ function basicAuth(req, res, next) {
     return res.status(401).send('Authentication required.');
   }
 
-  const [user, pass] = Buffer.from(header.slice(6), 'base64').toString().split(':');
+  // Split on FIRST colon only — passwords can contain colons
+  const decoded = Buffer.from(header.slice(6), 'base64').toString();
+  const idx = decoded.indexOf(':');
+  const user = idx >= 0 ? decoded.slice(0, idx) : decoded;
+  const pass = idx >= 0 ? decoded.slice(idx + 1) : '';
   const email = process.env.ADMIN_EMAIL || 'timothy@waldin.net';
   if (user !== email || pass !== password) {
     res.set('WWW-Authenticate', 'Basic realm="term-site admin"');
