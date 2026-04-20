@@ -220,6 +220,17 @@ class SessionManager {
       // Start container
       await container.start();
 
+      // Pre-resize to a sensible default BEFORE the client resize arrives.
+      // Fallback safety-net kicks in at 6s; if it fires, PTY is already at
+      // 140x40 instead of docker's 80x24 default — so blog/welcome renders
+      // at a usable width even in the worst case. Real client resize arrives
+      // shortly after and overrides this.
+      try {
+        await container.resize({ h: 40, w: 140 });
+      } catch (e) {
+        console.warn(`Initial pre-resize failed for ${sessionId}:`, e?.message || e);
+      }
+
       // Attach to container
       const stream = await container.attach({
         stream: true,
@@ -273,17 +284,19 @@ class SessionManager {
 
       this.sessions.set(sessionId, session);
 
-      // Safety net: if the client never sends a resize (shouldn't happen, but
-      // a half-broken client shouldn't deadlock the welcome screen), force
-      // the gate open after 2s so the user at least sees something.
+      // Safety net: if the client never sends a resize (half-broken client
+      // shouldn't deadlock the welcome screen), force the gate open after 6s.
+      // 6s covers slow mobile dynamic-import + socket-connect paths where
+      // 2s was firing early and init was running at the docker default 80x24.
+      // Pre-resize above already put us at 140x40 for this worst case.
       setTimeout(() => {
         const s = this.sessions.get(sessionId);
         if (s && !s.firstResizeApplied) {
-          console.warn(`Session ${sessionId}: no resize within 2s, releasing initCommand gate`);
+          console.warn(`Session ${sessionId}: no resize within 6s, releasing initCommand gate`);
           s.firstResizeApplied = true;
           this.maybeRunInitCommand(sessionId);
         }
-      }, 2000);
+      }, 6000);
 
       // Set session timeout
       this.setSessionTimeout(sessionId);
