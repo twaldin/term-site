@@ -14,7 +14,7 @@ class SessionManager {
     }
 
     this.docker = new Docker(dockerOptions);
-    this.maxSessions = 10;
+    this.maxSessions = 40;
     this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
     this.imagePreloaded = false;
 
@@ -349,6 +349,7 @@ class SessionManager {
     if (!session) return;
 
     session.lastActivity = Date.now();
+    this.setSessionTimeout(sessionId);
     session.stream.write(data);
   }
 
@@ -357,6 +358,7 @@ class SessionManager {
     if (!session) return;
 
     session.lastActivity = Date.now();
+    this.setSessionTimeout(sessionId);
     session.container.resize({
       h: rows,
       w: cols
