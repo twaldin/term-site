@@ -1,11 +1,13 @@
 #!/bin/bash
-# blog — list and read blog posts from /home/portfolio/blog/posts
+# blog — list posts and hand off to the HTML page for reading
 #
 # Usage:
 #   blog              list all posts (newest first)
-#   blog <slug>       render post by slug
-#   blog latest       render newest post
-#   blog --raw <slug> emit raw markdown (pipeable)
+#   blog <slug>       open /blog/<slug> via OSC 9997 navigate
+#   blog <N>          same as above, N = 1 newest, 2 second newest, ...
+#   blog <fuzzy>      substring match of any slug (single-match required)
+#   blog latest       open newest post
+#   blog --raw <slug> emit raw markdown (pipeable; no navigation)
 
 source "$(dirname "$0")/shared-functions.sh"
 
@@ -24,41 +26,6 @@ body_after_frontmatter() {
   awk 'NR==1 && /^---$/ {inside=1; next}
        inside && /^---$/ {inside=0; next}
        !inside' "$1"
-}
-
-# Pretty-render markdown. Prefer mdcat: emits OSC 8 hyperlinks so xterm.js
-# shows clickable link text without a raw URL next to it.
-#
-# No pager. Content goes straight to stdout so xterm's native scrollback
-# handles paging (wheel / j / k / arrows work throughout, not only after
-# you've paged to the end of a `less` buffer). After content, we emit
-# OSC 9998 — the frontend handler calls xterm.scrollToTop() so the viewport
-# always parks at the post title even on long posts.
-render_markdown() {
-  # Width detection is annoyingly flaky inside a docker-mediated PTY: tput
-  # can return a stale value, $COLUMNS can be whatever the env was at spawn,
-  # stty reads from fd 0 which may or may not be a tty depending on how the
-  # script got invoked. Take the max of everything we can query.
-  local cols=0 t
-  t="$(tput cols 2>/dev/null)";                       [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
-  t="$(stty size 2>/dev/null | awk '{print $2}')";    [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
-  [[ "$COLUMNS" =~ ^[0-9]+$ ]]                     && (( COLUMNS > cols )) && cols=$COLUMNS
-  # Allow narrow renders for mobile captures (< 60 cols). Only fall back to
-  # the default when we truly couldn't determine a width.
-  (( cols < 20 )) && cols=100
-  local width=$(( cols - 4 ))
-  (( width < 20 )) && width=20
-  clear
-  if command -v mdcat >/dev/null 2>&1; then
-    mdcat --columns "$width" "$1"
-  elif command -v glow >/dev/null 2>&1; then
-    glow -s dark -w "$width" "$1"
-  elif command -v bat >/dev/null 2>&1; then
-    bat --language=markdown --color=always "$1"
-  else
-    cat "$1"
-  fi
-  emit_scroll_top
 }
 
 list_posts() {
@@ -180,28 +147,9 @@ render_post() {
     return 1
   fi
 
-  local title date
-  title="$(frontmatter_get "$file" title)"
-  date="$(frontmatter_get "$file" date)"
-  [[ -z "$title" ]] && title="$slug"
-
-  # Build a single markdown document with the title/date injected as real
-  # markdown headers so glow renders them inside the pager (styled by the
-  # theme) instead of us printing them separately above the pager.
-  local tmp
-  tmp="$(mktemp -t blog-XXXXXX.md)"
-  {
-    printf '# %s\n' "$title"
-    [[ -n "$date" ]] && printf '_%s_\n' "$date"
-    printf '\n'
-    body_after_frontmatter "$file"
-    # Footer nav so readers always have an obvious way back. Rendered inside
-    # the same mdcat pass so styling matches the post body.
-    printf '\n\n---\n\n'
-    printf '**navigation** — `blog` all posts · `projects` project list · `home` welcome screen · `help` full command list\n'
-  } > "$tmp"
-  render_markdown "$tmp"
-  rm -f "$tmp"
+  # Hand off to the HTML blog page — the static Gruvbox render is prettier
+  # than mdcat-in-PTY and serves from the CDN edge.
+  emit_navigate "/blog/${slug}"
 }
 
 latest_post() {

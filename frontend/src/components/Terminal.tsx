@@ -144,6 +144,19 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             return true;
           });
 
+          // OSC 9997 — `emit_navigate <path>` hands off to an HTML page
+          // (e.g. `blog <slug>` opens /blog/<slug> for the nicer markdown
+          // rendering). Full navigation, not pushState.
+          const oscNavigateDisposable = xterm.parser.registerOscHandler(9997, (data) => {
+            try {
+              const path = '/' + data.replace(/^\/+/, '');
+              if (typeof window !== 'undefined') {
+                window.location.assign(path);
+              }
+            } catch { /* malformed — swallow */ }
+            return true;
+          });
+
           // Flush buffered output that arrived before xterm was ready
           if (outputBufferRef.current.length > 0) {
             for (const chunk of outputBufferRef.current) {
@@ -255,6 +268,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
             () => resizeDisposable.dispose(),
             () => oscUrlDisposable.dispose(),
             () => oscScrollTopDisposable.dispose(),
+            () => oscNavigateDisposable.dispose(),
             () => xterm.dispose(),
           ];
         });

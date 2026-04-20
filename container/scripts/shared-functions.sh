@@ -34,6 +34,15 @@ emit_scroll_top() {
   printf '\033]9998;\033\\'
 }
 
+# emit_navigate <path>
+# Emits OSC 9997 — frontend handler calls window.location.assign(path),
+# triggering a full page navigation. Use when the shell wants to hand off
+# to an HTML page (e.g. `blog <slug>` opens /blog/<slug>). Contrast with
+# emit_url (OSC 9999) which only updates the URL bar via pushState.
+emit_navigate() {
+  printf '\033]9997;%s\033\\' "${1-}"
+}
+
 typewriter() {
   local text="$1"
   local batch_size=1

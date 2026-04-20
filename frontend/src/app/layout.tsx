@@ -35,7 +35,7 @@ export default function RootLayout({
       </head>
       <body>
         <SiteHeader />
-        <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <main style={{ flex: '1 0 auto', display: 'flex', flexDirection: 'column', background: '#1d2021' }}>
           {children}
         </main>
       </body>

@@ -22,7 +22,10 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #000000;
+  /* Gruvbox bg so any unfilled gap (main flex slack, iOS rubber-band, etc.)
+     matches the blog page — avoids the white/gray strip some browsers
+     render in overflow regions. The home xterm provides its own bg on top. */
+  background: #1d2021;
   color: #00ff00;
   font-family: 'JetBrainsMono Nerd Font Mono', 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Monaco', 'Lucida Console', monospace;
   width: 100%;
