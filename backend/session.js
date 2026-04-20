@@ -15,7 +15,13 @@ class SessionManager {
 
     this.docker = new Docker(dockerOptions);
     this.maxSessions = 40;
-    this.sessionTimeout = 15 * 60 * 1000; // 15 minutes
+    // Idle timeout — kill a session if no USER INPUT arrives for this long.
+    // Reset only on sendInput, not on resize (resize is passive / happens
+    // on scroll or viewport change and shouldn't count as engagement).
+    this.sessionTimeout = 5 * 60 * 1000; // 5 minutes
+    // Bot kill — if a session never receives ANY user input within this
+    // window, assume it's a background tab / bot and free the slot.
+    this.noInputTimeout = 60 * 1000; // 60 seconds
     this.imagePreloaded = false;
 
     // Container pre-warm pool: always keep `poolSize` containers ready-to-go
@@ -328,6 +334,7 @@ class SessionManager {
     }, 6000);
 
     this.setSessionTimeout(sessionId);
+    this.setNoInputTimeout(sessionId);
     console.log(`Session ${sessionId} attached from pool`);
   }
 
@@ -484,8 +491,9 @@ class SessionManager {
         }
       }, 6000);
 
-      // Set session timeout
+      // Set session timeouts — 5min idle timer + 60s no-input bot kill.
       this.setSessionTimeout(sessionId);
+      this.setNoInputTimeout(sessionId);
 
       console.log(`Container session created for ${sessionId}`);
 
@@ -535,6 +543,13 @@ class SessionManager {
     if (!session) return;
 
     session.lastActivity = Date.now();
+    session.hasReceivedInput = true;
+    // Cancel the no-input bot-kill timer on the first real keystroke.
+    if (session.noInputTimer) {
+      clearTimeout(session.noInputTimer);
+      session.noInputTimer = null;
+    }
+    // Resetting the main 5-min idle timer keeps active users alive.
     this.setSessionTimeout(sessionId);
     session.stream.write(data);
   }
@@ -543,8 +558,7 @@ class SessionManager {
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
-    session.lastActivity = Date.now();
-    this.setSessionTimeout(sessionId);
+    // Resize is passive — don't count as activity and don't reset timers.
     session.container.resize({
       h: rows,
       w: cols
@@ -599,10 +613,9 @@ class SessionManager {
         await session.container.remove({ force: true }).catch(() => {});
       }
 
-      // Clear timeout
-      if (session.timeout) {
-        clearTimeout(session.timeout);
-      }
+      // Clear both timers
+      if (session.timeout) clearTimeout(session.timeout);
+      if (session.noInputTimer) clearTimeout(session.noInputTimer);
 
       this.sessions.delete(sessionId);
       console.log(`Session ${sessionId} destroyed`);
@@ -631,14 +644,35 @@ class SessionManager {
     }
 
     session.timeout = setTimeout(() => {
-      console.log(`Session ${sessionId} timed out`);
+      console.log(`Session ${sessionId} timed out (idle ${this.sessionTimeout / 1000}s)`);
       const { socket } = session;
       this.destroySession(sessionId);
       if (socket) {
-        socket.emit('output', '\r\n[Session timed out]\r\n');
+        socket.emit('output', '\r\n[session idle — closed]\r\n');
         socket.disconnect();
       }
     }, this.sessionTimeout);
+  }
+
+  // Bot / background-tab killer: if the session receives NO user input at all
+  // within `noInputTimeout`, assume it's not an engaged user and free the slot.
+  // Cancelled on the first sendInput().
+  setNoInputTimeout(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+
+    if (session.noInputTimer) clearTimeout(session.noInputTimer);
+
+    session.noInputTimer = setTimeout(() => {
+      const s = this.sessions.get(sessionId);
+      if (!s || s.hasReceivedInput) return;
+      console.log(`Session ${sessionId} closed (no user input within ${this.noInputTimeout / 1000}s)`);
+      const { socket } = s;
+      this.destroySession(sessionId);
+      if (socket) {
+        try { socket.disconnect(); } catch { /* ignore */ }
+      }
+    }, this.noInputTimeout);
   }
 
   getActiveSessionCount() {

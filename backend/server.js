@@ -42,10 +42,16 @@ const sessionManager = new SessionManager();
 // Per-socket command buffer for audit logging (raw chars → full commands)
 const cmdBufs = new Map();
 
-// Per-IP rate limiting for connections
+// Per-IP rate limiting for connections (connect attempts per window).
 const connectionTracker = new Map();
 const MAX_CONNECTIONS_PER_IP = 3;
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+
+// Single-session-per-IP: one IP can hold ONE live session at a time. A new
+// connection from the same IP immediately closes the old session. This keeps
+// one user from hoarding multiple slots (background tabs, bot retries) and
+// means the 40-slot pool can serve 40 distinct users.
+const ipSessions = new Map(); // ip → socketId (current session)
 
 function checkRateLimit(ip) {
   const now = Date.now();
@@ -74,6 +80,23 @@ io.on('connection', (socket) => {
     socket.disconnect();
     return;
   }
+
+  // Single-session-per-IP: if this IP already has a live session, kick it
+  // so the new connection gets the slot. Prevents idle tabs from hoarding.
+  const existingSid = ipSessions.get(clientIP);
+  if (existingSid && existingSid !== socket.id) {
+    console.log(`IP ${clientIP} already has session ${existingSid} — kicking to make room for ${socket.id}`);
+    const existingSocket = io.sockets.sockets.get(existingSid);
+    if (existingSocket) {
+      try {
+        existingSocket.emit('output', '\r\n[replaced by a new session from this ip]\r\n');
+        existingSocket.disconnect();
+      } catch { /* ignore */ }
+    }
+    try { sessionManager.destroySession(existingSid); } catch { /* ignore */ }
+    ipSessions.delete(clientIP);
+  }
+  ipSessions.set(clientIP, socket.id);
 
   // Extract optional init command from client handshake (URL path → command).
   // Validated again in sessionManager.autoTypeCommand.
@@ -136,6 +159,11 @@ io.on('connection', (socket) => {
     console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
     logger.append({ type: 'session_end', id: socket.id, reason });
     cmdBufs.delete(socket.id);
+    // Clear the per-IP lock only if this is still the active session for that
+    // IP (don't clobber a newer session from the same IP that just came in).
+    if (ipSessions.get(clientIP) === socket.id) {
+      ipSessions.delete(clientIP);
+    }
     sessionManager.destroySession(socket.id);
   });
 
