@@ -82,6 +82,35 @@ ascii_typewriter() {
     ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
   fi
 
+  # Detect terminal width. If the figlet output is wider than the terminal
+  # (e.g. narrow mobile session), fall back to a plain styled title rather
+  # than let it wrap into illegible ANSI confetti.
+  local cols=0 t
+  t="$(tput cols 2>/dev/null)";                       [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
+  t="$(stty size 2>/dev/null | awk '{print $2}')";    [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
+  [[ "$COLUMNS" =~ ^[0-9]+$ ]]                     && (( COLUMNS > cols )) && cols=$COLUMNS
+  (( cols < 10 )) && cols=80
+
+  # Max actual visible width of the figlet output, counted in CHARACTERS
+  # (not bytes — figlet output uses UTF-8 box-drawing chars that take 3
+  # bytes each but occupy 1 column). Python is reliable here; if it fails
+  # for any reason, fall back to a conservative byte-length / 3 estimate.
+  local max_width
+  max_width=$(printf '%s' "$ascii_output" | python3 -c 'import sys
+lines = sys.stdin.read().split("\n")
+print(max((len(l) for l in lines if l.strip()), default=0))' 2>/dev/null) || max_width=""
+
+  if ! [[ "$max_width" =~ ^[0-9]+$ ]]; then
+    local max_bytes
+    max_bytes=$(awk '{ if (length > m) m = length } END { print m+0 }' <<< "$ascii_output")
+    max_width=$((max_bytes / 3))
+  fi
+
+  if (( max_width > cols )); then
+    typewriter "${BOLD}${color}${text}${RESET}"
+    return
+  fi
+
   # Strip trailing blank lines using a safer method
   ascii_output=$(echo "$ascii_output" | awk '/^[[:space:]]*$/ {emptylines=emptylines"\n"; next} {if(emptylines) printf "%s",emptylines; emptylines=""; print}')
 

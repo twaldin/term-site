@@ -4,22 +4,9 @@ emit_url "welcome"
 
 clear
 echo ""
-
-# DOS_Rebel figlet for "twaldin" is ~50 cols wide — on narrow mobile terminals
-# it wraps into a garbled mess. Fall back to a simple colored title so the
-# welcome still looks clean. Check all three width sources like blog.sh does.
-_cols=0
-_t="$(tput cols 2>/dev/null)";                  [[ "$_t" =~ ^[0-9]+$ ]] && (( _t > _cols )) && _cols=$_t
-_t="$(stty size 2>/dev/null | awk '{print $2}')"; [[ "$_t" =~ ^[0-9]+$ ]] && (( _t > _cols )) && _cols=$_t
-[[ "$COLUMNS" =~ ^[0-9]+$ ]]                  && (( COLUMNS > _cols )) && _cols=$COLUMNS
-(( _cols < 10 )) && _cols=80
-
-# DOS_Rebel "twaldin" is 70 chars wide — need ≥ 75 cols to avoid wrap.
-if (( _cols >= 75 )); then
-  ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
-else
-  typewriter "${BOLD}${RED}twaldin${RESET}"
-fi
+# ascii_typewriter auto-detects terminal width and falls back to a plain
+# styled title when the figlet output is wider than the terminal.
+ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
 echo ""
 create_box "portfolio terminal" "  about       learn about me
 
