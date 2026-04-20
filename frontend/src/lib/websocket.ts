@@ -95,7 +95,9 @@ export function createWebSocketManager(): WebSocketManager {
     const initCommand = typeof window !== 'undefined' ? pathToCommand(window.location.pathname) : undefined;
 
     socket = io(getWebSocketUrl(), {
-      transports: ['polling', 'websocket'],
+      // websocket-first: skip the polling handshake on browsers that support WS
+      // (essentially all of them). Falls back to polling if WS fails.
+      transports: ['websocket', 'polling'],
       timeout: 10000,
       reconnection: true,
       reconnectionAttempts: 10,
@@ -103,7 +105,7 @@ export function createWebSocketManager(): WebSocketManager {
       reconnectionDelayMax: 10000,
       forceNew: true,
       upgrade: true,
-      rememberUpgrade: false,
+      rememberUpgrade: true,
       auth: initCommand ? { initCommand } : undefined,
     });
 

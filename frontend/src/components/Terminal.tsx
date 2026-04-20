@@ -86,16 +86,15 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         }
       };
 
-      // Load fonts, then dynamic-import xterm modules (avoids SSR)
-      loadFonts()
-        .then(() =>
-          Promise.all([
-            import("@xterm/xterm"),
-            import("@xterm/addon-fit"),
-            import("@xterm/addon-web-links"),
-          ]),
-        )
-        .then(([{ Terminal }, { FitAddon }, { WebLinksAddon }]) => {
+      // Parallelize font + xterm downloads so 1MB font doesn't block xterm import.
+      // Fonts are preloaded in layout.tsx so loadFonts() is typically cache-instant.
+      Promise.all([
+        loadFonts(),
+        import("@xterm/xterm"),
+        import("@xterm/addon-fit"),
+        import("@xterm/addon-web-links"),
+      ])
+        .then(([, { Terminal }, { FitAddon }, { WebLinksAddon }]) => {
           if (!terminalRef.current) return;
 
           const dynamicFontSize = calculateFontSize(terminalRef.current);

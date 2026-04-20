@@ -2,8 +2,10 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { notFound } from 'next/navigation';
 import BlogPost from '@/components/BlogPost';
+import BlogTerminalStatic from '@/components/BlogTerminalStatic';
 
 const POSTS_DIR = join(process.cwd(), 'blog-posts');
+const SNAPSHOTS_DIR = join(process.cwd(), 'public', 'blog-snapshots');
 
 function parseFrontmatter(raw: string): { meta: Record<string, string>; body: string } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
@@ -33,11 +35,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BlogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  // Preferred: terminal-aesthetic xterm with pre-captured ANSI output.
+  const snapshotPath = join(SNAPSHOTS_DIR, `${slug}.ansi`);
+  if (existsSync(snapshotPath)) {
+    const ansi = readFileSync(snapshotPath, 'utf-8');
+    return <BlogTerminalStatic slug={slug} ansi={ansi} />;
+  }
+
+  // Fallback: markdown-as-HTML (for posts without a captured snapshot).
   const filePath = join(POSTS_DIR, `${slug}.md`);
   if (!existsSync(filePath)) notFound();
-
   const { meta, body } = parseFrontmatter(readFileSync(filePath, 'utf-8'));
-
   return (
     <BlogPost
       slug={slug}
