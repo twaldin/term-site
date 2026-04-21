@@ -44,7 +44,7 @@ const cmdBufs = new Map();
 
 // Per-IP rate limiting for connections (connect attempts per window).
 const connectionTracker = new Map();
-const MAX_CONNECTIONS_PER_IP = 3;
+const MAX_CONNECTIONS_PER_IP = 10;
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 
 // Single-session-per-IP: one IP can hold ONE live session at a time. A new

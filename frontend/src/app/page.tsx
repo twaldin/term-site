@@ -10,7 +10,7 @@ const Terminal = dynamic(() => import('@/components/Terminal'), { ssr: false });
 export default function Home() {
   const wsManagerRef = useRef<WebSocketManager | null>(null);
   const terminalRef = useRef<{ writeToTerminal: (data: string) => void; clearTerminal: () => void; fitTerminal: () => void } | null>(null);
-  const [terminalReady, setTerminalReady] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
   useEffect(() => {
     const wsManager = createWebSocketManager();
@@ -23,8 +23,7 @@ export default function Home() {
     wsManager.onError(() => {});
 
     wsManager.onOutput((data) => {
-      // First output means xterm has mounted and is receiving data
-      if (!terminalReady) setTerminalReady(true);
+      setShowSkeleton(false);
       if (terminalRef.current) {
         terminalRef.current.writeToTerminal(data);
       }
@@ -37,6 +36,13 @@ export default function Home() {
     };
   }, []);
 
+  // Auto-dismiss skeleton after 3s so it never permanently blocks the
+  // terminal — if the WS is rate-limited or slow, xterm still shows.
+  useEffect(() => {
+    const t = setTimeout(() => setShowSkeleton(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   const handleTerminalData = useCallback((data: string) => {
     wsManagerRef.current?.sendInput(data);
   }, []);
@@ -47,7 +53,7 @@ export default function Home() {
 
   return (
     <div className="w-full flex-1 bg-black overflow-hidden" style={{ minHeight: 0, position: 'relative' }}>
-      {!terminalReady && (
+      {showSkeleton && (
         <div style={{
           position: 'absolute', inset: 0, zIndex: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
