@@ -507,12 +507,8 @@ class SessionManager {
     const session = this.sessions.get(sessionId);
     if (!session) return;
     if (!command || typeof command !== 'string') command = 'welcome';
-    // Safety: whitelist characters so we never execute arbitrary shell chars via URL.
-    // Any character outside [a-z0-9 _./-] drops us back to plain welcome.
     // Char whitelist — matches the frontend's SAFE_CMD_RE. Blocks shell
-    // metachars (; | & > < ` $ ( ) { } [ ] " ' \ * ? etc). The frontend
-    // also enforces BLOCKED_HEADS, so by the time a command reaches here
-    // it's already been through one layer of validation.
+    // metachars (; | & > < ` $ ( ) { } [ ] " ' \ * ? etc).
     if (!/^[a-z0-9 ._/+=:,@-]+$/i.test(command) || command.length > 200) {
       console.warn(`Rejected initCommand for ${sessionId}: ${command} — falling back to welcome`);
       command = 'welcome';
@@ -520,22 +516,9 @@ class SessionManager {
 
     console.log(`Auto-typing '${command}' for session ${sessionId}`);
 
-    const chars = command.split('');
-    let index = 0;
-
-    const typeNext = () => {
-      if (index < chars.length) {
-        this.sendInput(sessionId, chars[index]);
-        index++;
-        setTimeout(typeNext, 60);
-      } else {
-        setTimeout(() => {
-          this.sendInput(sessionId, '\r');
-        }, 100);
-      }
-    };
-
-    typeNext();
+    // Single write — no per-char delay needed for init commands since the
+    // terminal just mounted and the user hasn't seen the prompt yet.
+    this.sendInput(sessionId, command + '\r');
   }
 
   sendInput(sessionId, data) {
@@ -594,7 +577,7 @@ class SessionManager {
     session.initCommandRun = true;
     const cmd = session.initCommand || 'welcome';
     console.log(`Session ${sessionId}: prompt+resize ready, auto-typing '${cmd}'`);
-    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 200);
+    this.autoTypeCommand(sessionId, cmd);
   }
 
   async destroySession(sessionId) {

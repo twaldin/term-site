@@ -153,9 +153,21 @@ create_box() {
   [[ -z "$term_width" ]] && term_width="${COLUMNS:-80}"
 
   if [[ "$box_width" == "auto" ]]; then
-    # Default: fill terminal width (minus 2 cols of margin). Looks right on
-    # both 80-col mobile and 160-col wide monitors.
-    box_width=$((term_width - 2))
+    # Size to content width (longest line + borders/padding), capped at
+    # terminal width. Avoids a 70-char box wrapping on mobile when content
+    # is only ~35 chars wide.
+    local max_line=0
+    if [ -n "$content" ]; then
+      while IFS= read -r line; do
+        local line_clean=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
+        local len=${#line_clean}
+        (( len > max_line )) && max_line=$len
+      done <<< "$content"
+    fi
+    local title_len=${#title_clean}
+    local content_based=$(( (max_line > title_len ? max_line : title_len) + 8 ))
+    local term_max=$((term_width - 2))
+    box_width=$(( content_based < term_max ? content_based : term_max ))
   elif [ "$term_width" -lt "$box_width" ]; then
     box_width=$((term_width - 2))
   fi

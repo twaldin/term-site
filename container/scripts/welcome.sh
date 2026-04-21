@@ -4,9 +4,13 @@ emit_url "welcome"
 
 clear
 echo ""
-# ascii_typewriter auto-detects terminal width and falls back to a plain
-# styled title when the figlet output is wider than the terminal.
-ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
+# Skip figlet on narrow terminals (mobile) — DOS_Rebel "twaldin" is ~70 cols.
+cols=$(tput cols 2>/dev/null || echo 80)
+if (( cols >= 80 )); then
+  ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
+else
+  typewriter "${BOLD}${RED}twaldin${RESET}"
+fi
 echo ""
 create_box "portfolio terminal" "  about       learn about me
 
