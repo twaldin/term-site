@@ -1,8 +1,11 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useRef, useCallback } from 'react';
-import Terminal from '@/components/Terminal';
 import { createWebSocketManager, WebSocketManager } from '@/lib/websocket';
+
+// xterm references browser globals (`self`) at module level — skip SSR.
+const Terminal = dynamic(() => import('@/components/Terminal'), { ssr: false });
 
 export default function Home() {
   const wsManagerRef = useRef<WebSocketManager | null>(null);
