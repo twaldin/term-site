@@ -51,6 +51,9 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const xtermRef = useRef<XTermTerminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
     const outputBufferRef = useRef<string[]>([]);
+    const dripTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const cancelDripRef = useRef(false);
+    const dripRemainingRef = useRef('');
 
     useEffect(() => {
       if (!terminalRef.current || typeof window === "undefined") return;
@@ -121,7 +124,18 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         outputBufferRef.current = [];
       }
 
-      const dataDisposable = xterm.onData(onData);
+      const dataDisposable = xterm.onData((data) => {
+        cancelDripRef.current = true;
+        if (dripTimerRef.current) {
+          clearTimeout(dripTimerRef.current);
+          dripTimerRef.current = null;
+        }
+        if (dripRemainingRef.current && xtermRef.current) {
+          xtermRef.current.write(dripRemainingRef.current);
+          dripRemainingRef.current = '';
+        }
+        onData(data);
+      });
       const resizeDisposable = xterm.onResize(({ cols, rows }) => {
         onResize(cols, rows);
       });
@@ -207,6 +221,9 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       window.addEventListener("resize", handleResize);
 
       cleanupFunctions = [
+        () => {
+          if (dripTimerRef.current) clearTimeout(dripTimerRef.current);
+        },
         detachTouch,
         () => {
           clearTimeout(resizeTimeout);
@@ -244,11 +261,43 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     }, [onData, onResize]);
 
     const writeToTerminal = (data: string) => {
-      if (xtermRef.current) {
-        xtermRef.current.write(data);
-      } else {
+      if (!xtermRef.current) {
         outputBufferRef.current.push(data);
+        return;
       }
+
+      const newlineCount = (data.match(/\n/g) || []).length;
+      if (data.length <= 200 || newlineCount <= 3) {
+        xtermRef.current.write(data);
+        return;
+      }
+
+      cancelDripRef.current = false;
+      const lines = data.split('\n');
+      dripRemainingRef.current = data;
+      let i = 0;
+
+      const drip = () => {
+        if (cancelDripRef.current || i >= lines.length || !xtermRef.current) {
+          if (dripRemainingRef.current && xtermRef.current) {
+            xtermRef.current.write(dripRemainingRef.current);
+          }
+          dripRemainingRef.current = '';
+          dripTimerRef.current = null;
+          return;
+        }
+
+        const line = lines[i];
+        dripRemainingRef.current = lines.slice(i + 1).join('\n');
+        xtermRef.current.write(i < lines.length - 1 ? line + '\n' : line);
+        i++;
+        dripTimerRef.current = setTimeout(drip, 20);
+      };
+
+      if (dripTimerRef.current) {
+        clearTimeout(dripTimerRef.current);
+      }
+      drip();
     };
 
     const clearTerminal = () => {

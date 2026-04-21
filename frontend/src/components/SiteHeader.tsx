@@ -7,6 +7,14 @@ const LINK = '#8ec07c';
 const DIM = '#928374';
 
 export default function SiteHeader() {
+  const handleNav = (cmd: string) => (e: React.MouseEvent) => {
+    const w = window as Window & { __terminalSendCommand?: (cmd: string) => void };
+    if (w.__terminalSendCommand) {
+      e.preventDefault();
+      w.__terminalSendCommand(cmd);
+    }
+  };
+
   const linkStyle: React.CSSProperties = {
     color: LINK,
     textDecoration: 'none',
@@ -30,15 +38,15 @@ export default function SiteHeader() {
         flexShrink: 0,
       }}
     >
-      <Link href="/" style={{ color: BRAND, textDecoration: 'none', fontWeight: 'bold' }}>
+      <Link href="/" onClick={handleNav('welcome')} style={{ color: BRAND, textDecoration: 'none', fontWeight: 'bold' }}>
         tim.waldin.net
       </Link>
       <nav style={{ display: 'flex', gap: '12px', alignItems: 'center', color: DIM }}>
         <span>navigation —</span>
-        <Link href="/" style={linkStyle}>home</Link>
-        <Link href="/t/blog" style={linkStyle}>blog</Link>
-        <Link href="/t/projects" style={linkStyle}>projects</Link>
-        <Link href="/t/resume" style={linkStyle}>resume</Link>
+        <Link href="/" onClick={handleNav('welcome')} style={linkStyle}>home</Link>
+        <Link href="/t/blog" onClick={handleNav('blog')} style={linkStyle}>blog</Link>
+        <Link href="/t/projects" onClick={handleNav('projects')} style={linkStyle}>projects</Link>
+        <Link href="/t/resume" onClick={handleNav('resume')} style={linkStyle}>resume</Link>
       </nav>
     </header>
   );

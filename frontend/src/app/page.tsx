@@ -43,6 +43,14 @@ export default function Home() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    const w = window as Window & { __terminalSendCommand?: (cmd: string) => void };
+    w.__terminalSendCommand = (cmd: string) => {
+      wsManagerRef.current?.sendInput(cmd + '\r');
+    };
+    return () => { delete w.__terminalSendCommand; };
+  }, []);
+
   const handleTerminalData = useCallback((data: string) => {
     wsManagerRef.current?.sendInput(data);
   }, []);

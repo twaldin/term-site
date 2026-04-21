@@ -114,16 +114,21 @@ io.on('connection', (socket) => {
   });
   cmdBufs.set(socket.id, '');
 
-  // Create new terminal session
-  sessionManager.createSession(socket.id, socket, initCommand)
-    .then(() => {
-      console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
-    })
-    .catch((error) => {
-      console.error(`Failed to create session for ${socket.id}:`, error);
-      socket.emit('error', 'Failed to create terminal session');
-      socket.disconnect();
-    });
+  // Create new terminal session (try reattach first)
+  const reattached = sessionManager.tryReattach(clientIP, socket.id, socket);
+  if (reattached) {
+    console.log(`Reattached session for ${socket.id} from ${clientIP}`);
+  } else {
+    sessionManager.createSession(socket.id, socket, initCommand, clientIP)
+      .then(() => {
+        console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
+      })
+      .catch((error) => {
+        console.error(`Failed to create session for ${socket.id}:`, error);
+        socket.emit('error', 'Failed to create terminal session');
+        socket.disconnect();
+      });
+  }
 
   // Handle terminal input with validation
   socket.on('input', (data) => {
@@ -164,7 +169,7 @@ io.on('connection', (socket) => {
     if (ipSessions.get(clientIP) === socket.id) {
       ipSessions.delete(clientIP);
     }
-    sessionManager.destroySession(socket.id);
+    sessionManager.zombifySession(socket.id);
   });
 
   // Handle connection errors

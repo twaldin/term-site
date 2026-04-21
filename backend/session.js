@@ -30,6 +30,7 @@ class SessionManager {
     this.pool = [];
     this.poolSize = 3;
     this.poolWarming = 0;
+    this.zombieSessions = new Map();
 
     // Preload the image on startup, then fill the pool.
     this.preloadImage().then(() => {
@@ -279,7 +280,7 @@ class SessionManager {
     }
   }
 
-  async createSession(sessionId, socket, initCommand) {
+  async createSession(sessionId, socket, initCommand, clientIP) {
     if (this.sessions.size >= this.maxSessions) {
       throw new Error('Maximum session limit reached');
     }
@@ -288,12 +289,12 @@ class SessionManager {
     if (pooled) {
       // Replenish in the background so subsequent connections stay fast.
       this.fillPool();
-      return this.attachPooledSession(sessionId, socket, initCommand, pooled);
+      return this.attachPooledSession(sessionId, socket, initCommand, pooled, clientIP);
     }
-    return this.createContainerSession(sessionId, socket, initCommand);
+    return this.createContainerSession(sessionId, socket, initCommand, clientIP);
   }
 
-  async attachPooledSession(sessionId, socket, initCommand, pooled) {
+  async attachPooledSession(sessionId, socket, initCommand, pooled, clientIP) {
     console.log(`Assigning pooled container to session ${sessionId}`);
 
     const { container, stream, buffer } = pooled;
@@ -309,6 +310,7 @@ class SessionManager {
       container,
       stream,
       socket,
+      clientIP,
       startTime: Date.now(),
       lastActivity: Date.now(),
       initCommand,
@@ -322,16 +324,19 @@ class SessionManager {
     // Replay the buffered prompt output to the client so they see their shell.
     for (const chunk of buffer) socket.emit('output', chunk);
 
-    stream.on('data', (data) => {
+    session._streamDataHandler = (data) => {
       const output = data.toString();
       if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
-        socket.emit('output', output);
+        session.socket.emit('output', output);
       }
-    });
-    stream.on('close', () => {
+    };
+    stream.on('data', session._streamDataHandler);
+
+    session._streamCloseHandler = () => {
       console.log(`Container stream closed for session ${sessionId}`);
       this.destroySession(sessionId);
-    });
+    };
+    stream.on('close', session._streamCloseHandler);
 
     // Same 6s fallback as fresh sessions — if the client never sends a resize,
     // unblock initCommand so the session doesn't deadlock.
@@ -349,7 +354,7 @@ class SessionManager {
     console.log(`Session ${sessionId} attached from pool`);
   }
 
-  async createContainerSession(sessionId, socket, initCommand) {
+  async createContainerSession(sessionId, socket, initCommand, clientIP) {
     console.log(`Creating container session for ${sessionId}`);
 
     try {
@@ -450,32 +455,15 @@ class SessionManager {
       // figlet boxes / nvim / blog output at the default 80x24 TTY size and
       // the whole screen looks "small until you zoom once". The resizeTerminal
       // handler below flips firstResizeApplied and also drives this gate.
-      stream.on('data', (data) => {
-        const output = data.toString();
-        if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
-          socket.emit('output', output);
 
-          const session = this.sessions.get(sessionId);
-          if (session && !session.promptSeen && output.includes('~ ')) {
-            session.promptSeen = true;
-            this.maybeRunInitCommand(sessionId);
-          }
-        }
-      });
-
-      // Handle container close
-      stream.on('close', () => {
-        console.log(`Container stream closed for session ${sessionId}`);
-        this.destroySession(sessionId);
-      });
-
-      // Store session
+      // Store session (created before handlers so they can reference it)
       const session = {
         id: sessionId,
         type: 'container',
         container: container,
         stream: stream,
         socket: socket,
+        clientIP,
         startTime: Date.now(),
         lastActivity: Date.now(),
         initCommand: initCommand,
@@ -487,6 +475,26 @@ class SessionManager {
       };
 
       this.sessions.set(sessionId, session);
+
+      session._streamDataHandler = (data) => {
+        const output = data.toString();
+        if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
+          session.socket.emit('output', output);
+
+          const s = this.sessions.get(sessionId);
+          if (s && !s.promptSeen && output.includes('~ ')) {
+            s.promptSeen = true;
+            this.maybeRunInitCommand(sessionId);
+          }
+        }
+      };
+      stream.on('data', session._streamDataHandler);
+
+      session._streamCloseHandler = () => {
+        console.log(`Container stream closed for session ${sessionId}`);
+        this.destroySession(sessionId);
+      };
+      stream.on('close', session._streamCloseHandler);
 
       // Safety net: if the client never sends a resize (half-broken client
       // shouldn't deadlock the welcome screen), force the gate open after 6s.
@@ -621,6 +629,88 @@ class SessionManager {
     } catch (error) {
       console.error(`Error destroying session ${sessionId}:`, error);
       this.sessions.delete(sessionId);
+    }
+  }
+
+  tryReattach(clientIP, newSocketId, newSocket) {
+    const zombie = this.zombieSessions.get(clientIP);
+    if (!zombie) return null;
+
+    const { session, graceTimer } = zombie;
+    clearTimeout(graceTimer);
+    this.zombieSessions.delete(clientIP);
+
+    // Swap socket
+    session.id = newSocketId;
+    session.socket = newSocket;
+
+    // Swap stream data handler to emit to new socket
+    if (session._streamDataHandler) {
+      session.stream.off('data', session._streamDataHandler);
+    }
+    session._streamDataHandler = (data) => {
+      const output = data.toString();
+      if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
+        session.socket.emit('output', output);
+      }
+    };
+    session.stream.on('data', session._streamDataHandler);
+
+    session.initCommandRun = true;
+    session.hasReceivedInput = false;
+    session.lastActivity = Date.now();
+
+    this.sessions.set(newSocketId, session);
+    this.setSessionTimeout(newSocketId);
+    this.setNoInputTimeout(newSocketId);
+
+    console.log(`Reattached session ${newSocketId} (was zombie from IP ${clientIP})`);
+    return session;
+  }
+
+  zombifySession(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+
+    this.sessions.delete(sessionId);
+
+    if (session.timeout) clearTimeout(session.timeout);
+    if (session.noInputTimer) clearTimeout(session.noInputTimer);
+
+    const clientIP = session.clientIP;
+    if (!clientIP) {
+      this._killSession(session);
+      return;
+    }
+
+    // If there's already a zombie for this IP, kill it first
+    const existing = this.zombieSessions.get(clientIP);
+    if (existing) {
+      clearTimeout(existing.graceTimer);
+      this._killSession(existing.session);
+    }
+
+    const graceTimer = setTimeout(() => {
+      const z = this.zombieSessions.get(clientIP);
+      if (z) {
+        this.zombieSessions.delete(clientIP);
+        this._killSession(z.session);
+      }
+    }, 30000);
+
+    this.zombieSessions.set(clientIP, { session, graceTimer });
+    console.log(`Session ${sessionId} zombified (30s grace for IP ${clientIP})`);
+  }
+
+  _killSession(session) {
+    try {
+      if (session.stream) session.stream.end();
+      if (session.container) {
+        session.container.kill().catch(() => {});
+        session.container.remove({ force: true }).catch(() => {});
+      }
+    } catch (error) {
+      console.error(`Error killing session ${session.id}:`, error);
     }
   }
 
