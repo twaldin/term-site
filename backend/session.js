@@ -139,6 +139,17 @@ class SessionManager {
 
     this.pool.push(item);
     console.log(`Pool: warmed container (${this.pool.length}/${this.poolSize} ready, ${this.poolWarming - 1} still warming)`);
+
+    // Pre-populate the welcome output cache at the pool's default width (140).
+    // The first visitor gets instant output; without this they'd wait for
+    // figlet + animations to generate the cache. Wait ~1s for the script to
+    // run and write to /tmp, then discard the output from the buffer.
+    const promptBuffer = [...item.buffer]; // save prompt for user replay
+    item.stream.write('welcome\r');
+    await new Promise((r) => setTimeout(r, 1500));
+    // Restore just the prompt — discard the welcome script output that
+    // accumulated while the cache was being written to disk.
+    item.buffer = promptBuffer;
   }
 
   _grabFromPool() {
@@ -577,7 +588,11 @@ class SessionManager {
     session.initCommandRun = true;
     const cmd = session.initCommand || 'welcome';
     console.log(`Session ${sessionId}: prompt+resize ready, auto-typing '${cmd}'`);
-    this.autoTypeCommand(sessionId, cmd);
+    // 200ms settling delay — gives xterm time to process the resize and
+    // render before command output starts streaming in. Without this the
+    // initCommand output can arrive while xterm is mid-layout and get
+    // dropped or rendered at the old size.
+    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 200);
   }
 
   async destroySession(sessionId) {

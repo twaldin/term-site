@@ -63,169 +63,171 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       let cleanupFunctions: (() => void)[] = [];
 
-      // Fonts are preloaded via <link> in layout.tsx and @font-face in globals.css.
-      // Just wait for them to be ready — no redundant FontFace construction.
-      document.fonts.ready.then(() => {
-        if (!terminalRef.current) return;
+      // Init xterm immediately — don't gate on font download. The terminal
+      // renders with a system fallback font first, then re-fits when the
+      // Nerd Font finishes loading (preload in layout.tsx triggers the swap).
+      if (!terminalRef.current) return;
 
-        const dynamicFontSize = calculateFontSize(terminalRef.current);
-        const dynamicConfig = { ...terminalConfig, fontSize: dynamicFontSize };
+      const dynamicFontSize = calculateFontSize(terminalRef.current);
+      const dynamicConfig = { ...terminalConfig, fontSize: dynamicFontSize };
 
-        const xterm = new XTermTerminal(dynamicConfig);
-        const fitAddon = new FitAddon();
-        xterm.loadAddon(fitAddon);
+      const xterm = new XTermTerminal(dynamicConfig);
+      const fitAddon = new FitAddon();
+      xterm.loadAddon(fitAddon);
 
-        const handleLinkActivate = (_event: MouseEvent, text: string) => {
-          window.open(text, "_blank", "noopener,noreferrer");
-        };
-        xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
-        xterm.options.linkHandler = {
-          activate: handleLinkActivate,
-          allowNonHttpProtocols: true,
-        };
+      const handleLinkActivate = (_event: MouseEvent, text: string) => {
+        window.open(text, "_blank", "noopener,noreferrer");
+      };
+      xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
+      xterm.options.linkHandler = {
+        activate: handleLinkActivate,
+        allowNonHttpProtocols: true,
+      };
 
-        xterm.open(terminalRef.current);
-        xtermRef.current = xterm;
-        fitAddonRef.current = fitAddon;
+      xterm.open(terminalRef.current);
+      xtermRef.current = xterm;
+      fitAddonRef.current = fitAddon;
 
-        // OSC 9999 — shell scripts emit `\e]9999;<path>\e\\` on entry so the
-        // browser URL tracks the active command (bidirectional deep links).
-        const oscUrlDisposable = xterm.parser.registerOscHandler(9999, (data) => {
-          try {
-            const path = '/' + data.replace(/^\/+/, '');
-            if (typeof window !== 'undefined' && window.location.pathname !== path) {
-              window.history.pushState(null, '', path);
-            }
-          } catch { /* malformed — swallow, xterm still strips the seq */ }
-          return true;
-        });
-
-        // OSC 9998 — emitted by scripts after long renders (blog posts etc).
-        const oscScrollTopDisposable = xterm.parser.registerOscHandler(9998, () => {
-          try { xterm.scrollToTop(); } catch { /* best-effort */ }
-          return true;
-        });
-
-        // OSC 9997 — `emit_navigate <path>` hands off to an HTML page
-        const oscNavigateDisposable = xterm.parser.registerOscHandler(9997, (data) => {
-          try {
-            const path = '/' + data.replace(/^\/+/, '');
-            if (typeof window !== 'undefined') {
-              window.location.assign(path);
-            }
-          } catch { /* malformed — swallow */ }
-          return true;
-        });
-
-        // Flush buffered output that arrived before xterm was ready
-        if (outputBufferRef.current.length > 0) {
-          for (const chunk of outputBufferRef.current) {
-            xterm.write(chunk);
+      const oscUrlDisposable = xterm.parser.registerOscHandler(9999, (data) => {
+        try {
+          const path = '/' + data.replace(/^\/+/, '');
+          if (typeof window !== 'undefined' && window.location.pathname !== path) {
+            window.history.pushState(null, '', path);
           }
-          outputBufferRef.current = [];
+        } catch { return true; }
+        return true;
+      });
+
+      const oscScrollTopDisposable = xterm.parser.registerOscHandler(9998, () => {
+        try { xterm.scrollToTop(); } catch { /* best-effort */ }
+        return true;
+      });
+
+      const oscNavigateDisposable = xterm.parser.registerOscHandler(9997, (data) => {
+        try {
+          const path = '/' + data.replace(/^\/+/, '');
+          if (typeof window !== 'undefined') {
+            window.location.assign(path);
+          }
+        } catch { /* malformed */ }
+        return true;
+      });
+
+      // Flush buffered output that arrived before xterm was ready
+      if (outputBufferRef.current.length > 0) {
+        for (const chunk of outputBufferRef.current) {
+          xterm.write(chunk);
         }
+        outputBufferRef.current = [];
+      }
 
-        const dataDisposable = xterm.onData(onData);
-        const resizeDisposable = xterm.onResize(({ cols, rows }) => {
-          onResize(cols, rows);
-        });
+      const dataDisposable = xterm.onData(onData);
+      const resizeDisposable = xterm.onResize(({ cols, rows }) => {
+        onResize(cols, rows);
+      });
 
-        // Single rAF for DOM layout, then fit + notify backend
-        requestAnimationFrame(() => {
-          fitAddon.fit();
-          onResize(xterm.cols, xterm.rows);
-        });
+      // Fit after one frame for DOM layout
+      requestAnimationFrame(() => {
+        fitAddon.fit();
+        onResize(xterm.cols, xterm.rows);
+      });
 
-        xterm.focus();
+      // Re-fit when Nerd Font finishes loading — glyph widths change.
+      document.fonts.ready.then(() => {
+        if (fitAddonRef.current && xtermRef.current) {
+          fitAddonRef.current.fit();
+          onResize(xtermRef.current.cols, xtermRef.current.rows);
+        }
+      });
 
-        const handleClick = () => xterm.focus();
-        const currentTerminalElement = terminalRef.current;
-        currentTerminalElement.addEventListener("click", handleClick);
+      xterm.focus();
 
-        // Mobile touch scroll (1:1 finger tracking + momentum).
-        const detachTouch = attachTouchScroll(xterm, currentTerminalElement);
+      const handleClick = () => xterm.focus();
+      const currentTerminalElement = terminalRef.current;
+      currentTerminalElement.addEventListener("click", handleClick);
 
-        const handlePaste = async (event: ClipboardEvent) => {
+      const detachTouch = attachTouchScroll(xterm, currentTerminalElement);
+
+      const handlePaste = async (event: ClipboardEvent) => {
+        event.preventDefault();
+        try {
+          xterm.paste(await navigator.clipboard.readText());
+        } catch (err) {
+          console.warn("Failed to read clipboard:", err);
+        }
+      };
+
+      const handleCopy = async () => {
+        try {
+          const selection = xterm.getSelection();
+          if (selection) {
+            await navigator.clipboard.writeText(selection);
+          }
+        } catch (err) {
+          console.warn("Failed to write to clipboard:", err);
+        }
+      };
+
+      const handleKeyDown = async (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "v") {
           event.preventDefault();
           try {
             xterm.paste(await navigator.clipboard.readText());
           } catch (err) {
             console.warn("Failed to read clipboard:", err);
           }
-        };
-
-        const handleCopy = async () => {
-          try {
-            const selection = xterm.getSelection();
-            if (selection) {
-              await navigator.clipboard.writeText(selection);
-            }
-          } catch (err) {
-            console.warn("Failed to write to clipboard:", err);
-          }
-        };
-
-        const handleKeyDown = async (event: KeyboardEvent) => {
-          if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+        } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
+          const selection = xterm.getSelection();
+          if (selection) {
             event.preventDefault();
-            try {
-              xterm.paste(await navigator.clipboard.readText());
-            } catch (err) {
-              console.warn("Failed to read clipboard:", err);
-            }
-          } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
-            const selection = xterm.getSelection();
-            if (selection) {
-              event.preventDefault();
-              handleCopy();
-            }
+            handleCopy();
           }
-        };
+        }
+      };
 
-        currentTerminalElement.addEventListener("paste", handlePaste);
-        currentTerminalElement.addEventListener("keydown", handleKeyDown);
+      currentTerminalElement.addEventListener("paste", handlePaste);
+      currentTerminalElement.addEventListener("keydown", handleKeyDown);
 
-        let resizeTimeout: NodeJS.Timeout;
-        const handleResize = () => {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(() => {
-            if (terminalRef.current && xterm && fitAddon) {
-              const newFontSize = calculateFontSize(terminalRef.current);
-              const currentFontSize =
-                xterm.options.fontSize || dynamicConfig.fontSize;
-              if (Math.abs(currentFontSize - newFontSize) > 1) {
-                xterm.options.fontSize = newFontSize;
-              }
-              fitAddon.fit();
+      let resizeTimeout: NodeJS.Timeout;
+      const handleResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          if (terminalRef.current && xterm && fitAddon) {
+            const newFontSize = calculateFontSize(terminalRef.current);
+            const currentFontSize =
+              xterm.options.fontSize || dynamicConfig.fontSize;
+            if (Math.abs(currentFontSize - newFontSize) > 1) {
+              xterm.options.fontSize = newFontSize;
             }
-          }, 150);
-        };
+            fitAddon.fit();
+          }
+        }, 150);
+      };
 
-        window.addEventListener("resize", handleResize);
+      window.addEventListener("resize", handleResize);
 
-        cleanupFunctions = [
-          detachTouch,
-          () => {
-            clearTimeout(resizeTimeout);
-            window.removeEventListener("resize", handleResize);
-          },
-          () =>
-            currentTerminalElement.removeEventListener("click", handleClick),
-          () =>
-            currentTerminalElement.removeEventListener("paste", handlePaste),
-          () =>
-            currentTerminalElement.removeEventListener(
-              "keydown",
-              handleKeyDown,
-            ),
-          () => dataDisposable.dispose(),
-          () => resizeDisposable.dispose(),
-          () => oscUrlDisposable.dispose(),
-          () => oscScrollTopDisposable.dispose(),
-          () => oscNavigateDisposable.dispose(),
-          () => xterm.dispose(),
-        ];
-      });
+      cleanupFunctions = [
+        detachTouch,
+        () => {
+          clearTimeout(resizeTimeout);
+          window.removeEventListener("resize", handleResize);
+        },
+        () =>
+          currentTerminalElement.removeEventListener("click", handleClick),
+        () =>
+          currentTerminalElement.removeEventListener("paste", handlePaste),
+        () =>
+          currentTerminalElement.removeEventListener(
+            "keydown",
+            handleKeyDown,
+          ),
+        () => dataDisposable.dispose(),
+        () => resizeDisposable.dispose(),
+        () => oscUrlDisposable.dispose(),
+        () => oscScrollTopDisposable.dispose(),
+        () => oscNavigateDisposable.dispose(),
+        () => xterm.dispose(),
+      ];
 
       // Return cleanup function
       return () => {
@@ -241,7 +243,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       };
     }, [onData, onResize]);
 
-    // Method to write data to terminal (buffers if xterm not ready yet)
     const writeToTerminal = (data: string) => {
       if (xtermRef.current) {
         xtermRef.current.write(data);
@@ -250,14 +251,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       }
     };
 
-    // Method to clear terminal
     const clearTerminal = () => {
       if (xtermRef.current) {
         xtermRef.current.clear();
       }
     };
 
-    // Expose methods via ref
     useImperativeHandle(ref, () => ({
       writeToTerminal,
       clearTerminal,

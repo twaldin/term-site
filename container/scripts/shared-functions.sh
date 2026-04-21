@@ -251,6 +251,25 @@ email_link() {
   echo -en "${color}\033]8;;mailto:${email}\033\\ ${text}\033]8;;\033\\${RESET}"
 }
 
+# cache_output <command_name> -- wraps a script's output in a width-keyed cache.
+# First run at a given column count generates and caches the output (including
+# ANSI codes). Subsequent runs at the same width cat the cache — instant display.
+# Cache lives in /tmp which is a tmpfs inside the container (fast, ephemeral).
+cache_output() {
+  local cmd_name="$1"
+  local cols
+  cols=$(tput cols 2>/dev/null || echo 80)
+  local cache_dir="/tmp/cmd-cache"
+  local cache_file="${cache_dir}/${cmd_name}-${cols}.ans"
+
+  if [[ -f "$cache_file" ]]; then
+    cat "$cache_file"
+    return
+  fi
+
+  mkdir -p "$cache_dir"
+}
+
 git_activity() {
   local color="${1:-$BLUE}"
   echo ""
