@@ -27,8 +27,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 COPY --from=builder /app/next.config.ts ./
 
-# Install production dependencies
-RUN corepack enable && pnpm install --frozen-lockfile --prod && \
+# Install all deps (not just prod) — Next.js needs typescript at runtime
+# to parse next.config.ts. Enable corepack and chown before USER switch.
+RUN corepack enable && pnpm install --frozen-lockfile && \
     chown -R nextjs:nextjs /app
 
 USER nextjs
