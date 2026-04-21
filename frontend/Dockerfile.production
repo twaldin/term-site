@@ -3,15 +3,15 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package files (build context is repo root)
-COPY frontend/package*.json ./
-RUN npm ci
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
 # Copy frontend source + blog posts for static generation
 COPY frontend/ .
 COPY container/blog/posts/ ./blog-posts/
 
 # Build the Next.js app
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM node:18-alpine
@@ -24,11 +24,11 @@ RUN addgroup -g 1001 -S nextjs && \
 # Copy built application
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 COPY --from=builder /app/next.config.ts ./
 
-# Install production dependencies plus typescript (needed for next.config.ts at startup)
-RUN npm ci && \
+# Install production dependencies
+RUN corepack enable && pnpm install --frozen-lockfile --prod && \
     chown -R nextjs:nextjs /app
 
 USER nextjs
@@ -37,4 +37,4 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 
-CMD ["npm", "start"]
+CMD ["npx", "next", "start"]
