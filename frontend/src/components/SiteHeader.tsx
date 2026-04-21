@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 const BG = '#1d2021';
