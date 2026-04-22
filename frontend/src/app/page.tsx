@@ -46,7 +46,16 @@ export default function Home() {
   useEffect(() => {
     const w = window as Window & { __terminalSendCommand?: (cmd: string) => void };
     w.__terminalSendCommand = (cmd: string) => {
-      wsManagerRef.current?.sendInput(cmd + '\r');
+      // For home/welcome commands, send clear first then welcome
+      if (cmd === 'welcome' || cmd === 'home') {
+        wsManagerRef.current?.sendInput('clear\r');
+        // Add small delay to ensure clear is processed
+        setTimeout(() => {
+          wsManagerRef.current?.sendInput('welcome\r');
+        }, 100);
+      } else {
+        wsManagerRef.current?.sendInput(cmd + '\r');
+      }
     };
     return () => { delete w.__terminalSendCommand; };
   }, []);

@@ -98,10 +98,12 @@ io.on('connection', (socket) => {
   }
   ipSessions.set(clientIP, socket.id);
 
-  // Extract optional init command from client handshake (URL path → command).
-  // Validated again in sessionManager.autoTypeCommand.
+  // Extract optional init command and session ID from client handshake.
   const initCommand = typeof socket.handshake.auth?.initCommand === 'string'
     ? socket.handshake.auth.initCommand
+    : undefined;
+  const sessionId = typeof socket.handshake.auth?.sessionId === 'string'
+    ? socket.handshake.auth.sessionId
     : undefined;
 
   logger.append({
@@ -119,15 +121,39 @@ io.on('connection', (socket) => {
   if (reattached) {
     console.log(`Reattached session for ${socket.id} from ${clientIP}`);
   } else {
-    sessionManager.createSession(socket.id, socket, initCommand, clientIP)
-      .then(() => {
-        console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
-      })
-      .catch((error) => {
-        console.error(`Failed to create session for ${socket.id}:`, error);
-        socket.emit('error', 'Failed to create terminal session');
-        socket.disconnect();
-      });
+    // If client provided a persistent session ID, try to find and reuse that container
+    let session;
+    if (sessionId) {
+      console.log(`Client attempting to restore session ${sessionId}`);
+      // Look for existing session with this ID in the zombie sessions
+      for (const [ip, zombie] of sessionManager.zombieSessions) {
+        if (zombie.session.id === sessionId) {
+          console.log(`Found matching zombie session ${sessionId} for IP ${clientIP}`);
+          session = zombie.session;
+          break;
+        }
+      }
+    }
+
+    if (session) {
+      // Reuse the existing session
+      session.id = socket.id;
+      session.socket = socket;
+      sessionManager.sessions.set(socket.id, session);
+      sessionManager.zombieSessions.delete(clientIP);
+      console.log(`Restored session ${sessionId} for new socket ${socket.id}`);
+    } else {
+      // Create new session
+      sessionManager.createSession(socket.id, socket, initCommand, clientIP)
+        .then(() => {
+          console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
+        })
+        .catch((error) => {
+          console.error(`Failed to create session for ${socket.id}:`, error);
+          socket.emit('error', 'Failed to create terminal session');
+          socket.disconnect();
+        });
+    }
   }
 
   // Handle terminal input with validation

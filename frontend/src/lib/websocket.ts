@@ -73,6 +73,18 @@ export function createWebSocketManager(): WebSocketManager {
   let disconnectCallback: (() => void) | null = null;
   let errorCallback: ((error: Error) => void) | null = null;
   let outputCallback: ((data: string) => void) | null = null;
+
+  // Generate or reuse persistent session ID
+  const getSessionId = (): string => {
+    if (typeof window === 'undefined') return `session-${Date.now()}`;
+
+    let sessionId = localStorage.getItem('terminal-session-id');
+    if (!sessionId) {
+      sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('terminal-session-id', sessionId);
+    }
+    return sessionId;
+  };
   // Buffer the most recent resize so we can re-emit it once the socket connects.
   // Without this, the xterm fit on mount (at 100/200ms) fires before socket is
   // ready, we drop the emit, and the PTY stays at default 80x24 until the user
@@ -93,6 +105,7 @@ export function createWebSocketManager(): WebSocketManager {
     if (socket?.connected) return;
 
     const initCommand = typeof window !== 'undefined' ? pathToCommand(window.location.pathname) : undefined;
+    const sessionId = getSessionId();
 
     socket = io(getWebSocketUrl(), {
       // websocket-first: skip the polling handshake on browsers that support WS
@@ -103,10 +116,13 @@ export function createWebSocketManager(): WebSocketManager {
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
       reconnectionDelayMax: 10000,
-      forceNew: true,
+      forceNew: false, // Don't force new connection to allow reattach
       upgrade: true,
       rememberUpgrade: true,
-      auth: initCommand ? { initCommand } : undefined,
+      auth: {
+        initCommand,
+        sessionId // Send persistent session ID
+      },
     });
 
     socket.on('connect', () => {
@@ -142,7 +158,11 @@ export function createWebSocketManager(): WebSocketManager {
 
   const disconnect = () => {
     if (socket) {
-      socket.disconnect();
+      // Don't disconnect immediately on refresh to allow zombie reattach
+      // Only disconnect when user explicitly closes the tab
+      if (!window.performance.navigation?.type || window.performance.navigation.type !== 0) {
+        socket.disconnect();
+      }
       socket = null;
     }
   };
