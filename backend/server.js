@@ -73,6 +73,14 @@ io.on('connection', (socket) => {
   const clientIP = socket.handshake.headers['x-real-ip'] || socket.handshake.address;
   console.log(`Client connected: ${socket.id} from ${clientIP}`);
 
+  // Extract optional init command and persistent session ID from client handshake.
+  const initCommand = typeof socket.handshake.auth?.initCommand === 'string'
+    ? socket.handshake.auth.initCommand
+    : undefined;
+  const sessionId = typeof socket.handshake.auth?.sessionId === 'string'
+    ? socket.handshake.auth.sessionId
+    : undefined;
+
   // Rate limit check
   if (!checkRateLimit(clientIP)) {
     console.log(`Rate limit exceeded for ${clientIP}`);
@@ -81,30 +89,46 @@ io.on('connection', (socket) => {
     return;
   }
 
-  // Single-session-per-IP: if this IP already has a live session, kick it
-  // so the new connection gets the slot. Prevents idle tabs from hoarding.
-  const existingSid = ipSessions.get(clientIP);
-  if (existingSid && existingSid !== socket.id) {
-    console.log(`IP ${clientIP} already has session ${existingSid} — kicking to make room for ${socket.id}`);
-    const existingSocket = io.sockets.sockets.get(existingSid);
-    if (existingSocket) {
-      try {
-        existingSocket.emit('output', '\r\n[replaced by a new session from this ip]\r\n');
-        existingSocket.disconnect();
-      } catch { /* ignore */ }
+  // First priority: if the client brought a persistent session ID, restore
+  // that exact session (active or zombie) instead of creating/killing a new one.
+  let restoredByPersistentId = false;
+  if (sessionId) {
+    const restored = sessionManager.restoreByPersistentSessionId(sessionId, socket.id, socket, clientIP);
+    if (restored) {
+      restoredByPersistentId = true;
+      if (restored.type === 'active' && restored.oldSocketId) {
+        const existingSocket = io.sockets.sockets.get(restored.oldSocketId);
+        if (existingSocket) {
+          try {
+            existingSocket.emit('output', '\r\n[session continued in a new tab]\r\n');
+            existingSocket.disconnect();
+          } catch { /* ignore */ }
+        }
+      }
+      ipSessions.set(clientIP, socket.id);
+      console.log(`Restored persistent session ${sessionId} for ${socket.id} (${restored.type})`);
     }
-    try { sessionManager.destroySession(existingSid); } catch { /* ignore */ }
-    ipSessions.delete(clientIP);
   }
-  ipSessions.set(clientIP, socket.id);
 
-  // Extract optional init command and session ID from client handshake.
-  const initCommand = typeof socket.handshake.auth?.initCommand === 'string'
-    ? socket.handshake.auth.initCommand
-    : undefined;
-  const sessionId = typeof socket.handshake.auth?.sessionId === 'string'
-    ? socket.handshake.auth.sessionId
-    : undefined;
+  // Single-session-per-IP: if this IP already has a live session and we didn't
+  // just restore by persistent ID, kick the old one so the new connection gets
+  // the slot. Prevents idle tabs from hoarding.
+  if (!restoredByPersistentId) {
+    const existingSid = ipSessions.get(clientIP);
+    if (existingSid && existingSid !== socket.id) {
+      console.log(`IP ${clientIP} already has session ${existingSid} — kicking to make room for ${socket.id}`);
+      const existingSocket = io.sockets.sockets.get(existingSid);
+      if (existingSocket) {
+        try {
+          existingSocket.emit('output', '\r\n[replaced by a new session from this ip]\r\n');
+          existingSocket.disconnect();
+        } catch { /* ignore */ }
+      }
+      try { sessionManager.destroySession(existingSid); } catch { /* ignore */ }
+      ipSessions.delete(clientIP);
+    }
+    ipSessions.set(clientIP, socket.id);
+  }
 
   logger.append({
     type: 'session_start',
@@ -116,35 +140,14 @@ io.on('connection', (socket) => {
   });
   cmdBufs.set(socket.id, '');
 
-  // Create new terminal session (try reattach first)
-  const reattached = sessionManager.tryReattach(clientIP, socket.id, socket);
-  if (reattached) {
-    console.log(`Reattached session for ${socket.id} from ${clientIP}`);
-  } else {
-    // If client provided a persistent session ID, try to find and reuse that container
-    let session;
-    if (sessionId) {
-      console.log(`Client attempting to restore session ${sessionId}`);
-      // Look for existing session with this ID in the zombie sessions
-      for (const [ip, zombie] of sessionManager.zombieSessions) {
-        if (zombie.session.id === sessionId) {
-          console.log(`Found matching zombie session ${sessionId} for IP ${clientIP}`);
-          session = zombie.session;
-          break;
-        }
-      }
-    }
-
-    if (session) {
-      // Reuse the existing session
-      session.id = socket.id;
-      session.socket = socket;
-      sessionManager.sessions.set(socket.id, session);
-      sessionManager.zombieSessions.delete(clientIP);
-      console.log(`Restored session ${sessionId} for new socket ${socket.id}`);
+  // Create new terminal session (if not already restored by persistent ID).
+  if (!restoredByPersistentId) {
+    const reattached = sessionManager.tryReattach(clientIP, socket.id, socket);
+    if (reattached) {
+      console.log(`Reattached session for ${socket.id} from ${clientIP}`);
     } else {
       // Create new session
-      sessionManager.createSession(socket.id, socket, initCommand, clientIP)
+      sessionManager.createSession(socket.id, socket, initCommand, clientIP, sessionId)
         .then(() => {
           console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
         })

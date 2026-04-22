@@ -87,9 +87,10 @@ changed_backend=0
 changed_frontend=0
 changed_container=0
 changed_nginx=0
+changed_compose=0
 
 if [[ "${REBUILD_ALL}" == "1" ]]; then
-  changed_backend=1; changed_frontend=1; changed_container=1; changed_nginx=1
+  changed_backend=1; changed_frontend=1; changed_container=1; changed_nginx=1; changed_compose=1
   log_info "rebuilding everything (--all)"
 else
   # Compare local HEAD to remote HEAD before we pushed — everything in that
@@ -108,7 +109,8 @@ else
   grep -qE '^(backend/|docker-compose.yml)'            <<<"${changed_files}" && changed_backend=1   || true
   grep -qE '^(frontend/|docker-compose.yml)'           <<<"${changed_files}" && changed_frontend=1  || true
   grep -qE '^(container/|docker-compose.yml)'          <<<"${changed_files}" && changed_container=1 || true
-  grep -qE '^nginx.conf$'                              <<<"${changed_files}" && changed_nginx=1     || true
+  grep -qE '^nginx.conf$|^docker-compose.yml$'         <<<"${changed_files}" && changed_nginx=1     || true
+  grep -qE '^docker-compose.yml$'                      <<<"${changed_files}" && changed_compose=1   || true
 fi
 
 (( SKIP_CONTAINER )) && changed_container=0
@@ -130,7 +132,11 @@ fi
 
 if (( changed_nginx )); then
   log_step "reload nginx"
-  maybe_run "bash '$(dirname "$0")/reload-nginx.sh'"
+  if (( changed_compose )); then
+    maybe_run "on_vps_deploy 'docker compose up -d --no-deps nginx 2>&1 | tail -8'"
+  else
+    maybe_run "bash '$(dirname "$0")/reload-nginx.sh'"
+  fi
 fi
 
 # ---- Verify ------------------------------------------------------------------

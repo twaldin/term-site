@@ -11,18 +11,62 @@ export default function Home() {
   const wsManagerRef = useRef<WebSocketManager | null>(null);
   const terminalRef = useRef<{ writeToTerminal: (data: string) => void; clearTerminal: () => void; fitTerminal: () => void } | null>(null);
   const [showSkeleton, setShowSkeleton] = useState(true);
+  const firstOutputSeenRef = useRef(false);
+  const firstPromptSeenRef = useRef(false);
+  const welcomeSeenRef = useRef(false);
+  const readyPromptSeenRef = useRef(false);
+
+  const stripAnsi = (s: string) =>
+    s
+      .replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '')
+      .replace(/\x1B\][^\x07]*(\x07|\x1B\\)/g, '')
+      .replace(/\r/g, '');
+
+  const mark = (name: string) => {
+    if (typeof window === 'undefined') return;
+    performance.mark(name);
+    const w = window as Window & {
+      __termTti?: {
+        [key: string]: number;
+      };
+    };
+    if (!w.__termTti) w.__termTti = {};
+    w.__termTti[name] = performance.now();
+  };
 
   useEffect(() => {
+    mark('term:page-mounted');
     const wsManager = createWebSocketManager();
     wsManagerRef.current = wsManager;
 
-    wsManager.onConnect(() => {});
+    wsManager.onConnect(() => {
+      mark('term:socket-connected');
+    });
 
     wsManager.onDisconnect(() => {});
 
     wsManager.onError(() => {});
 
     wsManager.onOutput((data) => {
+      if (!firstOutputSeenRef.current) {
+        firstOutputSeenRef.current = true;
+        mark('term:first-output');
+      }
+
+      const plain = stripAnsi(data);
+      if (!firstPromptSeenRef.current && plain.includes('❯ ')) {
+        firstPromptSeenRef.current = true;
+        mark('term:first-prompt');
+      }
+      if (!welcomeSeenRef.current && /(^|\n)welcome(\n|$)/m.test(plain)) {
+        welcomeSeenRef.current = true;
+        mark('term:welcome-typed');
+      }
+      if (!readyPromptSeenRef.current && welcomeSeenRef.current && plain.includes('❯ ')) {
+        readyPromptSeenRef.current = true;
+        mark('term:ready-for-input');
+      }
+
       setShowSkeleton(false);
       if (terminalRef.current) {
         terminalRef.current.writeToTerminal(data);

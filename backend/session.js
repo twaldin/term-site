@@ -287,7 +287,7 @@ class SessionManager {
     }
   }
 
-  async createSession(sessionId, socket, initCommand, clientIP) {
+  async createSession(sessionId, socket, initCommand, clientIP, persistentSessionId) {
     if (this.sessions.size >= this.maxSessions) {
       throw new Error('Maximum session limit reached');
     }
@@ -296,12 +296,12 @@ class SessionManager {
     if (pooled) {
       // Replenish in the background so subsequent connections stay fast.
       this.fillPool();
-      return this.attachPooledSession(sessionId, socket, initCommand, pooled, clientIP);
+      return this.attachPooledSession(sessionId, socket, initCommand, pooled, clientIP, persistentSessionId);
     }
-    return this.createContainerSession(sessionId, socket, initCommand, clientIP);
+    return this.createContainerSession(sessionId, socket, initCommand, clientIP, persistentSessionId);
   }
 
-  async attachPooledSession(sessionId, socket, initCommand, pooled, clientIP) {
+  async attachPooledSession(sessionId, socket, initCommand, pooled, clientIP, persistentSessionId) {
     console.log(`Assigning pooled container to session ${sessionId}`);
 
     const { container, stream, buffer } = pooled;
@@ -319,6 +319,7 @@ class SessionManager {
       stream,
       socket,
       clientIP,
+      persistentSessionId,
       startTime: Date.now(),
       lastActivity: Date.now(),
       initCommand,
@@ -341,8 +342,8 @@ class SessionManager {
     stream.on('data', session._streamDataHandler);
 
     session._streamCloseHandler = () => {
-      console.log(`Container stream closed for session ${sessionId}`);
-      this.destroySession(sessionId);
+      console.log(`Container stream closed for session ${session.id}`);
+      this.destroySession(session.id);
     };
     stream.on('close', session._streamCloseHandler);
 
@@ -362,7 +363,7 @@ class SessionManager {
     console.log(`Session ${sessionId} attached from pool`);
   }
 
-  async createContainerSession(sessionId, socket, initCommand, clientIP) {
+  async createContainerSession(sessionId, socket, initCommand, clientIP, persistentSessionId) {
     console.log(`Creating container session for ${sessionId}`);
 
     try {
@@ -472,6 +473,7 @@ class SessionManager {
         stream: stream,
         socket: socket,
         clientIP,
+        persistentSessionId,
         startTime: Date.now(),
         lastActivity: Date.now(),
         initCommand: initCommand,
@@ -499,8 +501,8 @@ class SessionManager {
       stream.on('data', session._streamDataHandler);
 
       session._streamCloseHandler = () => {
-        console.log(`Container stream closed for session ${sessionId}`);
-        this.destroySession(sessionId);
+        console.log(`Container stream closed for session ${session.id}`);
+        this.destroySession(session.id);
       };
       stream.on('close', session._streamCloseHandler);
 
@@ -543,20 +545,20 @@ class SessionManager {
 
     console.log(`Auto-typing '${command}' for session ${sessionId}`);
 
-    // For the welcome/home command, type char-by-char at 50ms/char so the
+    // For the welcome/home command, type char-by-char at 25ms/char so the
     // user sees "w → e → l → c → o → m → e" before the ASCII art appears.
     // Other commands are typed instantly (long command strings would be slow
-    // at 50ms/char and don't need the animation).
+    // even at 25ms/char and don't need the animation).
     if (command === 'welcome') {
       const chars = [...command];
       chars.forEach((ch, i) => {
         setTimeout(() => {
           if (this.sessions.has(sessionId)) this.sendInput(sessionId, ch);
-        }, i * 50);
+        }, i * 25);
       });
       setTimeout(() => {
         if (this.sessions.has(sessionId)) this.sendInput(sessionId, '\r');
-      }, chars.length * 50);
+      }, chars.length * 25);
       return;
     }
 
@@ -619,9 +621,62 @@ class SessionManager {
     session.initCommandRun = true;
     const cmd = session.initCommand || 'welcome';
     console.log(`Session ${sessionId}: prompt+resize ready, auto-typing '${cmd}'`);
-    // 100ms settling delay — gives xterm one or two rAF cycles to finish
+    // 20ms settling delay — gives xterm one frame to finish
     // rendering the resize before command output starts streaming in.
-    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 100);
+    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 20);
+  }
+
+  restoreByPersistentSessionId(persistentSessionId, newSocketId, newSocket, clientIP) {
+    if (!persistentSessionId) return null;
+
+    for (const [existingSocketId, session] of this.sessions.entries()) {
+      if (session.persistentSessionId !== persistentSessionId) continue;
+      if (existingSocketId === newSocketId) return { type: 'active', oldSocketId: existingSocketId };
+
+      this.sessions.delete(existingSocketId);
+      session.id = newSocketId;
+      session.socket = newSocket;
+      session.clientIP = clientIP;
+      session.lastActivity = Date.now();
+
+      this.sessions.set(newSocketId, session);
+      this.setSessionTimeout(newSocketId);
+      this.setNoInputTimeout(newSocketId);
+
+      return { type: 'active', oldSocketId: existingSocketId };
+    }
+
+    for (const [ip, zombie] of this.zombieSessions.entries()) {
+      const { session, graceTimer } = zombie;
+      if (session.persistentSessionId !== persistentSessionId) continue;
+
+      clearTimeout(graceTimer);
+      this.zombieSessions.delete(ip);
+
+      session.id = newSocketId;
+      session.socket = newSocket;
+      session.clientIP = clientIP;
+      session.lastActivity = Date.now();
+
+      if (session._streamDataHandler) {
+        session.stream.off('data', session._streamDataHandler);
+      }
+      session._streamDataHandler = (data) => {
+        const output = data.toString();
+        if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
+          session.socket.emit('output', output);
+        }
+      };
+      session.stream.on('data', session._streamDataHandler);
+
+      this.sessions.set(newSocketId, session);
+      this.setSessionTimeout(newSocketId);
+      this.setNoInputTimeout(newSocketId);
+
+      return { type: 'zombie' };
+    }
+
+    return null;
   }
 
   async destroySession(sessionId) {
