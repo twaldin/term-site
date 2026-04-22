@@ -15,6 +15,7 @@ export default function Home() {
   const firstPromptSeenRef = useRef(false);
   const welcomeSeenRef = useRef(false);
   const readyPromptSeenRef = useRef(false);
+  const promptCountRef = useRef(0);
 
   const stripAnsi = (s: string) =>
     s
@@ -54,15 +55,19 @@ export default function Home() {
       }
 
       const plain = stripAnsi(data);
-      if (!firstPromptSeenRef.current && plain.includes('❯ ')) {
+      const promptMatches = plain.match(/❯ /g);
+      if (promptMatches) {
+        promptCountRef.current += promptMatches.length;
+      }
+      if (!firstPromptSeenRef.current && promptCountRef.current >= 1) {
         firstPromptSeenRef.current = true;
         mark('term:first-prompt');
       }
-      if (!welcomeSeenRef.current && /(^|\n)welcome(\n|$)/m.test(plain)) {
+      if (!welcomeSeenRef.current && /welcome/i.test(plain)) {
         welcomeSeenRef.current = true;
         mark('term:welcome-typed');
       }
-      if (!readyPromptSeenRef.current && welcomeSeenRef.current && plain.includes('❯ ')) {
+      if (!readyPromptSeenRef.current && promptCountRef.current >= 2) {
         readyPromptSeenRef.current = true;
         mark('term:ready-for-input');
       }
