@@ -647,6 +647,12 @@ class SessionManager {
       this.setSessionTimeout(newSocketId);
       this.setNoInputTimeout(newSocketId);
 
+      // Force a prompt repaint for the newly attached client. Without this,
+      // refresh/new-tab restores can appear blank until the user types.
+      setTimeout(() => {
+        if (this.sessions.has(newSocketId)) this.sendInput(newSocketId, '\r');
+      }, 10);
+
       return { type: 'active', oldSocketId: existingSocketId };
     }
 
@@ -676,6 +682,11 @@ class SessionManager {
       this.sessions.set(newSocketId, session);
       this.setSessionTimeout(newSocketId);
       this.setNoInputTimeout(newSocketId);
+
+      // Force a prompt repaint for the newly attached client.
+      setTimeout(() => {
+        if (this.sessions.has(newSocketId)) this.sendInput(newSocketId, '\r');
+      }, 10);
 
       return { type: 'zombie' };
     }
