@@ -77,7 +77,8 @@ maybe_run "ensure_deploy_owned"
 
 log_info "pulling latest on VPS..."
 # sudo to DEPLOY_USER — root trips git's "unsafe directory" check.
-maybe_run "on_vps_deploy \"sudo -u ${DEPLOY_USER} git pull --rebase 2>&1 | tail -5\""
+# Keep exit status intact (no pipe-to-tail masking pull failures).
+maybe_run "on_vps_deploy \"sudo -u ${DEPLOY_USER} git pull --rebase\""
 
 # ---- Detect what changed -----------------------------------------------------
 

@@ -15,7 +15,7 @@ ensure_deploy_owned
 
 log_info "pulling latest..."
 # Run git as deploy user — root trips git's "unsafe directory" check.
-on_vps_deploy "sudo -u ${DEPLOY_USER} git pull --rebase 2>&1 | tail -5"
+on_vps_deploy "sudo -u ${DEPLOY_USER} git pull --rebase"
 
 log_info "rebuilding backend container..."
 on_vps_deploy 'docker compose up -d --no-deps --build backend 2>&1 | tail -8'
