@@ -48,6 +48,13 @@ export default function Home() {
 
     wsManager.onError(() => {});
 
+    wsManager.onTti((phase) => {
+      if (phase === 'welcome-enter-sent' && !welcomeSeenRef.current) {
+        welcomeSeenRef.current = true;
+        mark('term:welcome-typed');
+      }
+    });
+
     wsManager.onOutput((data) => {
       if (!firstOutputSeenRef.current) {
         firstOutputSeenRef.current = true;

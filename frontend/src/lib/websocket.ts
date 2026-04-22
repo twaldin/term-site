@@ -64,6 +64,7 @@ export interface WebSocketManager {
   onConnect: (callback: () => void) => void;
   onDisconnect: (callback: () => void) => void;
   onError: (callback: (error: Error) => void) => void;
+  onTti: (callback: (phase: string) => void) => void;
   resize: (cols: number, rows: number) => void;
 }
 
@@ -73,6 +74,7 @@ export function createWebSocketManager(): WebSocketManager {
   let disconnectCallback: (() => void) | null = null;
   let errorCallback: ((error: Error) => void) | null = null;
   let outputCallback: ((data: string) => void) | null = null;
+  let ttiCallback: ((phase: string) => void) | null = null;
 
   // Generate or reuse persistent session ID
   const getSessionId = (): string => {
@@ -151,6 +153,12 @@ export function createWebSocketManager(): WebSocketManager {
     socket.on('output', (data) => {
       outputCallback?.(data);
     });
+
+    socket.on('tti', (payload: { phase?: string }) => {
+      if (typeof payload?.phase === 'string') {
+        ttiCallback?.(payload.phase);
+      }
+    });
   };
 
   const disconnect = () => {
@@ -186,6 +194,10 @@ export function createWebSocketManager(): WebSocketManager {
     errorCallback = callback;
   };
 
+  const onTti = (callback: (phase: string) => void) => {
+    ttiCallback = callback;
+  };
+
   const resize = (cols: number, rows: number) => {
     lastResize = { cols, rows };
     if (socket?.connected) {
@@ -202,6 +214,7 @@ export function createWebSocketManager(): WebSocketManager {
     onConnect,
     onDisconnect,
     onError,
+    onTti,
     resize,
   };
 }

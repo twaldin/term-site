@@ -550,6 +550,7 @@ class SessionManager {
     // Other commands are typed instantly (long command strings would be slow
     // even at 25ms/char and don't need the animation).
     if (command === 'welcome') {
+      try { session.socket.emit('tti', { phase: 'welcome-start' }); } catch { /* ignore */ }
       const chars = [...command];
       chars.forEach((ch, i) => {
         setTimeout(() => {
@@ -557,7 +558,10 @@ class SessionManager {
         }, i * 25);
       });
       setTimeout(() => {
-        if (this.sessions.has(sessionId)) this.sendInput(sessionId, '\r');
+        if (this.sessions.has(sessionId)) {
+          this.sendInput(sessionId, '\r');
+          try { this.sessions.get(sessionId)?.socket?.emit('tti', { phase: 'welcome-enter-sent' }); } catch { /* ignore */ }
+        }
       }, chars.length * 25);
       return;
     }
