@@ -142,21 +142,15 @@ io.on('connection', (socket) => {
 
   // Create new terminal session (if not already restored by persistent ID).
   if (!restoredByPersistentId) {
-    const reattached = sessionManager.tryReattach(clientIP, socket.id, socket);
-    if (reattached) {
-      console.log(`Reattached session for ${socket.id} from ${clientIP}`);
-    } else {
-      // Create new session
-      sessionManager.createSession(socket.id, socket, initCommand, clientIP, sessionId)
-        .then(() => {
-          console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
-        })
-        .catch((error) => {
-          console.error(`Failed to create session for ${socket.id}:`, error);
-          socket.emit('error', 'Failed to create terminal session');
-          socket.disconnect();
-        });
-    }
+    sessionManager.createSession(socket.id, socket, initCommand, clientIP, sessionId)
+      .then(() => {
+        console.log(`Session created for ${socket.id}${initCommand ? ' (initCommand=' + initCommand + ')' : ''}`);
+      })
+      .catch((error) => {
+        console.error(`Failed to create session for ${socket.id}:`, error);
+        socket.emit('error', 'Failed to create terminal session');
+        socket.disconnect();
+      });
   }
 
   // Handle terminal input with validation
