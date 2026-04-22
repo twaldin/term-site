@@ -110,12 +110,9 @@ export function createWebSocketManager(): WebSocketManager {
     socket = io(getWebSocketUrl(), {
       // websocket-first: skip the polling handshake on browsers that support WS
       // (essentially all of them). Falls back to polling if WS fails.
-      transports: ['websocket', 'polling'],
-      timeout: 10000,
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 10000,
+      transports: ['websocket'],
+      timeout: 5000, // Reduce timeout for faster TTI
+      reconnection: false, // Disable reconnection for faster initial connect
       forceNew: false, // Don't force new connection to allow reattach
       upgrade: true,
       rememberUpgrade: true,

@@ -145,17 +145,19 @@ class SessionManager {
     // The first visitor gets instant output; without this they'd wait for
     // figlet + animations to generate the cache.
     const promptBuffer = [...item.buffer]; // save just the initial prompt for user replay
+
+    // Disable the data handler before sending welcome to prevent prompt bleed
+    stream.off('data', item._onData);
+    item._onData = null;
+
     item.stream.write('welcome\r');
     // Wait for welcome script + OMP prompt re-render to finish. 2s covers
     // even slow figlet first-run (cache miss) + OMP's git-status evaluation.
     await new Promise((r) => setTimeout(r, 2000));
-    // Restore to just the initial prompt and STOP accumulating further data.
-    // Without this, the new OMP prompt that renders after welcome exits gets
-    // pushed into item.buffer, causing a double-prompt replay to users which
-    // corrupts xterm cursor state and makes the prompt bleed into the ASCII art.
+
+    // Restore to just the initial prompt and ensure buffer is sealed
     item.buffer = promptBuffer;
-    stream.off('data', item._onData);
-    item._onData = null; // signal: buffer is sealed, no more accumulation
+    // Don't re-enable the data handler - the buffer should remain sealed
   }
 
   _grabFromPool() {

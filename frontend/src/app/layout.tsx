@@ -5,11 +5,19 @@ import SiteHeader from "@/components/SiteHeader";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // TTI optimization: disable forced colors to avoid paint delays
+  colorScheme: "dark",
+  // Preload critical resources
+  themeColor: "#1d2021",
 };
 
 export const metadata: Metadata = {
   title: "twaldin portfolio",
   description: "Interactive terminal portfolio - Timothy Waldin",
+  // TTI optimization: critical resources preload hint
+  other: {
+    "critical": "true",
+  },
 };
 
 export default function RootLayout({
@@ -28,12 +36,21 @@ export default function RootLayout({
           as="font"
           href="/fonts/JetBrainsMonoNerdFontMono-Regular.woff2"
           type="font/woff2"
+          crossOrigin=""
         />
         <link
           rel="preload"
           as="font"
           href="/fonts/JetBrainsMonoNerdFontMono-Bold.woff2"
           type="font/woff2"
+          crossOrigin=""
+        />
+        {/* TTI optimization: preload main JS bundle */}
+        <link
+          rel="preload"
+          as="script"
+          href="/_next/static/chunks/main-app.js"
+          fetchPriority="high"
         />
       </head>
       <body>

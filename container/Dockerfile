@@ -56,16 +56,17 @@ COPY DOS_Rebel.flf /usr/share/figlet/DOS_Rebel.flf
 # xterm.js handles scroll natively, which sidesteps glow's `-p` alt-screen
 # redraw duplication bug on viewport resize.
 RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" != "amd64" ]; then \
-      echo "mdcat prebuilt binaries only ship for amd64; add a cargo build path if you want arm64" && exit 1; \
-    fi && \
-    MDCAT_ARCH=x86_64-unknown-linux-gnu && \
-    curl -fsSL "https://github.com/swsnr/mdcat/releases/download/mdcat-2.7.1/mdcat-2.7.1-${MDCAT_ARCH}.tar.gz" \
-      | tar -xz -C /tmp && \
-    mv /tmp/mdcat-2.7.1-${MDCAT_ARCH}/mdcat /usr/local/bin/mdcat && \
-    rm -rf /tmp/mdcat-2.7.1-${MDCAT_ARCH} && \
-    chmod +x /usr/local/bin/mdcat && \
-    mdcat --version
+    if [ "$ARCH" = "amd64" ]; then \
+      MDCAT_ARCH=x86_64-unknown-linux-gnu && \
+      curl -fsSL "https://github.com/swsnr/mdcat/releases/download/mdcat-2.7.1/mdcat-2.7.1-${MDCAT_ARCH}.tar.gz" \
+        | tar -xz -C /tmp && \
+      mv /tmp/mdcat-2.7.1-${MDCAT_ARCH}/mdcat /usr/local/bin/mdcat && \
+      rm -rf /tmp/mdcat-2.7.1-${MDCAT_ARCH} && \
+      chmod +x /usr/local/bin/mdcat && \
+      mdcat --version; \
+    else \
+      echo "Skipping mdcat on non-amd64 architecture"; \
+    fi
 
 # Install glow (markdown renderer) as fallback. blog.sh prefers mdcat when
 # both are present.
