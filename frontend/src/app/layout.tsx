@@ -28,14 +28,12 @@ export default function RootLayout({
           as="font"
           href="/fonts/JetBrainsMonoNerdFontMono-Regular.woff2"
           type="font/woff2"
-          crossOrigin="anonymous"
         />
         <link
           rel="preload"
           as="font"
           href="/fonts/JetBrainsMonoNerdFontMono-Bold.woff2"
           type="font/woff2"
-          crossOrigin="anonymous"
         />
       </head>
       <body>

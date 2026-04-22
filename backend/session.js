@@ -28,7 +28,7 @@ class SessionManager {
     // so new connections skip the 1-2s createContainer latency. On assign,
     // we replenish the pool in the background.
     this.pool = [];
-    this.poolSize = 3;
+    this.poolSize = 5;
     this.poolWarming = 0;
     this.zombieSessions = new Map();
 
@@ -143,14 +143,19 @@ class SessionManager {
 
     // Pre-populate the welcome output cache at the pool's default width (140).
     // The first visitor gets instant output; without this they'd wait for
-    // figlet + animations to generate the cache. Wait ~1s for the script to
-    // run and write to /tmp, then discard the output from the buffer.
-    const promptBuffer = [...item.buffer]; // save prompt for user replay
+    // figlet + animations to generate the cache.
+    const promptBuffer = [...item.buffer]; // save just the initial prompt for user replay
     item.stream.write('welcome\r');
-    await new Promise((r) => setTimeout(r, 1500));
-    // Restore just the prompt — discard the welcome script output that
-    // accumulated while the cache was being written to disk.
+    // Wait for welcome script + OMP prompt re-render to finish. 2s covers
+    // even slow figlet first-run (cache miss) + OMP's git-status evaluation.
+    await new Promise((r) => setTimeout(r, 2000));
+    // Restore to just the initial prompt and STOP accumulating further data.
+    // Without this, the new OMP prompt that renders after welcome exits gets
+    // pushed into item.buffer, causing a double-prompt replay to users which
+    // corrupts xterm cursor state and makes the prompt bleed into the ASCII art.
     item.buffer = promptBuffer;
+    stream.off('data', item._onData);
+    item._onData = null; // signal: buffer is sealed, no more accumulation
   }
 
   _grabFromPool() {
@@ -300,7 +305,8 @@ class SessionManager {
     const { container, stream, buffer } = pooled;
 
     // Stop the pool-warming handlers; they'd keep appending to .buffer otherwise.
-    try { stream.off('data', pooled._onData); } catch { /* ignore */ }
+    // _onData may already be null if warmOne() sealed the buffer after welcome ran.
+    if (pooled._onData) try { stream.off('data', pooled._onData); } catch { /* ignore */ }
     try { stream.off('close', pooled._onClose); } catch { /* ignore */ }
 
     // Store the session first so the prompt/output handlers below can reach it.
@@ -535,8 +541,23 @@ class SessionManager {
 
     console.log(`Auto-typing '${command}' for session ${sessionId}`);
 
-    // Single write — no per-char delay needed for init commands since the
-    // terminal just mounted and the user hasn't seen the prompt yet.
+    // For the welcome/home command, type char-by-char at 50ms/char so the
+    // user sees "w → e → l → c → o → m → e" before the ASCII art appears.
+    // Other commands are typed instantly (long command strings would be slow
+    // at 50ms/char and don't need the animation).
+    if (command === 'welcome') {
+      const chars = [...command];
+      chars.forEach((ch, i) => {
+        setTimeout(() => {
+          if (this.sessions.has(sessionId)) this.sendInput(sessionId, ch);
+        }, i * 50);
+      });
+      setTimeout(() => {
+        if (this.sessions.has(sessionId)) this.sendInput(sessionId, '\r');
+      }, chars.length * 50);
+      return;
+    }
+
     this.sendInput(sessionId, command + '\r');
   }
 
@@ -596,11 +617,9 @@ class SessionManager {
     session.initCommandRun = true;
     const cmd = session.initCommand || 'welcome';
     console.log(`Session ${sessionId}: prompt+resize ready, auto-typing '${cmd}'`);
-    // 200ms settling delay — gives xterm time to process the resize and
-    // render before command output starts streaming in. Without this the
-    // initCommand output can arrive while xterm is mid-layout and get
-    // dropped or rendered at the old size.
-    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 200);
+    // 100ms settling delay — gives xterm one or two rAF cycles to finish
+    // rendering the resize before command output starts streaming in.
+    setTimeout(() => this.autoTypeCommand(sessionId, cmd), 100);
   }
 
   async destroySession(sessionId) {
