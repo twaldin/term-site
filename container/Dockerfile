@@ -39,7 +39,6 @@ RUN apt-get install -y \
     zsh \
     figlet \
     fontconfig \
-    sudo \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
     && ln -s /usr/bin/batcat /usr/bin/bat 2>/dev/null || true \
@@ -107,12 +106,6 @@ RUN chown -R portfolio:portfolio /home/portfolio/.config && \
     chown -R portfolio:portfolio /home/portfolio/.local && \
     chown -R portfolio:portfolio /home/portfolio/workspace && \
     chown -R portfolio:portfolio /home/portfolio/tmp
-
-# Passwordless sudo — lets visitors run sudo rm -rf / as a demo.
-# All capabilities are still dropped at the Docker level so "root" inside the
-# container can't do anything outside it; this is purely cosmetic escalation.
-RUN echo 'portfolio ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/portfolio && \
-    chmod 440 /etc/sudoers.d/portfolio
 
 # Switch to portfolio user to install Oh My Posh
 USER portfolio
@@ -245,9 +238,16 @@ USER root
 # Remove wget (no longer needed). Keep curl — mason.nvim spawns curl at
 # startup to refresh LSP server registry; without it nvim pops a
 # "Press ENTER or type command to continue" prompt on every launch.
+# Install sudo here (not in the early layer) to avoid busting the bob/nvim
+# build cache. Passwordless sudo lets visitors run sudo rm -rf / as a demo;
+# all Linux capabilities are still dropped at Docker level so root inside the
+# container can't escape or affect the host.
 RUN apt-get purge -y wget && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get update && apt-get install -y sudo && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo 'portfolio ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/portfolio && \
+    chmod 440 /etc/sudoers.d/portfolio
 
 # Create directory structure for portfolio content
 RUN mkdir -p /home/portfolio/portfolio && \
