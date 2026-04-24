@@ -39,6 +39,7 @@ RUN apt-get install -y \
     zsh \
     figlet \
     fontconfig \
+    sudo \
     && useradd -m -s /bin/zsh -d /home/portfolio portfolio \
     && mkdir -p /home/portfolio/.bashrc.d \
     && ln -s /usr/bin/batcat /usr/bin/bat 2>/dev/null || true \
@@ -106,6 +107,12 @@ RUN chown -R portfolio:portfolio /home/portfolio/.config && \
     chown -R portfolio:portfolio /home/portfolio/.local && \
     chown -R portfolio:portfolio /home/portfolio/workspace && \
     chown -R portfolio:portfolio /home/portfolio/tmp
+
+# Passwordless sudo — lets visitors run sudo rm -rf / as a demo.
+# All capabilities are still dropped at the Docker level so "root" inside the
+# container can't do anything outside it; this is purely cosmetic escalation.
+RUN echo 'portfolio ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/portfolio && \
+    chmod 440 /etc/sudoers.d/portfolio
 
 # Switch to portfolio user to install Oh My Posh
 USER portfolio
