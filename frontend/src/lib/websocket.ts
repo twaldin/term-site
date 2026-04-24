@@ -65,6 +65,7 @@ export interface WebSocketManager {
   onDisconnect: (callback: () => void) => void;
   onError: (callback: (error: Error) => void) => void;
   onTti: (callback: (phase: string) => void) => void;
+  onSessionEnd: (callback: () => void) => void;
   resize: (cols: number, rows: number) => void;
 }
 
@@ -75,6 +76,7 @@ export function createWebSocketManager(): WebSocketManager {
   let errorCallback: ((error: Error) => void) | null = null;
   let outputCallback: ((data: string) => void) | null = null;
   let ttiCallback: ((phase: string) => void) | null = null;
+  let sessionEndCallback: (() => void) | null = null;
 
   // Generate or reuse persistent session ID
   const getSessionId = (): string => {
@@ -159,6 +161,16 @@ export function createWebSocketManager(): WebSocketManager {
         ttiCallback?.(payload.phase);
       }
     });
+
+    socket.on('session_end', () => {
+      // Container exited (e.g. user typed 'exit'). Clear the persistent session
+      // ID so the next page load gets a fresh container instead of trying to
+      // restore a dead session.
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('terminal-session-id');
+      }
+      sessionEndCallback?.();
+    });
   };
 
   const disconnect = () => {
@@ -198,6 +210,10 @@ export function createWebSocketManager(): WebSocketManager {
     ttiCallback = callback;
   };
 
+  const onSessionEnd = (callback: () => void) => {
+    sessionEndCallback = callback;
+  };
+
   const resize = (cols: number, rows: number) => {
     lastResize = { cols, rows };
     if (socket?.connected) {
@@ -215,6 +231,7 @@ export function createWebSocketManager(): WebSocketManager {
     onDisconnect,
     onError,
     onTti,
+    onSessionEnd,
     resize,
   };
 }

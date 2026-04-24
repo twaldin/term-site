@@ -775,6 +775,16 @@ class SessionManager {
 
     console.log(`Destroying session ${sessionId}`);
 
+    // Tell the client the session is gone so it clears its persistent session
+    // ID and gets a fresh container on next load. Without this, localStorage
+    // keeps the old ID, zombie reattach finds nothing after 30s, and the user
+    // silently gets a fresh container — but only if they waited long enough.
+    // "exit" + refresh should reliably give a new terminal, not a maybe.
+    try {
+      session.socket.emit('output', '\r\n\x1b[2m[session ended — refresh for a new terminal]\x1b[0m\r\n');
+      session.socket.emit('session_end');
+    } catch { /* socket may already be gone */ }
+
     try {
       if (session.stream) {
         session.stream.end();

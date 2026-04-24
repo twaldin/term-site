@@ -20,3 +20,5 @@ create_box "portfolio terminal" "  about       learn about me
 
   help        all available commands" "${PURPLE}"
 echo ""
+typewriter "${DIM}real shell · isolated docker container · type ${RESET}${CYAN}exit${RESET}${DIM} to reset${RESET}"
+echo ""
