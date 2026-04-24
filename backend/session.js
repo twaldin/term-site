@@ -643,10 +643,21 @@ class SessionManager {
       if (!s) return;
       s.initCommand = initCommand;
       s.initCommandRun = false;
-      s.hasPrompt = false;
       s.firstResizeApplied = false;
-      // Let the first resize from the new client trigger maybeRunInitCommand,
-      // so the PTY is sized correctly before welcome.sh reads $COLUMNS.
+      // NOTE: do NOT reset hasPrompt. The container shell has already been
+      // sitting at a prompt from the prior session; the prompt-detector in
+      // the stream data handler only flips the flag on NEW prompt emissions.
+      // If we reset it, maybeRunInitCommand waits forever, the client
+      // eventually types into a stale prompt, and the autotyped `projects`
+      // interleaves with whatever output was mid-flight — producing the
+      // "zsh path line appears mid-script" artifact.
+      //
+      // Instead, send a Ctrl-C first to cancel any script that was still
+      // running when the previous socket disconnected, then let the first
+      // resize from the new client trigger maybeRunInitCommand. Any
+      // half-finished `projects` / `welcome` stream from before is aborted
+      // cleanly rather than interleaved with the fresh run.
+      try { this.sendInput(sid, '\x03'); } catch { /* ignore */ }
     };
 
     for (const [existingSocketId, session] of this.sessions.entries()) {
