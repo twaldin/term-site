@@ -103,16 +103,12 @@ export default function Home() {
   useEffect(() => {
     const w = window as Window & { __terminalSendCommand?: (cmd: string) => void };
     w.__terminalSendCommand = (cmd: string) => {
-      // For home/welcome commands, send clear first then welcome
-      if (cmd === 'welcome' || cmd === 'home') {
-        wsManagerRef.current?.sendInput('clear\r');
-        // Add small delay to ensure clear is processed
-        setTimeout(() => {
-          wsManagerRef.current?.sendInput('welcome\r');
-        }, 100);
-      } else {
-        wsManagerRef.current?.sendInput(cmd + '\r');
-      }
+      // Nav-click = literally "cancel whatever's running, then type cmd".
+      // `\x03` (Ctrl-C) kills any in-flight script so we don't interleave
+      // the previous command's trailing output with the new one's output.
+      // Everything goes in one sendInput so the shell sees it atomically.
+      const normalized = cmd === 'home' ? 'welcome' : cmd;
+      wsManagerRef.current?.sendInput('\x03' + normalized + '\r');
     };
     return () => { delete w.__terminalSendCommand; };
   }, []);
