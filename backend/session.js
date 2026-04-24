@@ -72,7 +72,7 @@ class SessionManager {
         ReadonlyRootfs: false,
         NetworkMode: 'none',
         CapDrop: ['ALL'],
-        CapAdd: [],
+        CapAdd: ['SETUID', 'SETGID'], // needed for sudo; no escape surface
         Tmpfs: { '/tmp': 'rw,noexec,nosuid,size=100m' },
       },
     };
@@ -424,10 +424,8 @@ class SessionManager {
           PidsLimit: 100, // Process limit
           ReadonlyRootfs: false, // Need write for nvim plugins
           NetworkMode: 'none', // No network access for security
-          CapDrop: [
-            'ALL'
-          ],
-          CapAdd: [],
+          CapDrop: ['ALL'],
+          CapAdd: ['SETUID', 'SETGID'],
           Tmpfs: {
             '/tmp': 'rw,noexec,nosuid,size=100m'
           }
