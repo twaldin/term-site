@@ -260,39 +260,14 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         outputBufferRef.current.push(data);
         return;
       }
-
-      const newlineCount = (data.match(/\n/g) || []).length;
-      if (data.length <= 200 || newlineCount <= 3) {
-        xtermRef.current.write(data);
-        return;
-      }
-
-      cancelDripRef.current = false;
-      const lines = data.split('\n');
-      dripRemainingRef.current = data;
-      let i = 0;
-
-      const drip = () => {
-        if (cancelDripRef.current || i >= lines.length || !xtermRef.current) {
-          if (dripRemainingRef.current && xtermRef.current) {
-            xtermRef.current.write(dripRemainingRef.current);
-          }
-          dripRemainingRef.current = '';
-          dripTimerRef.current = null;
-          return;
-        }
-
-        const line = lines[i];
-        dripRemainingRef.current = lines.slice(i + 1).join('\n');
-        xtermRef.current.write(i < lines.length - 1 ? line + '\n' : line);
-        i++;
-        dripTimerRef.current = setTimeout(drip, 20);
-      };
-
-      if (dripTimerRef.current) {
-        clearTimeout(dripTimerRef.current);
-      }
-      drip();
+      // Write immediately. The previous "drip" (split large chunks into
+      // line-by-line writes with 20ms setTimeout between each) was the
+      // source of the prompt-mid-output race: if a big chunk was dripping
+      // and a small chunk arrived, the small chunk bypassed the drip and
+      // wrote immediately, stitching the shell's next-prompt escape into
+      // the middle of the projects.sh output. xterm has its own internal
+      // write buffer that handles throughput fine.
+      xtermRef.current.write(data);
     };
 
     const clearTerminal = () => {
