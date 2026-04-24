@@ -4,7 +4,7 @@ emit_url "projects/term-site"
 
 clear
 echo ""
-ascii_typewriter "term site" "DOS_Rebel" "${CYAN}"
+ascii_typewriter "term site" "DOS_Rebel" "${PURPLE}"
 
 echo ""
 
@@ -12,7 +12,7 @@ create_box "Description" "My portfolio website that looks like a terminal. Users
 
 echo ""
 
-typewriter "${CYAN}Tech Stack:${RESET}"
+typewriter "${BLUE}Tech Stack:${RESET}"
 typewriter "   ${YELLOW}Frontend:${RESET} Next.js app with xterm.js terminal"
 typewriter "   ${YELLOW}Backend:${RESET} Node.js server that spawns Docker containers via Socket.IO"
 typewriter "   ${YELLOW}Terminal:${RESET} Each user gets their own Ubuntu container with portfolio content"
@@ -21,11 +21,11 @@ echo ""
 animated_separator "~" 70
 
 
-git_activity "${CYAN}"
+git_activity "${PURPLE}"
 
 echo ""
 
-typewriter "${YELLOW}You're now in the projects/term-site directory${RESET}"
+typewriter "${RED}You're now in the projects/term-site directory${RESET}"
 typewriter "${DIM}Use ls, cat, vim, etc. to explore this project, or type 'home' to go back${RESET}"
 
 echo ""

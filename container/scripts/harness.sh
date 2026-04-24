@@ -4,36 +4,36 @@ emit_url "projects/harness"
 
 clear
 echo ""
-ascii_typewriter "harness" "DOS_Rebel" "${CYAN}"
+ascii_typewriter "harness" "DOS_Rebel" "${PURPLE}"
 
 echo ""
 
 create_box "Description" "Unified python interface for invoking 6 AI coding CLIs as subprocesses
 — claude-code, opencode, codex, gemini, aider, swe-agent — behind one
 \`RunSpec -> RunResult\` contract. Each CLI's quirks (env setup, flag
-munging, cost/token parsing) lives in exactly one adapter file." "${CYAN}"
+munging, cost/token parsing) lives in exactly one adapter file." "${PURPLE}"
 
 echo ""
 
-typewriter "${CYAN}Tech Stack:${RESET}"
-animated_separator "~" 10 "${CYAN}"
-typewriter "   ${CYAN}•${RESET} Python (subprocess + per-CLI adapters)"
-typewriter "   ${CYAN}•${RESET} \`harness run\` CLI with --json output"
-typewriter "   ${CYAN}•${RESET} Pluggable registry — add a CLI by subclassing Adapter"
-typewriter "   ${CYAN}•${RESET} Uniform token + cost reporting across providers"
+typewriter "${BLUE}Tech Stack:${RESET}"
+animated_separator "~" 10 "${PURPLE}"
+typewriter "   ${PURPLE}•${RESET} Python (subprocess + per-CLI adapters)"
+typewriter "   ${PURPLE}•${RESET} \`harness run\` CLI with --json output"
+typewriter "   ${PURPLE}•${RESET} Pluggable registry — add a CLI by subclassing Adapter"
+typewriter "   ${PURPLE}•${RESET} Uniform token + cost reporting across providers"
 
 echo ""
 
-typewriter "${CYAN}Consumers:${RESET}"
-animated_separator "~" 10 "${CYAN}"
-typewriter "   ${CYAN}•${RESET} ${GREEN}hone${RESET} — mutator via \`harness:<cli>:<model>\` spec"
-typewriter "   ${CYAN}•${RESET} ${GREEN}agentelo${RESET} — grader subprocess runner"
-typewriter "   ${CYAN}•${RESET} ${GREEN}flt${RESET} — post-exit cost/token extraction (TS shell-out)"
+typewriter "${BLUE}Consumers:${RESET}"
+animated_separator "~" 10 "${PURPLE}"
+typewriter "   ${PURPLE}•${RESET} ${PURPLE}hone${RESET} — mutator via \`harness:<cli>:<model>\` spec"
+typewriter "   ${PURPLE}•${RESET} ${PURPLE}agentelo${RESET} — grader subprocess runner"
+typewriter "   ${PURPLE}•${RESET} ${PURPLE}flt${RESET} — post-exit cost/token extraction (TS shell-out)"
 
-git_activity "$CYAN"
+git_activity "$PURPLE"
 
 echo ""
 
-typewriter "${YELLOW}You are now in the projects/harness directory${RESET}"
+typewriter "${RED}You are now in the projects/harness directory${RESET}"
 typewriter "${DIM}Read README.md for the full API + integration sketches, or type home to go back${RESET}"
 echo ""

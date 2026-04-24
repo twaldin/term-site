@@ -10,5 +10,5 @@ and am working on tradeupbot.app (check it out!)
 In my spare time I like to make side projects, like the one you're reading.
 
 type contact to see my contact info
-type projects to see my projects" "$GREEN" 80
+type projects to see my projects" "$PURPLE" 80
 echo ""

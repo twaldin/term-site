@@ -45,18 +45,10 @@ emit_navigate() {
 }
 
 typewriter() {
-  local text="$1"
-  local batch_size=1
-  local delay=0.0005
-
-  local processed_text=$(echo -e "$text")
-  local length=${#processed_text}
-
-  for ((i = 0; i < length; i += batch_size)); do
-    printf "%s" "${processed_text:$i:$batch_size}"
-    sleep $delay
-  done
-  echo
+  # Print the line atomically so multi-byte ANSI escapes don't get split
+  # across terminal flushes (which shows up as literal "93m" / "0m"
+  # fragments on slow network paths like Socket.IO).
+  printf '%b\n' "$1"
 }
 
 animated_separator() {
@@ -90,9 +82,8 @@ ascii_typewriter() {
   [[ "$COLUMNS" =~ ^[0-9]+$ ]]                  && (( COLUMNS > cols )) && cols=$COLUMNS
   (( cols < 10 )) && cols=80
 
-  # DOS_Rebel output for anything longer than ~3 chars exceeds 60 cols.
-  # Fall back immediately on narrow terminals rather than run figlet then measure.
-  if (( cols < 60 )); then
+  # On truly narrow terminals (< 50 cols), even short figlet output won't fit.
+  if (( cols < 50 )); then
     typewriter "${BOLD}${color}${text}${RESET}"
     return
   fi
@@ -104,7 +95,7 @@ ascii_typewriter() {
   local max_width
   max_width=$(printf '%s' "$ascii_output" | awk '{ if (length > m) m = length } END { print m+0 }')
 
-  if (( max_width >= cols - 1 )); then
+  if (( max_width > cols )); then
     typewriter "${BOLD}${color}${text}${RESET}"
     return
   fi

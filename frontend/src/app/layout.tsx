@@ -54,13 +54,6 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin=""
         />
-        {/* TTI optimization: preload main JS bundle */}
-        <link
-          rel="preload"
-          as="script"
-          href="/_next/static/chunks/main-app.js"
-          fetchPriority="high"
-        />
       </head>
       <body>
         <SiteHeader />

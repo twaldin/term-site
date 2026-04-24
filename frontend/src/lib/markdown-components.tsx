@@ -6,11 +6,14 @@ import { terminalTheme } from '@/config/terminal-theme';
 export const BG          = terminalTheme.background;
 export const FG          = terminalTheme.foreground;
 export const DIM         = terminalTheme.brightBlack;
-export const BRAND       = terminalTheme.brightMagenta;
-export const BRIGHT_GREEN  = terminalTheme.brightGreen;
+export const BRAND       = terminalTheme.brightMagenta;  // purple
+export const PINK        = terminalTheme.red;            // hot pink in Hardcore
+export const BLUE        = terminalTheme.blue;
 export const BRIGHT_YELLOW = terminalTheme.brightYellow;
-export const BRIGHT_BLUE   = terminalTheme.blue;
-export const BRIGHT_CYAN   = terminalTheme.brightCyan;
+// legacy aliases still imported by BlogUnifiedPage etc.
+export const BRIGHT_GREEN  = BRAND;
+export const BRIGHT_BLUE   = BLUE;
+export const BRIGHT_CYAN   = BLUE;
 export const CODE_BG     = terminalTheme.black;
 export const CODE_BORDER = terminalTheme.brightBlack;
 
@@ -26,13 +29,13 @@ export const LINK = lightenHex(terminalTheme.brightMagenta, 50);
 
 export const markdownComponents: Components = {
   h1: ({ children }) => (
-    <h1 style={{ color: BRIGHT_BLUE, fontWeight: 'bold', fontSize: '1.5rem', lineHeight: 1.25, marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h1>
+    <h1 style={{ color: BRAND, fontWeight: 'bold', fontSize: '1.5rem', lineHeight: 1.25, marginTop: '1.5rem', marginBottom: '0.75rem' }}>{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 style={{ color: BRIGHT_YELLOW, fontWeight: 'bold', fontSize: '1.125rem', marginTop: '1.5rem', marginBottom: '0.5rem' }}>{children}</h2>
+    <h2 style={{ color: BLUE, fontWeight: 'bold', fontSize: '1.125rem', marginTop: '1.5rem', marginBottom: '0.5rem' }}>{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 style={{ color: BRIGHT_GREEN, fontWeight: 'bold', fontSize: '1rem', marginTop: '1rem', marginBottom: '0.5rem' }}>{children}</h3>
+    <h3 style={{ color: PINK, fontWeight: 'bold', fontSize: '1rem', marginTop: '1rem', marginBottom: '0.5rem' }}>{children}</h3>
   ),
   p: ({ children }) => (
     <p style={{ color: FG, marginBottom: '1rem', lineHeight: 1.55 }}>{children}</p>
@@ -146,7 +149,7 @@ export function BlogMarkdown({ slug, title, date, body }: BlogBlockProps) {
         <span style={{ color: FG }}>blog {slug}</span>
       </div>
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ color: BRIGHT_BLUE, fontWeight: 'bold', fontSize: '1.5rem', lineHeight: 1.25, marginBottom: '0.25rem' }}>
+        <h1 style={{ color: BRAND, fontWeight: 'bold', fontSize: '1.5rem', lineHeight: 1.25, marginBottom: '0.25rem' }}>
           {title}
         </h1>
         {date && <div style={{ color: DIM, fontStyle: 'italic', fontSize: '0.9rem' }}>{date}</div>}

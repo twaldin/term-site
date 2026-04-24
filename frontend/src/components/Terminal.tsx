@@ -12,26 +12,21 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { terminalConfig } from "../config/terminal-theme";
 import { attachTouchScroll } from "../lib/xterm-touch";
 
-const MOBILE_CONTENT_WIDTH = 50;
-const DESKTOP_CONTENT_WIDTH = 139;
 const MOBILE_BREAKPOINT = 768;
-const CHAR_WIDTH_RATIO = 0.6;
-const SAFETY_MARGIN = 0.95;
-const MIN_FONT_SIZE = 12;
-const MAX_FONT_SIZE = 24;
+const MIN_FONT_SIZE = 13;
+const MAX_FONT_SIZE = 28;
 
-function calculateFontSize(container: HTMLElement): number {
+// Pick font size directly from viewport width. Cols fall out via xterm's
+// FitAddon so box widths, figlet output, etc. scale naturally — narrow
+// screens get compact columns; ultrawide monitors get a much bigger,
+// readable font instead of wasting real estate on 200+ cols.
+function calculateFontSize(_container: HTMLElement): number {
   const viewportWidth = window.innerWidth;
-  const documentWidth = document.documentElement.clientWidth;
-  const containerWidth = container.clientWidth;
-  const containerRect = container.getBoundingClientRect();
-  const actualWidth = Math.min(viewportWidth, documentWidth, containerWidth, containerRect.width);
-  const padding = Math.min(10, actualWidth * 0.02);
-  const usableWidth = actualWidth - padding;
-  const targetCols = viewportWidth < MOBILE_BREAKPOINT ? MOBILE_CONTENT_WIDTH : DESKTOP_CONTENT_WIDTH;
-  const theoretical = Math.floor((usableWidth / targetCols) / CHAR_WIDTH_RATIO);
-  const conservative = Math.floor(theoretical * SAFETY_MARGIN);
-  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, conservative));
+  // Mobile gets a fixed small font; desktop scales ~1px per 80px of viewport.
+  const target = viewportWidth < MOBILE_BREAKPOINT
+    ? 13
+    : Math.round(viewportWidth / 80);
+  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, target));
 }
 
 interface TerminalProps {
