@@ -71,7 +71,6 @@ class SessionManager {
         PidsLimit: 100,
         ReadonlyRootfs: false,
         NetworkMode: 'none',
-        SecurityOpt: ['no-new-privileges:true'],
         CapDrop: ['ALL'],
         CapAdd: [],
         Tmpfs: { '/tmp': 'rw,noexec,nosuid,size=100m' },
@@ -425,9 +424,6 @@ class SessionManager {
           PidsLimit: 100, // Process limit
           ReadonlyRootfs: false, // Need write for nvim plugins
           NetworkMode: 'none', // No network access for security
-          SecurityOpt: [
-            'no-new-privileges:true'
-          ],
           CapDrop: [
             'ALL'
           ],
