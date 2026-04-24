@@ -6,6 +6,7 @@ YELLOW='\033[93m'  # colour11 (bright yellow)
 BLUE='\033[34m'    # colour4  (blue)
 RED='\033[31m'     # colour1  (red)
 MAGENTA='\033[35m' # colour5  (magenta)
+PURPLE='\033[95m'  # colour13 (bright magenta)
 ORANGE='\033[93m'  # colour11 (bright yellow, closest ANSI slot to orange)
 GRAY='\033[90m'    # colour8  (bright black / dark gray)
 BG='\033[40m'      # colour0  background

@@ -5,7 +5,7 @@ import { terminalTheme } from '@/config/terminal-theme';
 
 const BG     = terminalTheme.background;
 const BORDER = terminalTheme.brightBlack;
-const BRAND  = terminalTheme.red;
+const BRAND  = terminalTheme.brightMagenta;
 const LINK   = terminalTheme.green;
 const DIM    = terminalTheme.brightBlack;
 

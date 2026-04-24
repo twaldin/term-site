@@ -24,9 +24,9 @@ render_welcome() {
   # Skip figlet on narrow terminals (mobile) — DOS_Rebel "twaldin" is ~70 cols.
   cols=$(tput cols 2>/dev/null || echo 80)
   if (( cols >= 80 )); then
-    ascii_typewriter "twaldin" "DOS_Rebel" "${RED}"
+    ascii_typewriter "twaldin" "DOS_Rebel" "${PURPLE}"
   else
-    typewriter "${BOLD}${RED}twaldin${RESET}"
+    typewriter "${BOLD}${PURPLE}twaldin${RESET}"
   fi
   echo ""
   create_box "portfolio terminal" "  about       learn about me
@@ -39,7 +39,7 @@ render_welcome() {
 
   blog        posts i've written
 
-  help        all available commands" "${RED}"
+  help        all available commands" "${PURPLE}"
   echo ""
 }
 
