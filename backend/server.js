@@ -93,7 +93,7 @@ io.on('connection', (socket) => {
   // that exact session (active or zombie) instead of creating/killing a new one.
   let restoredByPersistentId = false;
   if (sessionId) {
-    const restored = sessionManager.restoreByPersistentSessionId(sessionId, socket.id, socket, clientIP);
+    const restored = sessionManager.restoreByPersistentSessionId(sessionId, socket.id, socket, clientIP, initCommand);
     if (restored) {
       restoredByPersistentId = true;
       if (restored.type === 'active' && restored.oldSocketId) {

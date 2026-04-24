@@ -545,16 +545,28 @@ class SessionManager {
 
     console.log(`Auto-typing '${command}' for session ${sessionId}`);
 
-    // Send the whole command + \r atomically. The previous char-by-char
-    // typing animation (25ms/char) raced with the shell: the prompt could
-    // redraw between chars, the \r could arrive before a prompt was fully
-    // rendered, and the output stream from welcome.sh could interleave with
-    // autotyped chars — producing the "empty prompt above real welcome"
-    // artifact on first load and the prompt-mid-output interleave on
-    // project pages.
-    try { session.socket.emit('tti', { phase: 'welcome-start' }); } catch { /* ignore */ }
+    // For `welcome`, type char-by-char so the user sees the command being
+    // entered. Other commands get sent atomically (long slugs / blog
+    // lookups don't benefit from the animation).
+    if (command === 'welcome') {
+      try { session.socket.emit('tti', { phase: 'welcome-start' }); } catch { /* ignore */ }
+      const chars = [...command];
+      const perCharMs = 55;
+      chars.forEach((ch, i) => {
+        setTimeout(() => {
+          if (this.sessions.has(sessionId)) this.sendInput(sessionId, ch);
+        }, i * perCharMs);
+      });
+      setTimeout(() => {
+        if (this.sessions.has(sessionId)) {
+          this.sendInput(sessionId, '\r');
+          try { session.socket.emit('tti', { phase: 'welcome-enter-sent' }); } catch { /* ignore */ }
+        }
+      }, chars.length * perCharMs + 80);
+      return;
+    }
+
     this.sendInput(sessionId, command + '\r');
-    try { session.socket.emit('tti', { phase: 'welcome-enter-sent' }); } catch { /* ignore */ }
   }
 
   sendInput(sessionId, data) {
@@ -618,8 +630,24 @@ class SessionManager {
     setTimeout(() => this.autoTypeCommand(sessionId, cmd), 20);
   }
 
-  restoreByPersistentSessionId(persistentSessionId, newSocketId, newSocket, clientIP) {
+  restoreByPersistentSessionId(persistentSessionId, newSocketId, newSocket, clientIP, initCommand) {
     if (!persistentSessionId) return null;
+
+    // On refresh / new-tab, xterm.js has no scrollback from the previous
+    // browser session, so we re-run the URL's initCommand in the existing
+    // container to repaint the welcome / projects / etc output. The user
+    // gets session persistence (container kept warm) plus a fresh render.
+    const rerunInitCommand = (sid) => {
+      if (!initCommand && initCommand !== '') return;
+      const s = this.sessions.get(sid);
+      if (!s) return;
+      s.initCommand = initCommand;
+      s.initCommandRun = false;
+      s.hasPrompt = false;
+      s.firstResizeApplied = false;
+      // Let the first resize from the new client trigger maybeRunInitCommand,
+      // so the PTY is sized correctly before welcome.sh reads $COLUMNS.
+    };
 
     for (const [existingSocketId, session] of this.sessions.entries()) {
       if (session.persistentSessionId !== persistentSessionId) continue;
@@ -635,11 +663,7 @@ class SessionManager {
       this.setSessionTimeout(newSocketId);
       this.setNoInputTimeout(newSocketId);
 
-      // Force a prompt repaint for the newly attached client. Without this,
-      // refresh/new-tab restores can appear blank until the user types.
-      setTimeout(() => {
-        if (this.sessions.has(newSocketId)) this.sendInput(newSocketId, '\r');
-      }, 10);
+      rerunInitCommand(newSocketId);
 
       return { type: 'active', oldSocketId: existingSocketId };
     }
@@ -671,10 +695,7 @@ class SessionManager {
       this.setSessionTimeout(newSocketId);
       this.setNoInputTimeout(newSocketId);
 
-      // Force a prompt repaint for the newly attached client.
-      setTimeout(() => {
-        if (this.sessions.has(newSocketId)) this.sendInput(newSocketId, '\r');
-      }, 10);
+      rerunInitCommand(newSocketId);
 
       return { type: 'zombie' };
     }
