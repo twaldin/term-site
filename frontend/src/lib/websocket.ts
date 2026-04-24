@@ -16,6 +16,7 @@ const BLOCKED_HEADS = new Set([
   'rm', 'mv', 'cp', 'dd', 'sudo', 'su', 'chmod', 'chown',
   'kill', 'pkill', 'killall', 'sh', 'bash', 'zsh', 'dash',
   'eval', 'exec', 'source', 'mkfs', 'mount', 'umount',
+  'exit', 'logout', // would auto-type and immediately end the session
 ]);
 
 // Safe char set for a full command string (first word + args combined).

@@ -50,10 +50,14 @@ export default function Home() {
     wsManager.onError(() => {});
 
     wsManager.onSessionEnd(() => {
-      // Session ended (exit, idle timeout, dead container). Clear the terminal
-      // briefly so the user sees the "session ended" message, then reconnect
-      // for a fresh container. connect() re-reads the current URL for initCommand.
+      // Session ended (exit, idle timeout, dead container). Show the "session
+      // ended" message briefly, then reset URL to / and reconnect. Resetting
+      // the URL prevents a loop where the current path (e.g. /exit) is re-read
+      // as the initCommand, which would immediately end the next session too.
       setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', '/');
+        }
         terminalRef.current?.clearTerminal();
         wsManager.connect();
       }, 1500);
