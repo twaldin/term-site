@@ -103,7 +103,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       const oscNavigateDisposable = xterm.parser.registerOscHandler(9997, (data) => {
         try {
-          const path = '/' + data.replace(/^\/+/, '');
+          // Strip leading slashes then re-add exactly one, so //evil.com
+          // becomes /evil.com (same-origin). Reject anything that still
+          // looks like a URL scheme or protocol-relative path.
+          const clean = data.replace(/^\/+/, '');
+          if (/^[a-zA-Z][a-zA-Z0-9+.-]*:|^\//.test(clean)) return true; // reject scheme: or //
+          const path = '/' + clean;
           if (typeof window !== 'undefined') {
             window.location.assign(path);
           }

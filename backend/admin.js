@@ -1,4 +1,5 @@
 const express = require('express');
+const { timingSafeEqual } = require('crypto');
 const { readAll } = require('./logger');
 
 const router = express.Router();
@@ -19,7 +20,10 @@ function basicAuth(req, res, next) {
   const user = idx >= 0 ? decoded.slice(0, idx) : decoded;
   const pass = idx >= 0 ? decoded.slice(idx + 1) : '';
   const email = process.env.ADMIN_EMAIL || 'timothy@waldin.net';
-  if (user !== email || pass !== password) {
+  // Constant-time comparison to prevent timing-based brute-force
+  const userMatch = timingSafeEqual(Buffer.from(user), Buffer.from(email));
+  const passMatch = timingSafeEqual(Buffer.from(pass), Buffer.from(password));
+  if (!userMatch || !passMatch) {
     res.set('WWW-Authenticate', 'Basic realm="term-site admin"');
     return res.status(401).send('Invalid credentials.');
   }

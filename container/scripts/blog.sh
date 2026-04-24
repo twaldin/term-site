@@ -177,6 +177,13 @@ latest_post() {
 case "${1:-}" in
   "" | "list")     list_posts ;;
   "latest")        latest_post ;;
-  "--raw")         shift; body_after_frontmatter "$BLOG_DIR/${1}.md" ;;
+  "--raw")
+    shift
+    # Reject slugs containing path traversal chars — only allow filename-safe chars
+    if [[ ! "${1:-}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+      echo "invalid slug" >&2; exit 1
+    fi
+    body_after_frontmatter "$BLOG_DIR/${1}.md"
+    ;;
   *)               render_post "$1" ;;
 esac

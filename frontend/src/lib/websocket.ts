@@ -85,7 +85,7 @@ export function createWebSocketManager(): WebSocketManager {
 
     let sessionId = localStorage.getItem('terminal-session-id');
     if (!sessionId) {
-      sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      sessionId = crypto.randomUUID();
       localStorage.setItem('terminal-session-id', sessionId);
     }
     return sessionId;
