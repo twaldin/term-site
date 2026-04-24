@@ -30,23 +30,7 @@ typewriter "   ${CYAN}•${RESET} ${GREEN}hone${RESET} — mutator via \`harness
 typewriter "   ${CYAN}•${RESET} ${GREEN}agentelo${RESET} — grader subprocess runner"
 typewriter "   ${CYAN}•${RESET} ${GREEN}flt${RESET} — post-exit cost/token extraction (TS shell-out)"
 
-echo ""
-typewriter "${CYAN}Recent Git Activity:${RESET}"
-if [ -d ".git" ]; then
-  branch=$(git branch --show-current 2>/dev/null || echo "main")
-  typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
-  typewriter "   ${BLUE}Recent commits:${RESET}"
-  git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    git_typewriter "     $line"
-  done
-  if git status --porcelain | grep -q .; then
-    typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
-  else
-    typewriter "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
-  fi
-else
-  typewriter "   ${DIM}Not a git repository${RESET}"
-fi
+git_activity "$CYAN"
 
 echo ""
 

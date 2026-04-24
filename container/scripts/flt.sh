@@ -33,23 +33,7 @@ typewriter "   ${GREEN}•${RESET} Spinner/idle detection per harness"
 typewriter "   ${GREEN}•${RESET} TUI with vim keybinds, themes, live logs"
 typewriter "   ${GREEN}•${RESET} Cron integration for persistent agents"
 
-echo ""
-typewriter "${GREEN}Recent Git Activity:${RESET}"
-if [ -d ".git" ]; then
-  branch=$(git branch --show-current 2>/dev/null || echo "main")
-  typewriter "   ${BLUE}Branch:${RESET} ${YELLOW}${branch}${RESET}"
-  typewriter "   ${BLUE}Recent commits:${RESET}"
-  git log --oneline --decorate --color=always | head -5 | while IFS= read -r line; do
-    git_typewriter "     $line"
-  done
-  if git status --porcelain | grep -q .; then
-    typewriter "   ${YELLOW}Status:${RESET} ${RED}Modified files present${RESET}"
-  else
-    typewriter "   ${YELLOW}Status:${RESET} ${GREEN}Clean working directory${RESET}"
-  fi
-else
-  typewriter "   ${DIM}Not a git repository${RESET}"
-fi
+git_activity "$GREEN"
 
 echo ""
 

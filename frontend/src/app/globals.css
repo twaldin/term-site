@@ -22,11 +22,10 @@
 html, body {
   margin: 0;
   padding: 0;
-  /* Gruvbox bg so any unfilled gap (main flex slack, iOS rubber-band, etc.)
-     matches the blog page — avoids the white/gray strip some browsers
-     render in overflow regions. The home xterm provides its own bg on top. */
-  background: #1d2021;
-  color: #00ff00;
+  /* bg/fg come from CSS vars injected by layout.tsx from terminal-theme.ts —
+     change theme in ghostty config, run generate-theme.sh, redeploy. */
+  background: var(--color-bg);
+  color: var(--color-fg);
   font-family: 'JetBrainsMono Nerd Font Mono', 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Monaco', 'Lucida Console', monospace;
   width: 100%;
   height: 100%;

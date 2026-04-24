@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { terminalTheme } from '@/config/terminal-theme';
 
-const BG = '#1d2021';
-const BORDER = '#3c3836';
-const BRAND = '#cc241d';
-const LINK = '#8ec07c';
-const DIM = '#928374';
+const BG     = terminalTheme.background;
+const BORDER = terminalTheme.brightBlack;
+const BRAND  = terminalTheme.red;
+const LINK   = terminalTheme.green;
+const DIM    = terminalTheme.brightBlack;
 
 export default function SiteHeader() {
   const handleNav = (cmd: string) => (e: React.MouseEvent) => {

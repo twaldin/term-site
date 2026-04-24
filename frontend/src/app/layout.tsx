@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
+import { terminalTheme } from "@/config/terminal-theme";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // TTI optimization: disable forced colors to avoid paint delays
   colorScheme: "dark",
-  // Preload critical resources
-  themeColor: "#1d2021",
+  themeColor: terminalTheme.background,
 };
 
 export const metadata: Metadata = {
@@ -28,6 +27,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <style>{`
+          :root {
+            --color-bg: ${terminalTheme.background};
+            --color-fg: ${terminalTheme.foreground};
+            --color-red: ${terminalTheme.red};
+            --color-green: ${terminalTheme.green};
+            --color-dim: ${terminalTheme.brightBlack};
+            --color-border: ${terminalTheme.brightBlack};
+          }
+        `}</style>
         {/* Start the 1MB Nerd Font download with the HTML parse, not after JS mounts.
             Cuts ~400-500ms off TTI — without this the FontFace API call in xterm
             init is the first request that triggers the font download. */}
@@ -55,7 +64,7 @@ export default function RootLayout({
       </head>
       <body>
         <SiteHeader />
-        <main style={{ flex: '1 0 auto', display: 'flex', flexDirection: 'column', background: '#1d2021' }}>
+        <main style={{ flex: '1 0 auto', display: 'flex', flexDirection: 'column', background: terminalTheme.background }}>
           {children}
         </main>
       </body>

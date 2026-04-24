@@ -80,42 +80,30 @@ ascii_typewriter() {
   local text="$1"
   local font="${2:-DOS_Rebel}"
   local color="${3:-${BOLD}${CYAN}}"
-  local wrap_width="${4:-}"  # optional figlet output width (columns) for wrapping long text
 
-  local ascii_output
-  if [ -n "$wrap_width" ]; then
-    # Replace hyphens with spaces so figlet can find word boundaries for wrapping
-    local wrap_text="${text//-/ }"
-    ascii_output=$(figlet -f "$font" -w "$wrap_width" "$wrap_text" 2>/dev/null || figlet -w "$wrap_width" "$wrap_text")
-  else
-    ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
-  fi
-
-  # Detect terminal width. If the figlet output is wider than the terminal
-  # (e.g. narrow mobile session), fall back to a plain styled title rather
-  # than let it wrap into illegible ANSI confetti.
+  # Detect terminal width before running figlet — avoids spawning figlet
+  # on mobile where the output will always overflow.
   local cols=0 t
-  t="$(tput cols 2>/dev/null)";                       [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
-  t="$(stty size 2>/dev/null | awk '{print $2}')";    [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
-  [[ "$COLUMNS" =~ ^[0-9]+$ ]]                     && (( COLUMNS > cols )) && cols=$COLUMNS
+  t="$(tput cols 2>/dev/null)";                    [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
+  t="$(stty size 2>/dev/null | awk '{print $2}')"; [[ "$t" =~ ^[0-9]+$ ]] && (( t > cols )) && cols=$t
+  [[ "$COLUMNS" =~ ^[0-9]+$ ]]                  && (( COLUMNS > cols )) && cols=$COLUMNS
   (( cols < 10 )) && cols=80
 
-  # Max actual visible width of the figlet output, counted in CHARACTERS
-  # (not bytes — figlet output uses UTF-8 box-drawing chars that take 3
-  # bytes each but occupy 1 column). Python is reliable here; if it fails
-  # for any reason, fall back to a conservative byte-length / 3 estimate.
-  local max_width
-  max_width=$(printf '%s' "$ascii_output" | python3 -c 'import sys
-lines = sys.stdin.read().split("\n")
-print(max((len(l) for l in lines if l.strip()), default=0))' 2>/dev/null) || max_width=""
-
-  if ! [[ "$max_width" =~ ^[0-9]+$ ]]; then
-    local max_bytes
-    max_bytes=$(awk '{ if (length > m) m = length } END { print m+0 }' <<< "$ascii_output")
-    max_width=$((max_bytes / 3))
+  # DOS_Rebel output for anything longer than ~3 chars exceeds 60 cols.
+  # Fall back immediately on narrow terminals rather than run figlet then measure.
+  if (( cols < 60 )); then
+    typewriter "${BOLD}${color}${text}${RESET}"
+    return
   fi
 
-  if (( max_width > cols )); then
+  local ascii_output
+  ascii_output=$(figlet -f "$font" -w "$cols" "$text" 2>/dev/null || figlet -w "$cols" "$text")
+
+  # Measure the actual rendered width (character count, not bytes).
+  local max_width
+  max_width=$(printf '%s' "$ascii_output" | awk '{ if (length > m) m = length } END { print m+0 }')
+
+  if (( max_width >= cols - 1 )); then
     typewriter "${BOLD}${color}${text}${RESET}"
     return
   fi
@@ -197,32 +185,19 @@ create_box() {
     done
     echo -e "${color}│${RESET} ${spaces} ${color}│${RESET}"
   else
+    local content_width=$((box_width - 4))
     while IFS= read -r line; do
       local line_clean=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
-      local line_length=${#line_clean}
-      local content_width=$((box_width - 4))
-
-      if [ $line_length -le $content_width ]; then
-        local padding=$((content_width - line_length))
-        local spaces=""
-        for ((i=0; i<padding; i++)); do
-          spaces+=" "
-        done
-        echo -e "${color}│${RESET} ${WHITE}${line}${RESET}${spaces} ${color}│${RESET}"
-      else
-        local start=0
-        while [ $start -lt $line_length ]; do
-          local chunk="${line_clean:$start:$content_width}"
-          local chunk_length=${#chunk}
-          local padding=$((content_width - chunk_length))
-          local spaces=""
-          for ((i=0; i<padding; i++)); do
-            spaces+=" "
-          done
-          echo -e "${color}│${RESET} ${WHITE}${chunk}${RESET}${spaces} ${color}│${RESET}"
-          start=$((start + content_width))
-        done
-      fi
+      # Word-wrap at word boundaries so we never split mid-word.
+      local wrapped
+      wrapped=$(printf '%s' "$line_clean" | fold -s -w "$content_width")
+      while IFS= read -r chunk; do
+        local chunk_length=${#chunk}
+        local padding=$((content_width - chunk_length))
+        local spaces
+        spaces=$(printf '%*s' "$padding" '')
+        echo -e "${color}│${RESET} ${WHITE}${chunk}${RESET}${spaces} ${color}│${RESET}"
+      done <<< "$wrapped"
     done <<< "$content"
   fi
 

@@ -10,6 +10,17 @@ source "$(dirname "$0")/lib/common.sh"
 require_cmd ssh
 require_vps_reachable
 
+# ---- Sync terminal theme from current Ghostty config -----------------------
+
+log_info "syncing terminal theme from ghostty config..."
+"$(dirname "$0")/generate-theme.sh"
+theme_ts="${REPO_ROOT}/frontend/src/config/terminal-theme.ts"
+if ! git -C "${REPO_ROOT}" diff --quiet "${theme_ts}"; then
+  log_info "theme changed — committing updated terminal-theme.ts..."
+  git -C "${REPO_ROOT}" add "${theme_ts}"
+  git -C "${REPO_ROOT}" commit -m "chore: sync terminal theme"
+fi
+
 # ---- Pre-flight: warn if local blog posts lack captured snapshots ----------
 
 posts_dir="${REPO_ROOT}/container/blog/posts"
