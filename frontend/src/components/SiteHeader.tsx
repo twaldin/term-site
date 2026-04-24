@@ -3,10 +3,18 @@
 import Link from 'next/link';
 import { terminalTheme } from '@/config/terminal-theme';
 
+function lightenHex(hex: string, amount: number): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, (n >> 16) + amount);
+  const g = Math.min(255, ((n >> 8) & 0xff) + amount);
+  const b = Math.min(255, (n & 0xff) + amount);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
 const BG     = terminalTheme.background;
 const BORDER = terminalTheme.brightBlack;
 const BRAND  = terminalTheme.brightMagenta;
-const LINK   = terminalTheme.green;
+const LINK   = lightenHex(terminalTheme.brightMagenta, 50);
 const DIM    = terminalTheme.brightBlack;
 
 export default function SiteHeader() {

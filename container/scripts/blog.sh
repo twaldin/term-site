@@ -30,8 +30,8 @@ body_after_frontmatter() {
 
 list_posts() {
   echo ""
-  typewriter "${GREEN}blog${RESET}"
-  animated_separator "-" 10 "$GREEN"
+  typewriter "${PURPLE}blog${RESET}"
+  animated_separator "-" 10 "$PURPLE"
   echo ""
 
   shopt -s nullglob
@@ -68,9 +68,9 @@ list_posts() {
   # real ESC/`\` bytes) and write with `echo` (no `-e` reinterpretation).
   local esc_reset=$'\033[0m'
   local esc_dim=$'\033[2m'
-  local esc_gray=$'\033[38;2;146;131;116m'
-  local esc_yellow=$'\033[38;2;250;189;47m'
-  local esc_white=$'\033[38;2;235;219;178m'
+  local esc_gray=$'\033[90m'    # colour8  — date
+  local esc_yellow=$'\033[95m'  # colour13 — slug (matches PURPLE accent)
+  local esc_white=$'\033[97m'   # colour15 — title
   local osc_open=$'\033]8;;'
   local osc_close=$'\033\\'
 

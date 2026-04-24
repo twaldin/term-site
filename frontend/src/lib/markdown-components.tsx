@@ -1,17 +1,28 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
+import { terminalTheme } from '@/config/terminal-theme';
 
-export const BG = '#1d2021';
-export const FG = '#ebdbb2';
-export const DIM = '#928374';
-export const RED = '#cc241d';
-export const BRIGHT_GREEN = '#b8bb26';
-export const BRIGHT_YELLOW = '#fabd2f';
-export const BRIGHT_BLUE = '#83a598';
-export const BRIGHT_CYAN = '#8ec07c';
-export const CODE_BG = '#282828';
-export const CODE_BORDER = '#3c3836';
+export const BG          = terminalTheme.background;
+export const FG          = terminalTheme.foreground;
+export const DIM         = terminalTheme.brightBlack;
+export const BRAND       = terminalTheme.brightMagenta;
+export const BRIGHT_GREEN  = terminalTheme.brightGreen;
+export const BRIGHT_YELLOW = terminalTheme.brightYellow;
+export const BRIGHT_BLUE   = terminalTheme.blue;
+export const BRIGHT_CYAN   = terminalTheme.brightCyan;
+export const CODE_BG     = terminalTheme.black;
+export const CODE_BORDER = terminalTheme.brightBlack;
+
+// Lighter variant of the brand purple — used for navigation links.
+function lightenHex(hex: string, amount: number): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, (n >> 16) + amount);
+  const g = Math.min(255, ((n >> 8) & 0xff) + amount);
+  const b = Math.min(255, (n & 0xff) + amount);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+export const LINK = lightenHex(terminalTheme.brightMagenta, 50);
 
 export const markdownComponents: Components = {
   h1: ({ children }) => (
@@ -113,7 +124,7 @@ export const markdownComponents: Components = {
   td: ({ children }) => (
     <td style={{ color: FG, padding: '8px 12px', borderBottom: `1px solid ${CODE_BORDER}` }}>{children}</td>
   ),
-  strong: ({ children }) => <strong style={{ color: '#fbf1c7', fontWeight: 'bold' }}>{children}</strong>,
+  strong: ({ children }) => <strong style={{ color: terminalTheme.brightWhite, fontWeight: 'bold' }}>{children}</strong>,
   em: ({ children }) => <em style={{ color: DIM, fontStyle: 'italic' }}>{children}</em>,
 };
 
@@ -128,10 +139,10 @@ export function BlogMarkdown({ slug, title, date, body }: BlogBlockProps) {
   return (
     <>
       <div style={{ fontSize: '0.9rem', marginBottom: '1.25rem', userSelect: 'none' }}>
-        <span style={{ color: RED }}>tim.waldin.net </span>
-        <span style={{ color: '#fbf1c7' }}>~ </span>
+        <span style={{ color: BRAND }}>tim.waldin.net </span>
+        <span style={{ color: FG }}>~ </span>
         <br />
-        <span style={{ color: RED }}>❯ </span>
+        <span style={{ color: BRAND }}>❯ </span>
         <span style={{ color: FG }}>blog {slug}</span>
       </div>
       <div style={{ marginBottom: '1.5rem' }}>

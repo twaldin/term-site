@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { createWebSocketManager, WebSocketManager } from '@/lib/websocket';
+import { terminalTheme } from '@/config/terminal-theme';
 
 // xterm references browser globals (`self`) at module level — skip SSR.
 const Terminal = dynamic(() => import('@/components/Terminal'), { ssr: false });
@@ -130,9 +131,9 @@ export default function Home() {
         <div style={{
           position: 'absolute', inset: 0, zIndex: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#1d2021', fontFamily: 'monospace',
+          background: terminalTheme.background, fontFamily: 'monospace',
         }}>
-          <span style={{ color: '#928374', fontSize: '13px' }}>
+          <span style={{ color: terminalTheme.brightBlack, fontSize: '13px' }}>
             <span style={{ animation: 'blink 1s step-end infinite' }}>▌</span>
           </span>
         </div>

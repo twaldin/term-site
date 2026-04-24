@@ -7,13 +7,21 @@ import {
   BG,
   FG,
   DIM,
-  BRIGHT_CYAN,
+  BRAND,
+  LINK,
   CODE_BORDER,
 } from '@/lib/markdown-components';
-import { terminalConfig } from '@/config/terminal-theme';
+import { terminalConfig, terminalTheme } from '@/config/terminal-theme';
+
+function hexToAnsiRgb(hex: string): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return `${(n >> 16) & 0xff};${(n >> 8) & 0xff};${n & 0xff}`;
+}
 
 const ANSI_PROMPT =
-  '\x1b[38;2;204;36;29mtim.waldin.net \x1b[38;2;251;241;199m~ \r\n\x1b[38;2;204;36;29m❯ \x1b[0m';
+  `\x1b[38;2;${hexToAnsiRgb(terminalTheme.brightMagenta)}mtim.waldin.net ` +
+  `\x1b[38;2;${hexToAnsiRgb(terminalTheme.foreground)}m~ \r\n` +
+  `\x1b[38;2;${hexToAnsiRgb(terminalTheme.brightMagenta)}m❯ \x1b[0m`;
 
 const CHAR_WIDTH_RATIO = 0.6;
 const MOBILE_BREAKPOINT = 768;
@@ -154,16 +162,16 @@ export default function BlogUnifiedPage({ slug, title, date, body }: Props) {
         >
           <strong style={{ color: FG, fontWeight: 'bold' }}>navigation</strong>
           <span> — </span>
-          <Link href="/" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>
+          <Link href="/" style={{ color: LINK, textDecoration: 'underline', marginRight: '1rem' }}>
             home
           </Link>
-          <Link href="/t/blog" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>
+          <Link href="/t/blog" style={{ color: LINK, textDecoration: 'underline', marginRight: '1rem' }}>
             blog
           </Link>
-          <Link href="/t/projects" style={{ color: BRIGHT_CYAN, textDecoration: 'underline', marginRight: '1rem' }}>
+          <Link href="/t/projects" style={{ color: LINK, textDecoration: 'underline', marginRight: '1rem' }}>
             projects
           </Link>
-          <Link href="/t/resume" style={{ color: BRIGHT_CYAN, textDecoration: 'underline' }}>
+          <Link href="/t/resume" style={{ color: LINK, textDecoration: 'underline' }}>
             resume
           </Link>
         </div>
