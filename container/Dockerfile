@@ -123,6 +123,13 @@ RUN mkdir -p /home/portfolio/.local/share/fonts && \
 RUN mkdir -p /home/portfolio/.local/share/themes && \
     curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /home/portfolio/.local/bin -t /home/portfolio/.local/share/themes
 
+# Install nvm — the dotfiles zshrc defines a `load-nvmrc` hook that calls
+# `nvm_find_nvmrc` unconditionally on shell init. Without nvm installed,
+# the function is undefined and zsh prints 'command not found' on every
+# new session. We don't need a specific Node version in the container, just
+# the nvm.sh so the hook's helpers resolve.
+RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | PROFILE=/dev/null bash
+
 # Clone dotfiles and project repositories directly into container
 # Note: term-site is private — clone will fail silently, make it public to fix
 RUN git clone https://github.com/twaldin/dotfiles.git /home/portfolio/.dotfiles && \
