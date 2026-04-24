@@ -1,6 +1,7 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
+import Link from 'next/link';
 import { terminalTheme } from '@/config/terminal-theme';
 
 function lightenHex(hex: string, amount: number): string {
@@ -16,6 +17,11 @@ const BORDER = terminalTheme.brightBlack;
 const BRAND  = terminalTheme.brightMagenta;
 const LINK   = lightenHex(terminalTheme.brightMagenta, 50);
 const DIM    = terminalTheme.brightBlack;
+
+// Force a full page reload so nav always gets a fresh session + initCommand.
+function hardNav(href: string) {
+  return (e: MouseEvent) => { e.preventDefault(); window.location.href = href; };
+}
 
 export default function SiteHeader() {
   const linkStyle: CSSProperties = {
@@ -41,15 +47,15 @@ export default function SiteHeader() {
         flexShrink: 0,
       }}
     >
-      <a href="/" style={{ color: BRAND, textDecoration: 'none', fontWeight: 'bold' }}>
+      <Link href="/" onClick={hardNav('/')} style={{ color: BRAND, textDecoration: 'none', fontWeight: 'bold' }}>
         tim.waldin.net
-      </a>
+      </Link>
       <nav style={{ display: 'flex', gap: '12px', alignItems: 'center', color: DIM }}>
         <span>navigation —</span>
-        <a href="/" style={linkStyle}>home</a>
-        <a href="/t/blog" style={linkStyle}>blog</a>
-        <a href="/t/projects" style={linkStyle}>projects</a>
-        <a href="/t/resume" style={linkStyle}>resume</a>
+        <Link href="/" onClick={hardNav('/')} style={linkStyle}>home</Link>
+        <Link href="/t/blog" onClick={hardNav('/t/blog')} style={linkStyle}>blog</Link>
+        <Link href="/t/projects" onClick={hardNav('/t/projects')} style={linkStyle}>projects</Link>
+        <Link href="/t/resume" onClick={hardNav('/t/resume')} style={linkStyle}>resume</Link>
       </nav>
     </header>
   );
