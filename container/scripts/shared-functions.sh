@@ -55,18 +55,37 @@ animated_separator() {
   local char="$1"
   local width="$2"
   local color="${3:-$CYAN}"
-  local batch_size=1
-  local delay=0.001
 
-  for ((i = 0; i < width; i += batch_size)); do
-    local batch=""
-    for ((j = 0; j < batch_size && (i + j) < width; j++)); do
-      batch+="${color}${char}${RESET}"
-    done
-    printf "%b" "$batch"
-    sleep $delay
+  # Print the whole line atomically — the per-char loop with sleeps was
+  # producing visible rendering artifacts (prompt interleaving, lost lines)
+  # when Socket.IO flushed mid-sequence.
+  local line=""
+  local i
+  for ((i = 0; i < width; i++)); do line+="$char"; done
+  printf '%b%s%b\n' "${color}" "$line" "${RESET}"
+}
+
+# print_text <text> [color] [indent]
+# Word-wraps text to the terminal width, optionally colored and indented.
+# Use instead of hardcoded newlines in script content — this flows nicely
+# regardless of font size or viewport.
+print_text() {
+  local text="$1"
+  local color="${2:-}"
+  local indent="${3:-0}"
+
+  local cols
+  cols=$(tput cols 2>/dev/null || echo 80)
+  (( cols < 20 )) && cols=80
+
+  local prefix
+  prefix=$(printf '%*s' "$indent" '')
+  local wrap_width=$((cols - indent))
+  (( wrap_width < 20 )) && wrap_width=20
+
+  printf '%s' "$text" | fold -s -w "$wrap_width" | while IFS= read -r line; do
+    printf '%b%s%s%b\n' "${color}" "$prefix" "$line" "${RESET}"
   done
-  echo
 }
 
 ascii_typewriter() {
@@ -82,20 +101,23 @@ ascii_typewriter() {
   [[ "$COLUMNS" =~ ^[0-9]+$ ]]                  && (( COLUMNS > cols )) && cols=$COLUMNS
   (( cols < 10 )) && cols=80
 
-  # On truly narrow terminals (< 50 cols), even short figlet output won't fit.
-  if (( cols < 50 )); then
+  # Mobile-width terminals can't render any figlet art without ugly wrap.
+  if (( cols < 60 )); then
     typewriter "${BOLD}${color}${text}${RESET}"
     return
   fi
 
+  # Let figlet render at its natural width — passing `-w $cols` was forcing
+  # mid-word breaks on single-word text. Check afterwards that the actual
+  # rendered width fits, with a small overflow tolerance (xterm.js handles
+  # a few chars of soft-wrap gracefully; a huge overflow is what looks bad).
   local ascii_output
-  ascii_output=$(figlet -f "$font" -w "$cols" "$text" 2>/dev/null || figlet -w "$cols" "$text")
+  ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
 
-  # Measure the actual rendered width (character count, not bytes).
   local max_width
   max_width=$(printf '%s' "$ascii_output" | awk '{ if (length > m) m = length } END { print m+0 }')
 
-  if (( max_width > cols )); then
+  if (( max_width > cols + 10 )); then
     typewriter "${BOLD}${color}${text}${RESET}"
     return
   fi

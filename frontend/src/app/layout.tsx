@@ -37,22 +37,24 @@ export default function RootLayout({
             --color-border: ${terminalTheme.brightBlack};
           }
         `}</style>
-        {/* Start the 1MB Nerd Font download with the HTML parse, not after JS mounts.
-            Cuts ~400-500ms off TTI — without this the FontFace API call in xterm
-            init is the first request that triggers the font download. */}
+        {/* Start the Nerd Font download with the HTML parse so xterm's
+            FontFace call doesn't trigger a cold fetch. `crossorigin=anonymous`
+            matches the fetch mode xterm/@font-face use — without it the
+            browser keeps the preload and the real load as separate requests
+            and emits "preloaded but not used" warnings. */}
         <link
           rel="preload"
           as="font"
           href="/fonts/JetBrainsMonoNerdFontMono-Regular.woff2"
           type="font/woff2"
-          crossOrigin=""
+          crossOrigin="anonymous"
         />
         <link
           rel="preload"
           as="font"
           href="/fonts/JetBrainsMonoNerdFontMono-Bold.woff2"
           type="font/woff2"
-          crossOrigin=""
+          crossOrigin="anonymous"
         />
       </head>
       <body>
