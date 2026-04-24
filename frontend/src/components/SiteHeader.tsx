@@ -1,3 +1,6 @@
+'use client';
+
+import type { CSSProperties } from 'react';
 import { terminalTheme } from '@/config/terminal-theme';
 
 function lightenHex(hex: string, amount: number): string {
@@ -15,7 +18,7 @@ const LINK   = lightenHex(terminalTheme.brightMagenta, 50);
 const DIM    = terminalTheme.brightBlack;
 
 export default function SiteHeader() {
-  const linkStyle: React.CSSProperties = {
+  const linkStyle: CSSProperties = {
     color: LINK,
     textDecoration: 'none',
   };
