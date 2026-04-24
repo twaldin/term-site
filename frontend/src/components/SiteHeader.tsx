@@ -1,6 +1,3 @@
-'use client';
-
-import Link from 'next/link';
 import { terminalTheme } from '@/config/terminal-theme';
 
 function lightenHex(hex: string, amount: number): string {
@@ -18,14 +15,6 @@ const LINK   = lightenHex(terminalTheme.brightMagenta, 50);
 const DIM    = terminalTheme.brightBlack;
 
 export default function SiteHeader() {
-  const handleNav = (cmd: string) => (e: React.MouseEvent) => {
-    const w = window as Window & { __terminalSendCommand?: (cmd: string) => void };
-    if (w.__terminalSendCommand) {
-      e.preventDefault();
-      w.__terminalSendCommand(cmd);
-    }
-  };
-
   const linkStyle: React.CSSProperties = {
     color: LINK,
     textDecoration: 'none',
@@ -49,15 +38,15 @@ export default function SiteHeader() {
         flexShrink: 0,
       }}
     >
-      <Link href="/" onClick={handleNav('welcome')} style={{ color: BRAND, textDecoration: 'none', fontWeight: 'bold' }}>
+      <a href="/" style={{ color: BRAND, textDecoration: 'none', fontWeight: 'bold' }}>
         tim.waldin.net
-      </Link>
+      </a>
       <nav style={{ display: 'flex', gap: '12px', alignItems: 'center', color: DIM }}>
         <span>navigation —</span>
-        <Link href="/" onClick={handleNav('welcome')} style={linkStyle}>home</Link>
-        <Link href="/t/blog" onClick={handleNav('blog')} style={linkStyle}>blog</Link>
-        <Link href="/t/projects" onClick={handleNav('projects')} style={linkStyle}>projects</Link>
-        <Link href="/t/resume" onClick={handleNav('resume')} style={linkStyle}>resume</Link>
+        <a href="/" style={linkStyle}>home</a>
+        <a href="/t/blog" style={linkStyle}>blog</a>
+        <a href="/t/projects" style={linkStyle}>projects</a>
+        <a href="/t/resume" style={linkStyle}>resume</a>
       </nav>
     </header>
   );

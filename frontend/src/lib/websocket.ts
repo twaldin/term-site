@@ -164,12 +164,14 @@ export function createWebSocketManager(): WebSocketManager {
 
     socket.on('session_end', () => {
       // Container exited (e.g. user typed 'exit'). Clear the persistent session
-      // ID so the next page load gets a fresh container instead of trying to
-      // restore a dead session.
+      // ID so the next reconnect gets a fresh container.
       if (typeof window !== 'undefined') {
         localStorage.removeItem('terminal-session-id');
       }
       sessionEndCallback?.();
+      // Disconnect so the caller can call connect() again for a fresh session.
+      socket?.disconnect();
+      socket = null;
     });
   };
 

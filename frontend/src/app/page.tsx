@@ -49,6 +49,16 @@ export default function Home() {
 
     wsManager.onError(() => {});
 
+    wsManager.onSessionEnd(() => {
+      // Session ended (exit, idle timeout, dead container). Clear the terminal
+      // briefly so the user sees the "session ended" message, then reconnect
+      // for a fresh container. connect() re-reads the current URL for initCommand.
+      setTimeout(() => {
+        terminalRef.current?.clearTerminal();
+        wsManager.connect();
+      }, 1500);
+    });
+
     wsManager.onTti((phase) => {
       if (phase === 'welcome-enter-sent' && !welcomeSeenRef.current) {
         welcomeSeenRef.current = true;
@@ -100,17 +110,6 @@ export default function Home() {
     return () => clearTimeout(t);
   }, []);
 
-  useEffect(() => {
-    const w = window as Window & { __terminalSendCommand?: (cmd: string) => void };
-    w.__terminalSendCommand = (cmd: string) => {
-      // Nav-click = literally "type cmd + enter", one atomic send. No
-      // Ctrl-C, no clear, no timers. If something's running the user
-      // can wait or scroll — that's standard terminal behavior.
-      const normalized = cmd === 'home' ? 'welcome' : cmd;
-      wsManagerRef.current?.sendInput(normalized + '\r');
-    };
-    return () => { delete w.__terminalSendCommand; };
-  }, []);
 
   const handleTerminalData = useCallback((data: string) => {
     wsManagerRef.current?.sendInput(data);

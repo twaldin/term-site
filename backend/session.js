@@ -347,10 +347,7 @@ class SessionManager {
     };
     stream.on('data', session._streamDataHandler);
 
-    session._streamCloseHandler = () => {
-      console.log(`Container stream closed for session ${session.id}`);
-      this.destroySession(session.id);
-    };
+    session._streamCloseHandler = () => this._handleStreamClose(session);
     stream.on('close', session._streamCloseHandler);
 
     // Same 6s fallback as fresh sessions — if the client never sends a resize,
@@ -522,10 +519,7 @@ class SessionManager {
       };
       stream.on('data', session._streamDataHandler);
 
-      session._streamCloseHandler = () => {
-        console.log(`Container stream closed for session ${session.id}`);
-        this.destroySession(session.id);
-      };
+      session._streamCloseHandler = () => this._handleStreamClose(session);
       stream.on('close', session._streamCloseHandler);
 
       // Safety net: if the client never sends a resize (half-broken client
@@ -628,7 +622,35 @@ class SessionManager {
       }
     }).catch((error) => {
       console.error(`Failed to resize container terminal for ${sessionId}:`, error);
+      // Container is gone (e.g. killed externally). Destroy the session so the
+      // client gets session_end → auto-reconnect → fresh container.
+      if (error?.statusCode === 404) {
+        this.destroySession(sessionId);
+      }
     });
+  }
+
+  // Shared stream-close handler — called whether the session is still live or
+  // has been zombified. Covers the gap where a container dies after zombification:
+  // destroySession can't find the session in sessions.map (already moved to
+  // zombieSessions), so without this, the dead zombie persists until the 30s
+  // grace timer fires and a reconnect gets the blank-cursor experience.
+  _handleStreamClose(session) {
+    const currentId = session.id;
+    console.log(`Container stream closed for session ${currentId}`);
+    if (this.sessions.has(currentId)) {
+      this.destroySession(currentId);
+    } else {
+      for (const [ip, zombie] of this.zombieSessions.entries()) {
+        if (zombie.session === session) {
+          console.log(`Zombie container stream closed, cleaning up for IP ${ip}`);
+          clearTimeout(zombie.graceTimer);
+          this.zombieSessions.delete(ip);
+          this._killSession(session);
+          break;
+        }
+      }
+    }
   }
 
   // Run the initCommand only once both the shell prompt has appeared AND the
