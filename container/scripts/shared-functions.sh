@@ -1,15 +1,15 @@
 #!/bin/bash
-CYAN='\033[38;2;142;192;124m'      # Cyan #8ec07c
-GREEN='\033[38;2;184;187;38m'      # Green #b8bb26
-WHITE='\033[38;2;235;219;178m'     # White #ebdbb2
-YELLOW='\033[38;2;250;189;47m'     # Yellow #fabd2f
-BLUE='\033[38;2;69;133;136m'       # Blue #458588
-RED='\033[38;2;204;36;29m'         # Red #cc241d
-MAGENTA='\033[38;2;177;98;134m'    # Magenta #b16286
-ORANGE='\033[38;2;254;128;25m'     # Orange #fe8019
-GRAY='\033[38;2;146;131;116m'      # Gray #928374
-BG='\033[48;2;29;32;33m'           # Background #1d2021
-FG='\033[38;2;251;241;199m'        # Foreground #fbf1c7
+CYAN='\033[96m'    # colour14 (bright cyan)
+GREEN='\033[92m'   # colour10 (bright green)
+WHITE='\033[97m'   # colour15 (bright white / foreground)
+YELLOW='\033[93m'  # colour11 (bright yellow)
+BLUE='\033[34m'    # colour4  (blue)
+RED='\033[31m'     # colour1  (red)
+MAGENTA='\033[35m' # colour5  (magenta)
+ORANGE='\033[93m'  # colour11 (bright yellow, closest ANSI slot to orange)
+GRAY='\033[90m'    # colour8  (bright black / dark gray)
+BG='\033[40m'      # colour0  background
+FG='\033[39m'      # default foreground
 RESET='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
