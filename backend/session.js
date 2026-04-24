@@ -545,28 +545,16 @@ class SessionManager {
 
     console.log(`Auto-typing '${command}' for session ${sessionId}`);
 
-    // For the welcome/home command, type char-by-char at 25ms/char so the
-    // user sees "w → e → l → c → o → m → e" before the ASCII art appears.
-    // Other commands are typed instantly (long command strings would be slow
-    // even at 25ms/char and don't need the animation).
-    if (command === 'welcome') {
-      try { session.socket.emit('tti', { phase: 'welcome-start' }); } catch { /* ignore */ }
-      const chars = [...command];
-      chars.forEach((ch, i) => {
-        setTimeout(() => {
-          if (this.sessions.has(sessionId)) this.sendInput(sessionId, ch);
-        }, i * 25);
-      });
-      setTimeout(() => {
-        if (this.sessions.has(sessionId)) {
-          this.sendInput(sessionId, '\r');
-          try { this.sessions.get(sessionId)?.socket?.emit('tti', { phase: 'welcome-enter-sent' }); } catch { /* ignore */ }
-        }
-      }, chars.length * 25);
-      return;
-    }
-
+    // Send the whole command + \r atomically. The previous char-by-char
+    // typing animation (25ms/char) raced with the shell: the prompt could
+    // redraw between chars, the \r could arrive before a prompt was fully
+    // rendered, and the output stream from welcome.sh could interleave with
+    // autotyped chars — producing the "empty prompt above real welcome"
+    // artifact on first load and the prompt-mid-output interleave on
+    // project pages.
+    try { session.socket.emit('tti', { phase: 'welcome-start' }); } catch { /* ignore */ }
     this.sendInput(sessionId, command + '\r');
+    try { session.socket.emit('tti', { phase: 'welcome-enter-sent' }); } catch { /* ignore */ }
   }
 
   sendInput(sessionId, data) {

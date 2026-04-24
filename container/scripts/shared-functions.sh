@@ -114,10 +114,14 @@ ascii_typewriter() {
   local ascii_output
   ascii_output=$(figlet -f "$font" "$text" 2>/dev/null || figlet "$text")
 
+  # wc -L counts display columns (handles multibyte UTF-8 block chars that
+  # DOS_Rebel uses — awk's `length` would return bytes and massively
+  # overestimate the width, causing a spurious fallback to plain text).
   local max_width
-  max_width=$(printf '%s' "$ascii_output" | awk '{ if (length > m) m = length } END { print m+0 }')
+  max_width=$(printf '%s' "$ascii_output" | wc -L | tr -d ' ')
+  [[ "$max_width" =~ ^[0-9]+$ ]] || max_width=0
 
-  if (( max_width > cols + 10 )); then
+  if (( max_width > cols )); then
     typewriter "${BOLD}${color}${text}${RESET}"
     return
   fi
