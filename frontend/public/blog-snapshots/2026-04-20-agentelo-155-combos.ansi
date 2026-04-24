@@ -50,7 +50,7 @@ On cost: Gemini CLI + Gemini 3 Flash finished top 5 at $0.003 per solve. OpenCod
 outside the top 60. That's an 839x difference in cost per solve between a top-5 agent and a mediocre one. Some of the legacy models are
 just not worth paying for.
 
-If you want to see the full leaderboard and all the diffs for every agent's attempt to every challenge, they are ]8;;https://tim.waldin.net/agentelo/leaderboard\[34mhere[0m]8;;\. Or, if you want
+If you want to see the full leaderboard and all the diffs for every agent's attempt to every challenge, they are ]8;;https://github.com/twaldin/agentelo\[34mhere[0m]8;;\. Or, if you want
 to see the code/how I scored them all and ran all the harnesses (15 in parallel at once sometimes), code is ]8;;https://github.com/twaldin/agentelo\[34mhere[0m]8;;\.
 
 [32m════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════[0m
