@@ -31,6 +31,9 @@ class SessionManager {
     this.poolSize = 5;
     this.poolWarming = 0;
     this.zombieSessions = new Map();
+    // Resizes that arrive before the session is stored (fresh container path)
+    // are buffered here and applied once the session is ready.
+    this.pendingResizes = new Map();
 
     // Preload the image on startup, then fill the pool.
     this.preloadImage().then(() => {
@@ -327,6 +330,7 @@ class SessionManager {
       promptSeen: true,
       firstResizeApplied: false,
       initCommandRun: false,
+      inAltScreen: false,
     };
     this.sessions.set(sessionId, session);
 
@@ -337,6 +341,8 @@ class SessionManager {
       const output = data.toString();
       if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
         session.socket.emit('output', output);
+        if (output.includes('\x1b[?1049h') || output.includes('\x1b[?47h')) session.inAltScreen = true;
+        if (output.includes('\x1b[?1049l') || output.includes('\x1b[?47l')) session.inAltScreen = false;
       }
     };
     stream.on('data', session._streamDataHandler);
@@ -482,14 +488,30 @@ class SessionManager {
         promptSeen: false,
         firstResizeApplied: false,
         initCommandRun: false,
+        inAltScreen: false,
       };
 
       this.sessions.set(sessionId, session);
+
+      // Apply any resize that arrived while we were awaiting container creation.
+      // Without this, the client's first resize (sent on socket connect, ~16ms)
+      // was always dropped because sessions.set hadn't run yet, leaving the
+      // 6s fallback to fire at the 140×40 pre-resize size instead of the real
+      // viewport dimensions.
+      const pendingResize = this.pendingResizes.get(sessionId);
+      if (pendingResize) {
+        this.pendingResizes.delete(sessionId);
+        this.resizeTerminal(sessionId, pendingResize.cols, pendingResize.rows);
+      }
 
       session._streamDataHandler = (data) => {
         const output = data.toString();
         if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
           session.socket.emit('output', output);
+          // Track whether a TUI app has entered the alternate screen so we
+          // can restore xterm.js to the right mode on session reconnect.
+          if (output.includes('\x1b[?1049h') || output.includes('\x1b[?47h')) session.inAltScreen = true;
+          if (output.includes('\x1b[?1049l') || output.includes('\x1b[?47l')) session.inAltScreen = false;
 
           const s = this.sessions.get(sessionId);
           if (s && !s.promptSeen && output.includes('~ ')) {
@@ -587,7 +609,13 @@ class SessionManager {
 
   resizeTerminal(sessionId, cols, rows) {
     const session = this.sessions.get(sessionId);
-    if (!session) return;
+    if (!session) {
+      // Session still being created (fresh container path has multiple awaits
+      // before sessions.set). Buffer the latest resize so we can apply it the
+      // moment the session is stored rather than waiting for the 6s fallback.
+      this.pendingResizes.set(sessionId, { cols, rows });
+      return;
+    }
 
     // Resize is passive — don't count as activity and don't reset timers.
     session.container.resize({
@@ -641,6 +669,17 @@ class SessionManager {
       if (!initCommand && initCommand !== '') return;
       const s = this.sessions.get(sid);
       if (!s) return;
+
+      // If a TUI app (nvim, htop, etc.) is running in the alt screen, do NOT
+      // send Ctrl-C (it doesn't exit nvim — it just rings the bell), and do
+      // NOT type the initCommand (it'd be sent as keystrokes into the running
+      // app). Just reset firstResizeApplied so the incoming resize triggers
+      // SIGWINCH, which causes the app to redraw at the correct size.
+      if (s.inAltScreen) {
+        s.firstResizeApplied = false;
+        return;
+      }
+
       s.initCommand = initCommand;
       s.initCommandRun = false;
       s.firstResizeApplied = false;
@@ -670,6 +709,15 @@ class SessionManager {
       session.clientIP = clientIP;
       session.lastActivity = Date.now();
 
+      // Restore alt-screen mode on the new xterm.js before any container
+      // output arrives. Without this, nvim (still in alt screen on the
+      // container side) redraws without re-sending \033[?1049h, so its
+      // content lands on xterm.js's main screen and produces ghost artifacts
+      // when oil or another TUI subsequently redraws differentially.
+      if (session.inAltScreen) {
+        newSocket.emit('output', '\x1b[?1049h\x1b[2J\x1b[H');
+      }
+
       this.sessions.set(newSocketId, session);
       this.setSessionTimeout(newSocketId);
       this.setNoInputTimeout(newSocketId);
@@ -698,9 +746,16 @@ class SessionManager {
         const output = data.toString();
         if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
           session.socket.emit('output', output);
+          if (output.includes('\x1b[?1049h') || output.includes('\x1b[?47h')) session.inAltScreen = true;
+          if (output.includes('\x1b[?1049l') || output.includes('\x1b[?47l')) session.inAltScreen = false;
         }
       };
       session.stream.on('data', session._streamDataHandler);
+
+      // Same alt-screen restore as the active-session path above.
+      if (session.inAltScreen) {
+        newSocket.emit('output', '\x1b[?1049h\x1b[2J\x1b[H');
+      }
 
       this.sessions.set(newSocketId, session);
       this.setSessionTimeout(newSocketId);
@@ -763,9 +818,17 @@ class SessionManager {
       const output = data.toString();
       if (!output.includes('{"stream":true,"stdin":true,"stdout":true,"stderr":true,"hijack":true}')) {
         session.socket.emit('output', output);
+        if (output.includes('\x1b[?1049h') || output.includes('\x1b[?47h')) session.inAltScreen = true;
+        if (output.includes('\x1b[?1049l') || output.includes('\x1b[?47l')) session.inAltScreen = false;
       }
     };
     session.stream.on('data', session._streamDataHandler);
+
+    // Restore alt-screen mode on the new xterm.js before container output
+    // arrives so nvim's SIGWINCH redraw goes to the right buffer.
+    if (session.inAltScreen) {
+      newSocket.emit('output', '\x1b[?1049h\x1b[2J\x1b[H');
+    }
 
     session.initCommandRun = true;
     session.hasReceivedInput = false;
