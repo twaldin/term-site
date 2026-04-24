@@ -16,7 +16,6 @@ services:
       - external-net
       - frontend-net
       - backend-net
-      - agentelo-external
     restart: unless-stopped
 
   # Next.js frontend — isolated network, no internet access
@@ -97,9 +96,6 @@ networks:
   docker-net:
     driver: bridge
     internal: true
-  agentelo-external:
-    external: true
-    name: agentelo_external
 
 volumes:
   backend_data:
