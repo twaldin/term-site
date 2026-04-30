@@ -561,7 +561,7 @@ class SessionManager {
     if (command === 'welcome') {
       try { session.socket.emit('tti', { phase: 'welcome-start' }); } catch { /* ignore */ }
       const chars = [...command];
-      const perCharMs = 55;
+      const perCharMs = 20;
       chars.forEach((ch, i) => {
         setTimeout(() => {
           if (this.sessions.has(sessionId)) this.sendInput(sessionId, ch);
