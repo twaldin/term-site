@@ -9,6 +9,7 @@ import {
 import { Terminal as XTermTerminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { terminalConfig } from "../config/terminal-theme";
 import { attachTouchScroll } from "../lib/xterm-touch";
 
@@ -80,7 +81,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       const handleLinkActivate = (_event: MouseEvent, text: string) => {
         window.open(text, "_blank", "noopener,noreferrer");
       };
-      xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
       xterm.options.linkHandler = {
         activate: handleLinkActivate,
         allowNonHttpProtocols: true,
@@ -89,6 +89,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       xterm.open(terminalRef.current);
       xtermRef.current = xterm;
       fitAddonRef.current = fitAddon;
+
+      try {
+        const webgl = new WebglAddon();
+        webgl.onContextLoss(() => webgl.dispose());
+        xterm.loadAddon(webgl);
+      } catch { /* fall back to canvas */ }
 
       const oscUrlDisposable = xterm.parser.registerOscHandler(9999, (data) => {
         try {
@@ -164,6 +170,9 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       const currentTerminalElement = terminalRef.current;
       currentTerminalElement.addEventListener("click", handleClick);
 
+      const loadWebLinks = () => xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
+      currentTerminalElement.addEventListener("mouseover", loadWebLinks, { once: true });
+
       const detachTouch = attachTouchScroll(xterm, currentTerminalElement);
 
       const handlePaste = async (event: ClipboardEvent) => {
@@ -235,6 +244,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         },
         () =>
           currentTerminalElement.removeEventListener("click", handleClick),
+        () =>
+          currentTerminalElement.removeEventListener("mouseover", loadWebLinks),
         () =>
           currentTerminalElement.removeEventListener("paste", handlePaste),
         () =>
