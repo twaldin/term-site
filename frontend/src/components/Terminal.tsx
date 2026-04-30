@@ -9,12 +9,14 @@ import {
 import { Terminal as XTermTerminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { terminalConfig } from "../config/terminal-theme";
 import { attachTouchScroll } from "../lib/xterm-touch";
 
 const MOBILE_BREAKPOINT = 768;
-const MIN_FONT_SIZE = 13;
+const MIN_FONT_SIZE = 10;
 const MAX_FONT_SIZE = 28;
+const CHAR_WIDTH_RATIO = 0.6;
 
 // Pick font size directly from viewport width. Cols fall out via xterm's
 // FitAddon so box widths, figlet output, etc. scale naturally — narrow
@@ -22,11 +24,14 @@ const MAX_FONT_SIZE = 28;
 // readable font instead of wasting real estate on 200+ cols.
 function calculateFontSize(_container: HTMLElement): number {
   const viewportWidth = window.innerWidth;
-  // Mobile gets a fixed small font; desktop scales ~1px per 80px of viewport.
-  const target = viewportWidth < MOBILE_BREAKPOINT
-    ? 13
-    : Math.round(viewportWidth / 80);
-  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, target));
+  if (viewportWidth < MOBILE_BREAKPOINT) {
+    // Derive target cols from actual usable width so we never exceed what
+    // the viewport can display at the minimum font size.
+    const usableWidth = viewportWidth - 28; // 14px padding each side
+    const targetCols = Math.max(40, Math.min(80, Math.floor(usableWidth / (MIN_FONT_SIZE * CHAR_WIDTH_RATIO))));
+    return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, Math.floor(usableWidth / (targetCols * CHAR_WIDTH_RATIO))));
+  }
+  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, Math.round(viewportWidth / 80)));
 }
 
 interface TerminalProps {
@@ -76,7 +81,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       const handleLinkActivate = (_event: MouseEvent, text: string) => {
         window.open(text, "_blank", "noopener,noreferrer");
       };
-      xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
       xterm.options.linkHandler = {
         activate: handleLinkActivate,
         allowNonHttpProtocols: true,
@@ -85,6 +89,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       xterm.open(terminalRef.current);
       xtermRef.current = xterm;
       fitAddonRef.current = fitAddon;
+
+      try {
+        const webgl = new WebglAddon();
+        webgl.onContextLoss(() => webgl.dispose());
+        xterm.loadAddon(webgl);
+      } catch { /* fall back to canvas */ }
 
       const oscUrlDisposable = xterm.parser.registerOscHandler(9999, (data) => {
         try {
@@ -160,6 +170,9 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       const currentTerminalElement = terminalRef.current;
       currentTerminalElement.addEventListener("click", handleClick);
 
+      const loadWebLinks = () => xterm.loadAddon(new WebLinksAddon(handleLinkActivate));
+      currentTerminalElement.addEventListener("mouseover", loadWebLinks, { once: true });
+
       const detachTouch = attachTouchScroll(xterm, currentTerminalElement);
 
       const handlePaste = async (event: ClipboardEvent) => {
@@ -231,6 +244,8 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         },
         () =>
           currentTerminalElement.removeEventListener("click", handleClick),
+        () =>
+          currentTerminalElement.removeEventListener("mouseover", loadWebLinks),
         () =>
           currentTerminalElement.removeEventListener("paste", handlePaste),
         () =>
