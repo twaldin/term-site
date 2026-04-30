@@ -56,6 +56,8 @@ export default function SiteHeader() {
         <Link href="/t/blog" onClick={hardNav('/t/blog')} style={linkStyle}>blog</Link>
         <Link href="/t/projects" onClick={hardNav('/t/projects')} style={linkStyle}>projects</Link>
         <Link href="/t/resume" onClick={hardNav('/t/resume')} style={linkStyle}>resume</Link>
+        <Link href="/t/about" onClick={hardNav('/t/about')} style={linkStyle}>about</Link>
+        <Link href="/t/contact" onClick={hardNav('/t/contact')} style={linkStyle}>contact</Link>
       </nav>
     </header>
   );
