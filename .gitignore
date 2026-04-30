@@ -59,3 +59,7 @@ CLAUDE.md
 
 # dev symlink to container/blog/posts for Next.js
 frontend/blog-posts
+
+# flt agent fleet artifacts (per-spawn scratch + handoff docs)
+.flt/
+handoffs/
