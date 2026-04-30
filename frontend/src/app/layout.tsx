@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import { terminalTheme } from "@/config/terminal-theme";
+import { getPageMetadata } from "@/lib/routes";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -10,14 +11,15 @@ export const viewport: Viewport = {
   themeColor: terminalTheme.background,
 };
 
-export const metadata: Metadata = {
-  title: "twaldin portfolio",
-  description: "Interactive terminal portfolio - Timothy Waldin",
-  // TTI optimization: critical resources preload hint
-  other: {
-    "critical": "true",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const m = getPageMetadata('/');
+  return {
+    title: m.title,
+    description: m.description,
+    openGraph: { title: m.title, description: m.description, url: 'https://tim.waldin.net', siteName: 'twaldin', type: 'website' },
+    twitter: { card: 'summary', title: m.title, description: m.description },
+  };
+}
 
 export default function RootLayout({
   children,
