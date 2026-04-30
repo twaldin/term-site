@@ -196,10 +196,10 @@ RUN cp /home/portfolio/.dotfiles/zsh/zshrc /home/portfolio/.zshrc && \
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.zshrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias contact='cd ~ && /home/portfolio/scripts/contact.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias about='cd ~ && /home/portfolio/scripts/about.sh'" >> /home/portfolio/.zshrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.zshrc && \
-    echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
+    echo "alias resume='cd ~ && /home/portfolio/scripts/resume.sh'" >> /home/portfolio/.zshrc && \
     echo "alias blog='/home/portfolio/scripts/blog.sh'" >> /home/portfolio/.zshrc && \
     echo "" >> /home/portfolio/.zshrc && \
     echo "# preexec — re-emit OSC 9999 URL before every typed command so the" >> /home/portfolio/.zshrc && \
@@ -288,10 +288,10 @@ RUN echo 'export PATH="/home/portfolio/scripts:$PATH"' >> /home/portfolio/.bashr
     echo "alias dotfiles='cd ~/.dotfiles && /home/portfolio/scripts/dotfiles.sh'" >> /home/portfolio/.bashrc && \
     echo "alias home='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
     echo "alias welcome='cd ~ && /home/portfolio/scripts/welcome.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias contact='/home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias about='/home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias contact='cd ~ && /home/portfolio/scripts/contact.sh'" >> /home/portfolio/.bashrc && \
+    echo "alias about='cd ~ && /home/portfolio/scripts/about.sh'" >> /home/portfolio/.bashrc && \
     echo "alias help='/home/portfolio/scripts/help.sh'" >> /home/portfolio/.bashrc && \
-    echo "alias resume='/home/portfolio/scripts/resume.sh'" >> /home/portfolio/.bashrc
+    echo "alias resume='cd ~ && /home/portfolio/scripts/resume.sh'" >> /home/portfolio/.bashrc
 
 # Set proper ownership
 RUN chown -R portfolio:portfolio /home/portfolio
