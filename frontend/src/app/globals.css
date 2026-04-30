@@ -7,7 +7,7 @@
        url('/fonts/JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -16,7 +16,7 @@
        url('/fonts/JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 html, body {

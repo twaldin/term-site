@@ -7,7 +7,7 @@
   src: url('./JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -15,7 +15,7 @@
   src: url('./JetBrainsMonoNerdFont-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 /* Monospace Variant (all glyphs same width) */
@@ -25,7 +25,7 @@
        url('./JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -34,7 +34,7 @@
        url('./JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 /* Fallback to standard JetBrains Mono (without Nerd Font icons) */
@@ -45,7 +45,7 @@
        local('JetBrainsMono-Regular');
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -54,5 +54,5 @@
        local('JetBrainsMono-Bold');
   font-weight: bold;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
