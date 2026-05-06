@@ -41,6 +41,18 @@ html {
   overscroll-behavior-y: none;
 }
 
+/* Mobile-only bottom padding on the terminal host so the cursor + last
+   output line don't pin to the literal bottom of the screen — phones have
+   a hard-to-read lower zone (iOS URL bar / home indicator / awkward thumb
+   reach). The padding shrinks xterm's inner content area; FitAddon sizes
+   rows from that, so the grid is honored. The padded space is just the
+   terminal background color. */
+@media (max-width: 767px) {
+  .terminal-host {
+    padding-bottom: 25vh !important;
+  }
+}
+
 body {
   display: flex;
   flex-direction: column;
