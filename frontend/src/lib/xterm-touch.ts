@@ -2,9 +2,22 @@
 //
 // xterm renders into a canvas, so the browser has no native overflow scroll
 // to apply to touch drags — users get single-line stutter scrolling or
-// nothing at all. This attaches a custom touch handler with 1:1 finger-to-
-// scroll mapping plus momentum-decay on touch end. Taps (no drag) pass
-// through untouched so xterm.focus()/keyboard-open still work.
+// nothing at all. This attaches a custom touch handler with finger-to-line
+// mapping plus momentum-decay on touch end. Taps (no drag) pass through
+// untouched so xterm.focus()/keyboard-open still work.
+//
+// Why scrollLines() instead of vp.scrollTop:
+//   The previous implementation drove `vp.scrollTop` directly in pixels,
+//   relying on xterm's scroll listener to reconcile the canvas. In practice
+//   the canvas/WebGL renderer doesn't always repaint on sub-line scrollTop
+//   changes — pixel-level mutations would accumulate without visible
+//   movement, then the canvas would snap multiple lines on the next
+//   rerender threshold. Result: thumb drags produced jumpy, decoupled
+//   content scroll. xterm.scrollLines(N) forces a renderer repaint at line
+//   boundaries, which is the smallest unit the renderer actually honors.
+//   We accumulate sub-line pixel movement and emit scrollLines only when
+//   we cross a row-height boundary, so 1px finger ≈ 1 row scroll on a
+//   16px row is correct (and the cumulative position tracks the thumb).
 //
 // Usage:
 //   const detach = attachTouchScroll(xterm, hostElement);
@@ -17,9 +30,9 @@ const DRAG_THRESHOLD_PX = 6;        // finger must move this far before we claim
 const MOMENTUM_DECAY = 0.95;        // per-frame velocity multiplier (higher = longer glide)
 const MOMENTUM_MIN_VELOCITY = 0.2;  // px/ms — even a gentle lift gets a small glide
 const MOMENTUM_STOP = 0.04;         // px/ms below which the momentum loop exits
+const FALLBACK_ROW_HEIGHT_PX = 16;  // used only if we can't measure live
 
 export function attachTouchScroll(xterm: Terminal, host: HTMLElement): () => void {
-  void xterm;
   const getViewport = (): HTMLElement | null =>
     host.querySelector<HTMLElement>(".xterm-viewport");
 
@@ -29,6 +42,7 @@ export function attachTouchScroll(xterm: Terminal, host: HTMLElement): () => voi
   let velocity = 0;        // px / ms, positive = finger moving UP (content scrolls DOWN)
   let isDragging = false;
   let momentumRaf: number | null = null;
+  let accumPx = 0;          // sub-line pixel remainder; flushed when |accumPx| >= rowHeight
   let origHostTouchAction = "";
   let origViewportTouchAction = "";
 
@@ -39,14 +53,28 @@ export function attachTouchScroll(xterm: Terminal, host: HTMLElement): () => voi
     }
   };
 
-  // Drive xterm's own viewport.scrollTop directly so the finger-to-content
-  // ratio is a clean 1:1 in pixels — xterm has a scroll listener that
-  // reconciles the canvas to wherever scrollTop lands.
-  const scrollByPixels = (px: number): void => {
+  // Estimate the row height in CSS pixels by dividing the viewport's visible
+  // height by xterm's row count. Falls back to a static value if the viewport
+  // hasn't been measured yet (early touchstart before xterm.open finishes).
+  const rowHeightPx = (): number => {
     const vp = getViewport();
-    if (!vp) return;
-    const next = Math.max(0, Math.min(vp.scrollHeight - vp.clientHeight, vp.scrollTop + px));
-    vp.scrollTop = next;
+    const rows = (xterm as Terminal & { rows?: number }).rows;
+    if (!vp || !rows || rows <= 0) return FALLBACK_ROW_HEIGHT_PX;
+    const measured = vp.clientHeight / rows;
+    return measured > 0 ? measured : FALLBACK_ROW_HEIGHT_PX;
+  };
+
+  // Convert finger pixel delta into integer line scrolls via xterm's own
+  // scroll API, which the renderer always honors with a repaint. Sub-line
+  // remainder accumulates so a slow drag doesn't get rounded away.
+  const scrollByPixels = (px: number): void => {
+    accumPx += px;
+    const h = rowHeightPx();
+    const lines = Math.trunc(accumPx / h);
+    if (lines !== 0) {
+      try { xterm.scrollLines(lines); } catch { /* alt-screen / disposed */ }
+      accumPx -= lines * h;
+    }
   };
 
   const onTouchStart = (e: TouchEvent): void => {
@@ -57,6 +85,7 @@ export function attachTouchScroll(xterm: Terminal, host: HTMLElement): () => voi
     lastMoveTime = performance.now();
     velocity = 0;
     isDragging = false;
+    accumPx = 0;  // start a fresh fractional accumulator each gesture
   };
 
   const onTouchMove = (e: TouchEvent): void => {

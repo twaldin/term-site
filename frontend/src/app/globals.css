@@ -31,6 +31,16 @@ html, body {
   height: 100%;
 }
 
+/* Block rubber-band overscroll on mobile so users can't drag past the top
+   or bottom of the document and see the white "void" outside <html>. iOS
+   Safari and Android Chrome both honor overscroll-behavior-y: none on the
+   root. The terminal page is height: 100vh so it can't overscroll anyway,
+   but blog/static pages can — without this, scrolling past the end of the
+   article shows a white area underneath. */
+html {
+  overscroll-behavior-y: none;
+}
+
 body {
   display: flex;
   flex-direction: column;
