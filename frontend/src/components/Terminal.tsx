@@ -310,10 +310,16 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
     return (
       <div
+        className="terminal-host"
         style={{
           width: "100%",
           height: "100%",
           margin: 0,
+          // padding-bottom is overridden to ~25vh on mobile via globals.css —
+          // gives the cursor + last output line breathing room above the
+          // hard-to-read lower thumb zone of phones (where iOS URL bar +
+          // home indicator land). FitAddon sizes rows from the inner
+          // content area, so xterm's grid honors the reduced height.
           padding: "6px 14px",
           boxSizing: "border-box",
           backgroundColor: terminalConfig.theme.background,
